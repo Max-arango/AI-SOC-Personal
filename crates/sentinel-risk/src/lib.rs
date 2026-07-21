@@ -1,0 +1,1 @@
+//! sentinel-risk crate (stub).

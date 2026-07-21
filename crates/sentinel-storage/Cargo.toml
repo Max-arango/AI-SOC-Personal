@@ -1,0 +1,29 @@
+[package]
+name = "sentinel-storage"
+version = { workspace = true }
+edition = "2021"
+description = "Sentinel AI storage layer (SQLite + DuckDB)"
+license = { workspace = true }
+repository = { workspace = true }
+authors = { workspace = true }
+categories = { workspace = true }
+keywords = { workspace = true }
+publish = false
+
+[dependencies]
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }
+sqlx = { workspace = true }
+duckdb = { workspace = true }
+sentinel-core = { path = "../sentinel-core" }
+sentinel-events = { path = "../sentinel-events" }
+sentinel-config = { path = "../sentinel-config" }
+async-trait = "0.1"
+prost = "0.12"
+prost-types = "0.12"

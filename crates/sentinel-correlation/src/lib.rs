@@ -1,0 +1,1 @@
+//! sentinel-correlation crate (stub).

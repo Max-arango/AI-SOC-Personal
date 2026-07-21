@@ -1,0 +1,81 @@
+# cargo-deny configuration for Sentinel AI
+
+[licenses]
+# Allow these licenses
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-DFS-2016",
+    "Zlib",
+    "MPL-2.0",
+    "Unlicense",
+    "CC0-1.0",
+]
+
+# Deny these licenses
+deny = [
+    "GPL-2.0",
+    "GPL-3.0",
+    "LGPL-2.0",
+    "LGPL-3.0",
+    "AGPL-3.0",
+    "SSPL-1.0",
+    "BSL-1.0",
+    "Commons Clause",
+]
+
+# Allow specific crates with denied licenses if needed
+allow-by-crate = {}
+deny-by-crate = {}
+
+# Treat these as effectively these licenses
+license-clarifications = {
+    "ring" = "MIT",
+    "rustls" = "Apache-2.0",
+}
+
+[bans]
+# Deny specific versions
+deny = {}
+
+# Allow specific versions
+allow = {}
+
+# Deny these crates entirely
+deny-crate = [
+    "backtrace",  # Deprecated, use std::backtrace
+    "failure",    # Deprecated, use thiserror/anyhow
+    "error-chain", # Deprecated
+    "lazy_static", # Deprecated, use once_cell
+]
+
+# Allow these crates even if they have banned versions
+allow-crate = {}
+
+[advisories]
+# Ignore these vulnerability IDs
+ignore = []
+
+# Treat these as informational only
+informational = []
+
+# Deny these vulnerability severities
+deny = ["critical", "high"]
+
+[advisories.ignore]
+# Example: ignore specific advisory for a crate
+# "RUSTSEC-2023-0001" = { crate = "some-crate" }
+
+[sources]
+# Only allow these registries
+allow-registry = ["crates-io"]
+
+# Allow these git sources
+allow-git = {}
+
+# Allow these local paths
+allow-path = {}

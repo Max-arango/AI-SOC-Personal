@@ -1,0 +1,23 @@
+[package]
+name = "sentinel-event-bus"
+version = { workspace = true }
+edition = "2021"
+description = "Sentinel AI event bus implementation"
+license = { workspace = true }
+repository = { workspace = true }
+authors = { workspace = true }
+categories = { workspace = true }
+keywords = { workspace = true }
+publish = false
+
+[dependencies]
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+async-trait = "0.1"
+tokio = { workspace = true }
+tracing = { workspace = true }
+crossbeam = { workspace = true }
+parking_lot = { workspace = true }
+arc-swap = { workspace = true }
+sentinel-core = { path = "../sentinel-core" }
+sentinel-events = { path = "../sentinel-events" }

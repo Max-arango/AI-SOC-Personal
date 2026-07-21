@@ -1,0 +1,47 @@
+# Sentinel AI - Development Dockerfile
+# Used by docker-compose for development environment
+
+FROM rust:1.75-slim-bookworm
+
+# Install development dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    pkg-config \
+    libsqlite3-dev \
+    libclang-dev \
+    protobuf-compiler \
+    curl \
+    git \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install cargo-watch for hot reload
+RUN cargo install cargo-watch
+
+# Install cargo-audit and cargo-deny for security
+RUN cargo install cargo-audit cargo-deny
+
+# Create non-root user
+RUN useradd -m -s /bin/bash sentinel
+WORKDIR /workspace
+
+# Copy Cargo files first for better caching
+COPY Cargo.toml Cargo.lock ./
+COPY crates/ ./crates/
+COPY apps/ ./apps/
+COPY collectors/ ./collectors/
+COPY plugins/ ./plugins/
+
+# Build dependencies (cached layer)
+RUN cargo build --workspace --locked 2>/dev/null || true
+
+# Switch to non-root user
+USER sentinel
+
+# Set environment
+ENV RUST_LOG=debug
+ENV CARGO_HOME=/home/sentinel/.cargo
+
+EXPOSE 7777 7778 9090
+
+CMD ["cargo", "watch", "-x", "run --bin sentinel-core-service"]

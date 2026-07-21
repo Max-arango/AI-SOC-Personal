@@ -1,0 +1,13 @@
+[package]
+name = "sentinel-plugins"
+version = { workspace = true }
+edition = "2021"
+license = { workspace = true }
+publish = false
+
+[dependencies]
+sentinel-core = { path = "../sentinel-core" }
+async-trait = "0.1"
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }

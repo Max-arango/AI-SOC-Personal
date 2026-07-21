@@ -1,0 +1,405 @@
+syntax = "proto3";
+
+package sentinel.api.v1;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/struct.proto";
+import "sentinel/events/v1/event.proto";
+
+option go_package = "github.com/sentinel-ai/sentinel-ai/proto/sentinel/api/v1;apiv1";
+
+// ============================================================
+// HEALTH & INFO
+// ============================================================
+
+message HealthRequest {}
+message HealthResponse {
+  enum Status { HEALTH_UNKNOWN = 0; HEALTH_HEALTHY = 1; HEALTH_DEGRADED = 2; HEALTH_UNHEALTHY = 3; }
+  Status status = 1;
+  map<string, ComponentHealth> components = 2;
+  google.protobuf.Timestamp timestamp = 3;
+}
+message ComponentHealth {
+  enum Status { COMP_UNKNOWN = 0; COMP_HEALTHY = 1; COMP_DEGRADED = 2; COMP_UNHEALTHY = 3; }
+  Status status = 1;
+  string message = 2;
+  map<string, string> details = 3;
+}
+
+message VersionRequest {}
+message VersionResponse {
+  string version = 1;
+  string git_commit = 2;
+  string build_date = 3;
+  string rust_version = 4;
+  map<string, string> dependencies = 5;
+}
+
+message StatusRequest {}
+message StatusResponse {
+  SystemState state = 1;
+  google.protobuf.Timestamp uptime = 2;
+  ResourceUsage resources = 3;
+  map<string, CollectorStatus> collectors = 4;
+  RuleEngineStatus rules = 5;
+  AiEngineStatus ai = 6;
+}
+enum SystemState { SYS_INITIALIZING = 0; SYS_STARTING = 1; SYS_RUNNING = 2; SYS_DEGRADED = 3; SYS_STOPPING = 4; SYS_STOPPED = 5; SYS_CRASHED = 6; }
+message ResourceUsage { double cpu_percent = 1; uint64 memory_bytes = 2; uint64 event_queue_depth = 3; }
+message CollectorStatus {
+  enum State { CS_UNKNOWN = 0; CS_STOPPED = 1; CS_STARTING = 2; CS_RUNNING = 3; CS_DEGRADED = 4; CS_ERROR = 5; }
+  string id = 1;
+  string name = 2;
+  State state = 3;
+  CollectorStats stats = 4;
+  google.protobuf.Timestamp last_event = 5;
+}
+message CollectorStats { uint64 events_produced = 1; uint64 events_dropped = 2; uint64 errors = 3; double avg_latency_ms = 4; double cpu_percent = 5; uint64 memory_bytes = 6; }
+message RuleEngineStatus { uint32 loaded_rules = 1; uint32 enabled_rules = 2; uint64 evaluations_total = 3; uint64 matches_total = 4; double avg_eval_time_ms = 5; }
+message AiEngineStatus { bool enabled = 1; string model = 2; string provider = 3; uint64 requests_total = 4; double avg_latency_ms = 5; }
+
+// ============================================================
+// EVENTS
+// ============================================================
+
+message QueryEventsRequest {
+  EventQuery query = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+  string sort_by = 4;
+  bool sort_desc = 5;
+}
+message EventQuery {
+  google.protobuf.Timestamp start_time = 1;
+  google.protobuf.Timestamp end_time = 2;
+  repeated string event_types = 3;
+  repeated string sources = 4;
+  repeated sentinel.events.v1.Severity severities = 5;
+  repeated string process_names = 6;
+  repeated uint32 pids = 7;
+  repeated string hosts = 8;
+  string correlation_id = 9;
+  string flow_id = 10;
+  uint32 min_risk_score = 11;
+  repeated string tags = 12;
+  string free_text = 13;
+}
+message QueryEventsResponse {
+  repeated sentinel.events.v1.Event events = 1;
+  int64 total_count = 2;
+  bool has_more = 3;
+}
+message StreamEventsRequest {
+  EventQuery query = 1;
+  bool include_historical = 2;
+}
+message GetEventRequest { string event_id = 1; }
+
+message EventStatsRequest {
+  google.protobuf.Timestamp start_time = 1;
+  google.protobuf.Timestamp end_time = 2;
+  string group_by = 3;
+}
+message EventStatsResponse {
+  map<string, int64> counts = 1;
+  map<string, double> avg_risk = 2;
+}
+
+// ============================================================
+// PROCESSES
+// ============================================================
+
+message ListProcessesRequest {
+  bool include_terminated = 1;
+  google.protobuf.Timestamp since = 2;
+  string filter = 3;
+  int32 limit = 4;
+}
+message ListProcessesResponse { repeated ProcessSummary processes = 1; }
+message ProcessSummary {
+  uint32 pid = 1;
+  string name = 2;
+  string path = 3;
+  string command_line = 4;
+  uint32 ppid = 5;
+  google.protobuf.Timestamp start_time = 6;
+  google.protobuf.Timestamp end_time = 7;
+  sentinel.events.v1.UserContext user = 8;
+  uint32 event_count = 9;
+  uint32 risk_score = 10;
+  repeated string mitre_techniques = 11;
+  bool is_signed = 12;
+  string publisher = 13;
+}
+message GetProcessRequest { uint32 pid = 1; google.protobuf.Timestamp at_time = 2; }
+message ProcessDetail {
+  ProcessSummary summary = 1;
+  repeated sentinel.events.v1.Event events = 2;
+  repeated NetworkConnection connections = 3;
+  repeated FileActivity files = 4;
+  repeated RegistryActivity registry = 5;
+  ProcessTree tree = 6;
+}
+message GetProcessTreeRequest { uint32 root_pid = 1; int32 max_depth = 2; }
+
+message FileActivity {
+  string action = 1;
+  string path = 2;
+  uint64 size = 3;
+  string sha256 = 4;
+  google.protobuf.Timestamp timestamp = 5;
+}
+message RegistryActivity {
+  string action = 1;
+  string key_path = 2;
+  string value_name = 3;
+  string value_data = 4;
+  google.protobuf.Timestamp timestamp = 5;
+}
+message ProcessTree { ProcessTreeNode root = 1; }
+message ProcessTreeNode { ProcessSummary process = 1; repeated ProcessTreeNode children = 2; }
+
+// ============================================================
+// NETWORK
+// ============================================================
+
+message ListConnectionsRequest { bool active_only = 1; google.protobuf.Timestamp since = 2; string filter = 3; }
+message ListConnectionsResponse { repeated NetworkConnection connections = 1; }
+message NetworkConnection {
+  string id = 1;
+  uint32 pid = 2;
+  string process_name = 3;
+  sentinel.events.v1.NetworkEvent.Direction direction = 4;
+  sentinel.events.v1.NetworkEvent.Protocol protocol = 5;
+  string local_addr = 6;
+  uint32 local_port = 7;
+  string remote_addr = 8;
+  uint32 remote_port = 9;
+  google.protobuf.Timestamp start_time = 10;
+  google.protobuf.Timestamp end_time = 11;
+  uint64 bytes_sent = 12;
+  uint64 bytes_received = 13;
+  string hostname = 14;
+  string ja3 = 15;
+  string geoip_country = 16;
+}
+message ConnectionStatsRequest {}
+message ConnectionStatsResponse {
+  int64 total_connections = 1;
+  int64 active_connections = 2;
+  map<string, int64> by_protocol = 3;
+  map<string, int64> by_country = 4;
+  map<string, int64> by_process = 5;
+  repeated TopTalker top_talkers = 6;
+}
+message TopTalker { string remote_addr = 1; string hostname = 2; int64 connection_count = 3; uint64 total_bytes = 4; string country = 5; }
+
+// ============================================================
+// ALERTS
+// ============================================================
+
+message ListAlertsRequest {
+  AlertState state = 1;
+  sentinel.events.v1.Severity min_severity = 2;
+  google.protobuf.Timestamp start_time = 3;
+  google.protobuf.Timestamp end_time = 4;
+  int32 limit = 5;
+  int32 offset = 6;
+}
+message ListAlertsResponse { repeated Alert alerts = 1; int64 total_count = 2; }
+message GetAlertRequest { string alert_id = 1; }
+message UpdateAlertStateRequest { string alert_id = 1; AlertState new_state = 2; string comment = 3; }
+message StreamAlertsRequest {}
+enum AlertState { ALERT_STATE_UNSPECIFIED = 0; NEW = 1; ACKNOWLEDGED = 2; INVESTIGATING = 3; RESOLVED_TRUE_POSITIVE = 4; RESOLVED_FALSE_POSITIVE = 5; SUPPRESSED = 6; }
+message Alert {
+  string id = 1;
+  string rule_id = 2;
+  string correlation_id = 3;
+  uint32 risk_score = 4;
+  sentinel.events.v1.Severity severity = 5;
+  AlertState state = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
+  string acknowledged_by = 9;
+  google.protobuf.Timestamp acknowledged_at = 10;
+  repeated string events = 11;
+  AlertContext context = 12;
+  string ai_summary = 13;
+}
+message AlertContext { google.protobuf.Struct snapshot = 1; }
+
+// ============================================================
+// RULES
+// ============================================================
+
+message ListRulesRequest { bool enabled_only = 1; string category = 2; }
+message ListRulesResponse { repeated Rule rules = 1; }
+message GetRuleRequest { string id = 1; }
+message CreateRuleRequest { Rule rule = 1; }
+message UpdateRuleRequest { string id = 1; Rule rule = 2; }
+message DeleteRuleRequest { string id = 1; }
+message TestRuleRequest { Rule rule = 1; repeated sentinel.events.v1.Event test_events = 2; }
+message TestRuleResponse { repeated TestResult results = 1; bool all_passed = 2; }
+message TestResult { string event_id = 1; bool matched = 2; bool expected_match = 3; string error = 4; }
+message Rule {
+  string id = 1;
+  uint32 version = 2;
+  string name = 3;
+  string description = 4;
+  string author = 5;
+  google.protobuf.Timestamp created = 6;
+  google.protobuf.Timestamp modified = 7;
+  bool enabled = 8;
+  string category = 9;
+  string subcategory = 10;
+  repeated MitreMapping mitre = 11;
+  sentinel.events.v1.Severity severity = 12;
+  RiskConfig risk = 13;
+  string condition = 14;
+  repeated string and_conditions = 15;
+  repeated string or_conditions = 16;
+  repeated string not_conditions = 17;
+  repeated RuleAction actions = 18;
+  repeated SuppressionRule suppressions = 19;
+}
+message MitreMapping { string technique = 1; string name = 2; string tactic = 3; }
+message RiskConfig { uint32 base_score = 1; double confidence = 2; repeated RiskMultiplier multipliers = 3; }
+message RiskMultiplier { string condition = 1; double factor = 2; }
+message RuleAction {
+  enum Type { TYPE_UNSPECIFIED = 0; ALERT = 1; ENRICH = 2; CORRELATE = 3; SNAPSHOT = 4; }
+  Type type = 1;
+  google.protobuf.Struct config = 2;
+}
+message SuppressionRule { string id = 1; string condition = 2; string reason = 3; }
+
+// ============================================================
+// RISK
+// ============================================================
+
+message RiskSummaryRequest {}
+message RiskSummaryResponse {
+  uint32 current_risk = 1;
+  uint32 peak_24h = 2;
+  uint32 peak_7d = 3;
+  RiskTrend trend_1h = 4;
+  RiskTrend trend_24h = 5;
+  map<string, uint32> by_category = 6;
+  map<string, uint32> by_tactic = 7;
+  int32 active_alerts = 8;
+}
+enum RiskTrend { TREND_UNKNOWN = 0; IMPROVING = 1; STABLE = 2; DEGRADING = 3; CRITICAL = 4; }
+message RiskTimelineRequest { google.protobuf.Timestamp start_time = 1; google.protobuf.Timestamp end_time = 2; string granularity = 3; }
+message RiskTimelineResponse { repeated RiskPoint timeline = 1; }
+message RiskPoint { google.protobuf.Timestamp timestamp = 1; uint32 risk_score = 2; uint32 event_count = 3; uint32 alert_count = 4; }
+message TopRisksRequest { string entity_type = 1; int32 limit = 2; google.protobuf.Timestamp since = 3; }
+message TopRisksResponse { repeated RiskEntity top_risks = 1; }
+message RiskEntity { string entity_type = 1; string entity_id = 2; string display_name = 3; uint32 risk_score = 4; repeated string top_rules = 5; repeated string mitre_tactics = 6; }
+
+// ============================================================
+// CORRELATION
+// ============================================================
+
+message AttackChainsRequest {
+  google.protobuf.Timestamp start_time = 1;
+  google.protobuf.Timestamp end_time = 2;
+  ChainStatus status = 3;
+  int32 min_risk = 4;
+  int32 limit = 5;
+}
+message AttackChainsResponse { repeated AttackChainSummary chains = 1; }
+enum ChainStatus { CHAIN_STATUS_UNSPECIFIED = 0; ACTIVE_ATTACK = 1; SUSPICIOUS_CHAIN = 2; RESOLVED = 3; }
+message AttackChainSummary {
+  string id = 1;
+  google.protobuf.Timestamp start_time = 2;
+  google.protobuf.Timestamp end_time = 3;
+  uint32 risk_score = 4;
+  repeated string tactics = 5;
+  repeated string techniques = 6;
+  int32 event_count = 7;
+  ChainStatus status = 8;
+  double kill_chain_coverage = 9;
+}
+message ChainDetailRequest { string chain_id = 1; }
+message AttackChainDetail {
+  AttackChainSummary summary = 1;
+  repeated ChainEvent events = 2;
+  repeated ChainEdge edges = 3;
+  string ai_narrative = 4;
+}
+message ChainEvent { string event_id = 1; google.protobuf.Timestamp timestamp = 2; string event_type = 3; string summary = 4; repeated string mitre_techniques = 5; uint32 risk_contribution = 6; }
+message ChainEdge { string from_event = 1; string to_event = 2; string edge_type = 3; double confidence = 4; string evidence = 5; }
+
+// ============================================================
+// AI
+// ============================================================
+
+message ExplainAlertRequest { string alert_id = 1; bool include_recommendations = 2; bool include_investigation_steps = 3; }
+message ExplainAlertResponse {
+  string explanation = 1;
+  string risk_level = 2;
+  repeated string immediate_actions = 3;
+  repeated string investigation_steps = 4;
+  repeated string prevention_recommendations = 5;
+  google.protobuf.Timestamp generated_at = 6;
+  string model_used = 7;
+}
+message ChatRequest { string message = 1; string conversation_id = 2; bool stream = 3; }
+message ChatResponse { string response = 1; string conversation_id = 2; google.protobuf.Timestamp timestamp = 3; }
+message ChatChunk { string delta = 1; bool done = 2; string conversation_id = 3; }
+
+// ============================================================
+// CONFIGURATION
+// ============================================================
+
+message GetConfigRequest { string section = 1; }
+message ConfigResponse { string config_toml = 1; uint64 version = 2; }
+message UpdateConfigRequest { string config_toml = 1; bool validate_only = 2; }
+message ValidateConfigResponse { bool valid = 1; repeated ConfigError errors = 2; repeated ConfigWarning warnings = 3; }
+message ConfigError { string path = 1; string message = 2; }
+message ConfigWarning { string path = 1; string message = 2; }
+
+// ============================================================
+// PLUGINS
+// ============================================================
+
+message ListPluginsRequest {}
+message ListPluginsResponse { repeated PluginInfo plugins = 1; }
+message PluginInfo {
+  string id = 1;
+  string name = 2;
+  string version = 3;
+  string author = 4;
+  string description = 5;
+  PluginState state = 6;
+  repeated string capabilities = 7;
+  PluginConfigSchema config_schema = 8;
+  google.protobuf.Timestamp installed_at = 9;
+}
+enum PluginState { PLUGIN_STATE_UNSPECIFIED = 0; PLUGIN_INSTALLED = 1; PLUGIN_LOADED = 2; PLUGIN_RUNNING = 3; PLUGIN_ERROR = 4; PLUGIN_DISABLED = 5; }
+message GetPluginRequest { string plugin_id = 1; }
+message InstallPluginRequest { string source = 1; string checksum = 2; }
+message UninstallPluginRequest { string plugin_id = 1; }
+message ConfigurePluginRequest { string plugin_id = 1; google.protobuf.Struct config = 2; }
+message PluginConfig { google.protobuf.Struct config = 1; }
+message PluginConfigSchema { google.protobuf.Struct json_schema = 1; }
+
+// ============================================================
+// COLLECTORS
+// ============================================================
+
+message ListCollectorsRequest {}
+message ListCollectorsResponse { repeated CollectorInfo collectors = 1; }
+message CollectorInfo {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  bool enabled = 4;
+  CollectorState state = 5;
+  CollectorStats stats = 6;
+  google.protobuf.Timestamp last_event = 7;
+}
+enum CollectorState { COLLECTOR_STATE_UNSPECIFIED = 0; COLLECTOR_STOPPED = 1; COLLECTOR_STARTING = 2; COLLECTOR_RUNNING = 3; COLLECTOR_DEGRADED = 4; COLLECTOR_ERROR = 5; }
+message CollectorStatusRequest { string collector_id = 1; }
+message CollectorStatusResponse { CollectorInfo info = 1; google.protobuf.Struct detailed_stats = 2; }
+message RestartCollectorRequest { string collector_id = 1; }

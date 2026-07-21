@@ -1,0 +1,29 @@
+[package]
+name = "sentinel-rule-engine"
+version = { workspace = true }
+edition = "2021"
+description = "Sentinel AI rule engine with CEL"
+license = { workspace = true }
+repository = { workspace = true }
+authors = { workspace = true }
+categories = { workspace = true }
+keywords = { workspace = true }
+publish = false
+
+[dependencies]
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = "0.9"
+tokio = { workspace = true }
+tracing = { workspace = true }
+chrono = { workspace = true }
+async-trait = "0.1"
+cel = { workspace = true }
+sentinel-core = { path = "../sentinel-core" }
+sentinel-events = { path = "../sentinel-events" }
+sentinel-config = { path = "../sentinel-config" }
+parking_lot = { workspace = true }
+arc-swap = { workspace = true }
+notify = { workspace = true }

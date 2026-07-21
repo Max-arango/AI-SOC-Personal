@@ -1,0 +1,340 @@
+syntax = "proto3";
+
+package sentinel.events.v1;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+
+option go_package = "github.com/sentinel-ai/sentinel-ai/proto/sentinel/events/v1;eventsv1";
+
+// ============================================================
+// BASE EVENT
+// ============================================================
+
+message Event {
+  string id = 1;
+  string type = 2;
+  string source = 3;
+  google.protobuf.Timestamp timestamp = 4;
+  google.protobuf.Timestamp ingest_timestamp = 5;
+  Severity severity = 6;
+  ProcessContext process = 7;
+  oneof payload {
+    ProcessEvent process_event = 100;
+    NetworkEvent network_event = 101;
+    FileEvent file_event = 102;
+    RegistryEvent registry_event = 103;
+    UsbEvent usb_event = 104;
+    BrowserEvent browser_event = 105;
+    StartupEvent startup_event = 106;
+    GenericEvent generic_event = 107;
+  }
+  repeated string tags = 200;
+  google.protobuf.Struct metadata = 201;
+  uint32 risk_score = 300;
+  CorrelationContext correlation = 301;
+  string host_id = 400;
+  uint32 schema_version = 999;
+}
+
+enum Severity {
+  SEVERITY_UNSPECIFIED = 0;
+  SEVERITY_DEBUG = 1;
+  SEVERITY_INFO = 2;
+  SEVERITY_NOTICE = 3;
+  SEVERITY_WARNING = 4;
+  SEVERITY_ERROR = 5;
+  SEVERITY_CRITICAL = 6;
+  SEVERITY_ALERT = 7;
+  SEVERITY_EMERGENCY = 8;
+}
+
+// ============================================================
+// PROCESS CONTEXT (embedded in every event when available)
+// ============================================================
+
+message ProcessContext {
+  uint32 pid = 1;
+  uint32 ppid = 2;
+  string name = 3;
+  string path = 4;
+  string command_line = 5;
+  string cwd = 6;
+  UserContext user = 7;
+  string integrity_level = 8;
+  CodeSigningInfo signing = 9;
+  repeated string mitre_techniques = 10;
+  uint32 tree_depth = 11;
+  string sha256 = 12;
+  ProcessContext parent = 13;
+}
+
+message UserContext {
+  string sid = 1;
+  string username = 2;
+  string domain = 3;
+  bool is_elevated = 4;
+  bool is_system = 5;
+}
+
+message CodeSigningInfo {
+  bool is_signed = 1;
+  bool is_trusted = 2;
+  string publisher = 3;
+  string issuer = 4;
+  google.protobuf.Timestamp timestamp = 5;
+  repeated string certificates = 6;
+}
+
+// ============================================================
+// CORRELATION CONTEXT
+// ============================================================
+
+message CorrelationContext {
+  string session_id = 1;
+  string cause_event_id = 2;
+  string root_event_id = 3;
+  string correlation_id = 4;
+  string flow_id = 5;
+  uint32 sequence = 6;
+}
+
+// ============================================================
+// PAYLOAD TYPES
+// ============================================================
+
+message ProcessEvent {
+  enum Action {
+    ACTION_UNSPECIFIED = 0;
+    CREATE = 1;
+    TERMINATE = 2;
+    OPEN = 3;
+    ACCESS = 4;
+    INJECT = 5;
+    HOLLOW = 6;
+    DUMP = 7;
+  }
+  Action action = 1;
+  ProcessContext target = 2;
+  uint32 desired_access = 3;
+}
+
+message NetworkEvent {
+  enum Direction {
+    DIRECTION_UNSPECIFIED = 0;
+    INBOUND = 1;
+    OUTBOUND = 2;
+  }
+  enum Protocol {
+    PROTOCOL_UNSPECIFIED = 0;
+    TCP = 1;
+    UDP = 2;
+    ICMP = 3;
+    RAW = 4;
+  }
+  enum Action {
+    ACTION_UNSPECIFIED = 0;
+    CONNECT = 1;
+    LISTEN = 2;
+    ACCEPT = 3;
+    SEND = 4;
+    RECEIVE = 5;
+    CLOSE = 6;
+    DNS_QUERY = 7;
+    DNS_RESPONSE = 8;
+    HTTP_REQUEST = 9;
+    HTTP_RESPONSE = 10;
+  }
+  Direction direction = 1;
+  Protocol protocol = 2;
+  Action action = 3;
+  string local_addr = 4;
+  uint32 local_port = 5;
+  string remote_addr = 6;
+  uint32 remote_port = 7;
+  uint64 bytes_sent = 8;
+  uint64 bytes_received = 9;
+  string dns_query = 10;
+  string http_method = 11;
+  string http_url = 12;
+  uint32 http_status = 13;
+  string hostname = 14;
+  string ja3_fingerprint = 15;
+  string ja3s_fingerprint = 16;
+}
+
+message FileEvent {
+  enum Action {
+    ACTION_UNSPECIFIED = 0;
+    CREATE = 1;
+    MODIFY = 2;
+    DELETE = 3;
+    RENAME = 4;
+    READ = 5;
+    WRITE = 6;
+    EXECUTE = 7;
+    MAP = 8;
+    ATTRIBUTE_CHANGE = 9;
+    PERMISSION_CHANGE = 10;
+    HARDLINK = 11;
+    SYMLINK = 12;
+  }
+  Action action = 1;
+  string path = 2;
+  string destination = 3;
+  uint64 size = 4;
+  string sha256 = 5;
+  string entropy = 6;
+  FileAttributes attributes = 7;
+  bool is_executable = 8;
+  string mime_type = 9;
+  bool is_sensitive_path = 10;
+}
+
+message FileAttributes {
+  bool readonly = 1;
+  bool hidden = 2;
+  bool system = 3;
+  bool archive = 4;
+  bool compressed = 5;
+  bool encrypted = 6;
+  google.protobuf.Timestamp created = 7;
+  google.protobuf.Timestamp modified = 8;
+  google.protobuf.Timestamp accessed = 9;
+}
+
+message RegistryEvent {
+  enum Action {
+    ACTION_UNSPECIFIED = 0;
+    CREATE_KEY = 1;
+    DELETE_KEY = 2;
+    SET_VALUE = 3;
+    DELETE_VALUE = 4;
+    RENAME_KEY = 5;
+    QUERY_KEY = 6;
+    QUERY_VALUE = 7;
+  }
+  enum Hive {
+    HIVE_UNSPECIFIED = 0;
+    HKLM = 1;
+    HKCU = 2;
+    HKCR = 3;
+    HKU = 4;
+    HKCC = 5;
+  }
+  Action action = 1;
+  Hive hive = 2;
+  string key_path = 3;
+  string value_name = 4;
+  RegistryValueData value_data = 5;
+  string old_value = 6;
+}
+
+message RegistryValueData {
+  enum Type {
+    TYPE_UNSPECIFIED = 0;
+    STRING = 1;
+    EXPAND_STRING = 2;
+    BINARY = 3;
+    DWORD = 4;
+    QWORD = 5;
+    MULTI_STRING = 6;
+  }
+  Type type = 1;
+  bytes data = 2;
+}
+
+message UsbEvent {
+  enum Action {
+    ACTION_UNSPECIFIED = 0;
+    DEVICE_CONNECT = 1;
+    DEVICE_DISCONNECT = 2;
+    MASS_STORAGE_MOUNT = 3;
+    MASS_STORAGE_UNMOUNT = 4;
+    HID_KEYBOARD = 5;
+    HID_MOUSE = 6;
+  }
+  Action action = 1;
+  string device_id = 2;
+  string vendor_id = 3;
+  string product_id = 4;
+  string serial_number = 5;
+  string manufacturer = 6;
+  string product = 7;
+  string mount_point = 8;
+  bool is_encrypted = 9;
+  repeated string file_hashes = 10;
+}
+
+message BrowserEvent {
+  enum Browser {
+    BROWSER_UNSPECIFIED = 0;
+    CHROME = 1;
+    FIREFOX = 2;
+    EDGE = 3;
+    SAFARI = 4;
+    BRAVE = 5;
+    VIVALDI = 6;
+  }
+  enum Action {
+    ACTION_UNSPECIFIED = 0;
+    NAVIGATION = 1;
+    DOWNLOAD_START = 2;
+    DOWNLOAD_COMPLETE = 3;
+    EXTENSION_INSTALL = 4;
+    EXTENSION_REMOVE = 5;
+    COOKIE_ACCESS = 6;
+    LOCALSTORAGE_ACCESS = 7;
+    WEBSOCKET_CONNECT = 8;
+    SERVICE_WORKER_REGISTER = 9;
+  }
+  Browser browser = 1;
+  Action action = 2;
+  string url = 3;
+  string title = 4;
+  string referrer = 5;
+  string download_path = 6;
+  string download_hash = 7;
+  string extension_id = 8;
+  string extension_name = 9;
+  bool is_incognito = 10;
+}
+
+message StartupEvent {
+  enum Action {
+    ACTION_UNSPECIFIED = 0;
+    ADD = 1;
+    REMOVE = 2;
+    MODIFY = 3;
+    ENABLE = 4;
+    DISABLE = 5;
+  }
+  enum Location {
+    LOCATION_UNSPECIFIED = 0;
+    RUN_KEY = 1;
+    RUN_ONCE_KEY = 2;
+    SCHEDULED_TASK = 3;
+    SERVICE = 4;
+    STARTUP_FOLDER = 5;
+    WINLOGON = 6;
+    BROWSER_EXTENSION = 7;
+    SYSTEMD = 8;
+    LAUNCHD = 9;
+    CRON = 10;
+    RC_LOCAL = 11;
+    PROFILE_SCRIPT = 12;
+  }
+  Action action = 1;
+  Location location = 2;
+  string name = 3;
+  string command = 4;
+  string arguments = 5;
+  string user = 6;
+  bool is_signed = 7;
+  string publisher = 8;
+}
+
+message GenericEvent {
+  string custom_type = 1;
+  google.protobuf.Struct data = 2;
+}

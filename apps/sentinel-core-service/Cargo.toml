@@ -1,0 +1,42 @@
+[package]
+name = "sentinel-core-service"
+version = { workspace = true }
+edition = "2021"
+description = "Sentinel AI core daemon"
+license = { workspace = true }
+repository = { workspace = true }
+authors = { workspace = true }
+categories = { workspace = true }
+keywords = { workspace = true }
+publish = false
+
+[[bin]]
+name = "sentinel-core-service"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+tracing-appender = { workspace = true }
+clap = { workspace = true }
+config = { workspace = true }
+notify = { workspace = true }
+arc-swap = { workspace = true }
+parking_lot = { workspace = true }
+tonic = { workspace = true }
+tonic-reflection = { workspace = true }
+tonic-health = { workspace = true }
+
+sentinel-core = { path = "../../crates/sentinel-core" }
+sentinel-events = { path = "../../crates/sentinel-events" }
+sentinel-config = { path = "../../crates/sentinel-config" }
+sentinel-storage = { path = "../../crates/sentinel-storage" }
+sentinel-event-bus = { path = "../../crates/sentinel-event-bus" }
+sentinel-rule-engine = { path = "../../crates/sentinel-rule-engine" }
+sentinel-collectors = { path = "../../collectors" }
+sentinel-plugins = { path = "../../crates/sentinel-plugins" }

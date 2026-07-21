@@ -1,0 +1,34 @@
+[package]
+name = "sentinel-config"
+version = { workspace = true }
+edition = "2021"
+description = "Sentinel AI configuration management"
+license = { workspace = true }
+repository = { workspace = true }
+authors = { workspace = true }
+categories = { workspace = true }
+keywords = { workspace = true }
+publish = false
+
+[dependencies]
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+config = { workspace = true }
+notify = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+schemars = "0.8"
+validator = { version = "0.16", features = ["derive"] }
+age = { workspace = true }
+secrecy = { workspace = true }
+zeroize = { workspace = true }
+toml = { workspace = true }
+base64 = "0.13"
+futures = { workspace = true }
+sentinel-events = { path = "../sentinel-events" }
+once_cell = { workspace = true }
+async-trait = "0.1"
+arc-swap = { workspace = true }
+sentinel-core = { path = "../sentinel-core" }

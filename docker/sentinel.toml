@@ -1,0 +1,335 @@
+# Sentinel AI - Default Configuration
+# This file is copied to /etc/sentinel/config.toml in the container
+
+[core]
+host_id = ""                    # Auto-generated on first run
+instance_name = "Sentinel AI"
+graceful_shutdown_timeout = 30  # seconds
+health_check_interval = 10      # seconds
+metrics_enabled = true
+metrics_port = 9090
+max_memory_mb = 512
+max_cpu_percent = 25
+event_buffer_size = 10000
+
+features = [
+    "ai_engine",
+    "correlation_engine",
+    "plugin_system",
+    "grpc_api",
+    "rest_gateway",
+]
+
+[grpc]
+enabled = true
+address = "0.0.0.0:7777"
+tls_enabled = false
+max_message_size_mb = 16
+max_concurrent_streams = 100
+
+[rest_gateway]
+enabled = true
+address = "0.0.0.0:7778"
+cors_origins = ["http://localhost:3000", "http://localhost:5173", "tauri://localhost"]
+
+[storage]
+sqlite_path = "/var/lib/sentinel/sentinel.db"
+sqlite_wal_mode = true
+sqlite_busy_timeout_ms = 5000
+duckdb_path = "/var/lib/sentinel/events.duckdb"
+duckdb_memory_limit_mb = 256
+duckdb_threads = 2
+
+retention = [
+    { event_type = "sentinel.process.*", max_age_days = 30, max_count = 1000000 },
+    { event_type = "sentinel.network.*", max_age_days = 14, max_count = 500000 },
+    { event_type = "sentinel.file.*", max_age_days = 30, max_count = 200000 },
+    { event_type = "sentinel.registry.*", max_age_days = 90, max_count = 100000 },
+    { event_type = "sentinel.usb.*", max_age_days = 90, max_count = 10000 },
+    { event_type = "sentinel.browser.*", max_age_days = 7, max_count = 50000 },
+    { event_type = "sentinel.startup.*", max_age_days = 180, max_count = 5000 },
+    { event_type = "*", max_age_days = 7, max_count = 100000 },
+]
+
+aggregations = [
+    { name = "hourly_risk", interval = "1h", retention_days = 90 },
+    { name = "daily_mitre", interval = "1d", retention_days = 365 },
+    { name = "process_behavior", interval = "1h", retention_days = 30 },
+]
+
+[event_bus]
+ingest_channel_size = 10000
+broadcast_channel_size = 1000
+storage_channel_size = 5000
+plugin_channel_size = 2000
+ipc_channel_size = 500
+
+backpressure = { elevated = 50, high = 75, critical = 90 }
+
+[rule_engine]
+rules_directories = [
+    "/etc/sentinel/rules/builtin",
+    "/etc/sentinel/rules/custom",
+]
+hot_reload = true
+validation_on_load = true
+max_rules = 10000
+evaluation_timeout_ms = 50
+worker_threads = 4
+
+default_multipliers = [
+    { condition = "event.process.user.is_elevated", factor = 1.5 },
+    { condition = "event.process.signing.is_trusted == false", factor = 1.3 },
+    { condition = "event.network.geoip.country in ['CN', 'RU', 'KP', 'IR']", factor = 1.2 },
+]
+
+[risk_engine]
+decay_half_life = { critical = 72, high = 48, medium = 24, low = 12 }
+
+alert_thresholds = { low = 100, medium = 300, high = 600, critical = 900 }
+
+escalation = {
+    sustained_high_hours = 2,
+    flapping_max_alerts_per_hour = 10,
+    auto_acknowledge_low_after_hours = 24,
+}
+
+asset_criticality = {
+    system_process = 1.5,
+    domain_admin = 2.0,
+    critical_service = 1.3,
+    standard_user = 1.0,
+}
+
+[correlation_engine]
+enabled = true
+max_chains = 10000
+chain_timeout_hours = 24
+min_chain_length = 3
+min_chain_risk = 400
+
+flow_tracking = {
+    enabled = true,
+    max_objects = 50000,
+    ttl_hours = 48,
+}
+
+[ai_engine]
+enabled = true
+provider = "ollama"
+model = "llama-3.2-3b-instruct"
+fallback_models = ["llama-3.1-8b-instruct", "qwen2.5-7b-instruct"]
+
+ollama = {
+    base_url = "http://ollama:11434"
+    timeout_seconds = 60
+    keep_alive = "5m"
+    num_ctx = 8192
+    num_gpu = -1
+    num_thread = 4
+}
+
+llama_cpp = {
+    model_path = "/var/lib/sentinel/models/llama-3.2-3b-instruct-Q4_K_M.gguf"
+    n_gpu_layers = -1
+    n_threads = 4
+    n_ctx = 8192
+    n_batch = 512
+}
+
+generation = {
+    temperature = 0.0
+    top_p = 0.9
+    top_k = 40
+    repeat_penalty = 1.1
+    max_tokens = 2048
+    stop_sequences = ["###", "User:", "Assistant:"]
+}
+
+context = {
+    max_events = 100
+    max_chain_events = 50
+    anonymize = true
+    include_process_tree = true
+    include_network_summary = true
+    include_file_summary = true
+}
+
+[plugin_manager]
+enabled = true
+plugin_directories = [
+    "/etc/sentinel/plugins",
+    "/var/lib/sentinel/plugins",
+    "./plugins"
+]
+max_plugins = 50
+default_sandbox = "basic"
+allowed_capabilities = [
+    "event:read",
+    "event:write",
+    "config:read",
+    "config:write",
+    "network:http",
+    "secret:read",
+    "ai:query",
+    "storage:read",
+]
+
+[collectors]
+sample_rate = 1.0
+backpressure_response = "throttle"
+
+[collectors.process]
+enabled = true
+sample_rate = 1.0
+include_command_line = true
+include_environment = false
+resolve_signatures = true
+track_ancestry_depth = 10
+monitor_injection = true
+monitor_hollowing = true
+monitor_dumps = true
+exclude_paths = [
+    "C:\\Windows\\System32\\*",
+    "C:\\Program Files\\*",
+    "/usr/bin/*",
+    "/bin/*",
+    "/sbin/*",
+    "/lib*",
+]
+
+[collectors.network]
+enabled = true
+sample_rate = 1.0
+capture_dns = true
+capture_http = true
+capture_tls_fingerprints = true
+capture_payloads = false
+max_payload_bytes = 0
+resolve_hostnames = true
+geoip_enabled = true
+geoip_db_path = "/var/lib/sentinel/GeoLite2-Country.mmdb"
+exclude_ports = [53, 67, 68, 123, 1900, 5353, 5355]
+exclude_local = true
+tls_sni_extraction = true
+http_host_extraction = true
+
+[collectors.file]
+enabled = true
+sample_rate = 1.0
+monitor_paths = [
+    "C:\\Users\\*\\AppData\\*",
+    "C:\\ProgramData\\*",
+    "C:\\Temp\\*",
+    "/home/*/.config/*",
+    "/home/*/.local/*",
+    "/tmp/*",
+    "/var/tmp/*",
+    "/Library/LaunchAgents/*",
+    "/Library/LaunchDaemons/*",
+]
+exclude_paths = [
+    "C:\\Windows\\*",
+    "C:\\Program Files\\*",
+    "/usr/*",
+    "/bin/*",
+    "/sbin/*",
+    "/lib*",
+    "/var/log/*",
+    "*/node_modules/*",
+    "*/.git/*",
+    "*/target/*",
+]
+calculate_hashes = true
+calculate_entropy = true
+max_file_size_hash = 104857600
+monitor_executable_only = false
+monitor_sensitive_paths = true
+
+[collectors.registry]
+enabled = true
+sample_rate = 1.0
+monitor_hives = ["HKLM", "HKCU"]
+monitor_paths = [
+    "HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run*",
+    "HKLM\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Run*",
+    "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run*",
+    "HKLM\\SYSTEM\\CurrentControlSet\\Services\\*",
+    "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon*",
+    "HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Browser Helper Objects*",
+]
+exclude_paths = [
+    "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\*",
+]
+capture_value_data = true
+max_value_size = 8192
+
+[collectors.usb]
+enabled = true
+sample_rate = 1.0
+monitor_hid = true
+monitor_mass_storage = true
+scan_on_mount = true
+scan_max_files = 100
+scan_max_file_size = 10485760
+scan_extensions = [".exe", ".dll", ".ps1", ".bat", ".cmd", ".vbs", ".js", ".jar", ".scr", ".lnk"]
+notify_on_new_device = true
+
+[collectors.browser]
+enabled = true
+sample_rate = 1.0
+browsers = ["chrome", "edge", "firefox", "brave"]
+monitor_history = true
+monitor_downloads = true
+monitor_extensions = true
+monitor_cookies = false
+monitor_localstorage = false
+download_hash_calculation = true
+incognito_mode = "ignore"
+extension_allowlist = []
+native_messaging_enabled = true
+poll_interval_seconds = 30
+
+[collectors.startup]
+enabled = true
+scan_interval_hours = 4
+monitor_registry_run_keys = true
+monitor_scheduled_tasks = true
+monitor_services = true
+monitor_startup_folder = true
+monitor_winlogon = true
+monitor_systemd = true
+monitor_cron = true
+monitor_launchd = true
+monitor_shell_profiles = true
+monitor_browser_extensions = true
+verify_signatures = true
+alert_on_unsigned = true
+
+[threat_intel]
+enabled = true
+providers = [
+    { name = "local", type = "file", path = "/var/lib/sentinel/threat_intel/" },
+]
+update_interval_hours = 6
+max_iocs = 1000000
+
+[privacy]
+telemetry_enabled = false
+crash_reporting = false
+ai_local_only = true
+data_sharing = false
+anonymize_host_id = true
+strip_command_line_secrets = true
+strip_environment_secrets = true
+
+[logging]
+level = "info"
+format = "json"
+output = "file"
+file_path = "/var/log/sentinel/sentinel.log"
+max_file_size_mb = 100
+max_files = 10
+include_timestamp = true
+include_thread = true
+include_location = false

@@ -1,0 +1,68 @@
+# Sentinel AI - Production Dockerfile
+# Multi-stage build for minimal production image
+
+# Build stage
+FROM rust:1.75-slim-bookworm AS builder
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    pkg-config \
+    libsqlite3-dev \
+    libclang-dev \
+    protobuf-compiler \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create build user
+RUN useradd -m -s /bin/bash builder
+WORKDIR /build
+
+# Copy source code
+COPY --chown=builder:builder Cargo.toml Cargo.lock ./
+COPY --chown=builder:builder crates/ ./crates/
+COPY --chown=builder:builder apps/ ./apps/
+COPY --chown=builder:builder collectors/ ./collectors/
+COPY --chown=builder:builder plugins/ ./plugins/
+
+# Build release binaries
+USER builder
+RUN cargo build --release --workspace --locked --bins
+
+# Production stage
+FROM debian:bookworm-slim AS runtime
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    libsqlite3-0 \
+    libssl3 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create sentinel user
+RUN useradd -m -s /bin/bash -u 1000 sentinel
+
+# Create directories
+RUN mkdir -p /data /var/log/sentinel /etc/sentinel /var/lib/sentinel && \
+    chown -R sentinel:sentinel /data /var/log/sentinel /etc/sentinel /var/lib/sentinel
+
+# Copy binaries from builder
+COPY --from=builder --chown=sentinel:sentinel /build/target/release/sentinel-core-service /usr/local/bin/
+COPY --from=builder --chown=sentinel:sentinel /build/target/release/sentinel-cli /usr/local/bin/
+
+# Copy configuration template
+COPY --chown=sentinel:sentinel docker/sentinel.toml /etc/sentinel/config.toml.template
+
+# Switch to sentinel user
+USER sentinel
+WORKDIR /data
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD sentinel-cli health || exit 1
+
+# Expose ports
+EXPOSE 7777 7778 9090
+
+# Default command
+ENTRYPOINT ["sentinel-core-service"]
+CMD ["--config", "/etc/sentinel/config.toml"]
