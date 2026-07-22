@@ -1,6 +1,5 @@
 //! Error types for Sentinel AI
 
-use std::fmt;
 use thiserror::Error;
 
 /// Result type alias
@@ -401,19 +400,4 @@ pub enum SerializationError {
     
     #[error("Bincode error: {0}")]
     Bincode(#[from] bincode::Error),
-}
-
-impl From<SentinelError> for tonic::Status {
-    fn from(err: SentinelError) -> Self {
-        match err {
-            SentinelError::NotFound(msg) => tonic::Status::not_found(msg),
-            SentinelError::AlreadyExists(msg) => tonic::Status::already_exists(msg),
-            SentinelError::PermissionDenied(msg) => tonic::Status::permission_denied(msg),
-            SentinelError::ResourceExhausted(msg) => tonic::Status::resource_exhausted(msg),
-            SentinelError::Timeout(msg) => tonic::Status::deadline_exceeded(msg),
-            SentinelError::Validation(msg) => tonic::Status::invalid_argument(msg),
-            SentinelError::Internal(msg) => tonic::Status::internal(msg),
-            _ => tonic::Status::internal(err.to_string()),
-        }
-    }
 }

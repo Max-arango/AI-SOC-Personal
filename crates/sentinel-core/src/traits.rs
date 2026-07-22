@@ -60,7 +60,7 @@ pub struct EventSubscription {
 }
 
 /// Filter for event subscriptions
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct EventFilter {
     pub event_types: Option<Vec<String>>,
     pub sources: Option<Vec<String>>,
@@ -69,20 +69,6 @@ pub struct EventFilter {
     pub correlation_id: Option<String>,
     pub flow_id: Option<String>,
     pub min_risk_score: Option<u32>,
-}
-
-impl Default for EventFilter {
-    fn default() -> Self {
-        Self {
-            event_types: None,
-            sources: None,
-            min_severity: None,
-            process_names: None,
-            correlation_id: None,
-            flow_id: None,
-            min_risk_score: None,
-        }
-    }
 }
 
 /// Event bus statistics
@@ -226,6 +212,7 @@ pub trait RuleRepository: Send + Sync {
 
 /// Rule definition (matches YAML schema)
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Rule {
     pub id: String,
     pub version: u32,
@@ -276,7 +263,8 @@ impl Default for Rule {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(default)]
 pub struct MitreMapping {
     pub technique: String,
     pub name: String,
@@ -284,6 +272,7 @@ pub struct MitreMapping {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(default)]
 pub struct RiskConfig {
     pub base_score: u32,
     pub confidence: f64,
@@ -298,6 +287,9 @@ pub struct RiskMultiplier {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RuleAction {
+    /// Rule files use `type:` (documented format); `action_type` stays as an
+    /// accepted alias for backwards compatibility.
+    #[serde(rename = "type", alias = "action_type")]
     pub action_type: RuleActionType,
     pub config: serde_json::Value,
 }

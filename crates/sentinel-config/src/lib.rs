@@ -7,28 +7,30 @@ pub mod migration;
 pub mod secrets;
 
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use arc_swap::ArcSwap;
 use config::{Config, Environment, File, FileFormat};
 use notify::{Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
-use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use tokio::sync::{mpsc, watch};
-use tracing::{debug, error, info, warn};
+use tracing::{error, info};
 use validator::Validate;
 
 use async_trait::async_trait;
-use sentinel_core::{BackpressureConfig, ConfigError as CoreConfigError, ConfigProvider, ConfigSchema, ConfigValue, ConfigWatcher, Result as CoreResult, SentinelError};
+use sentinel_core::{BackpressureConfig, ConfigError as CoreConfigError, ConfigProvider, ConfigSchema, ConfigValue, ConfigWatcher, RetentionPolicy, Result as CoreResult, SentinelError};
 
 /// Main configuration manager
 pub struct ConfigManager {
     config: Arc<ArcSwap<AppConfig>>,
+    #[allow(dead_code)]
     watcher: Option<RecommendedWatcher>,
+    #[allow(dead_code)]
     watch_tx: watch::Sender<()>,
+    #[allow(dead_code)]
     schema_registry: SchemaRegistry,
     secrets_manager: secrets::SecretsManager,
     config_paths: Vec<PathBuf>,
@@ -158,7 +160,7 @@ impl ConfigManager {
     async fn reload_static(
         config_swap: &Arc<ArcSwap<AppConfig>>,
         config_paths: &[PathBuf],
-        schema_registry: &SchemaRegistry,
+        _schema_registry: &SchemaRegistry,
         secrets_manager: &secrets::SecretsManager,
     ) -> Result<()> {
         let mut builder = Config::builder();
@@ -203,7 +205,7 @@ impl ConfigManager {
     
     /// Watch for configuration changes
     pub fn watch(&self, path: &str) -> CoreResult<ConfigWatcher> {
-        let (tx, rx) = watch::channel(self.get_section_value(path)?);
+        let (_tx, rx) = watch::channel(self.get_section_value(path)?);
         
         // In a real implementation, this would be connected to the watcher
         // For now, return a watcher that never updates
@@ -287,6 +289,7 @@ impl ConfigManager {
 /// Complete application configuration
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 #[serde(default)]
+#[derive(Default)]
 pub struct AppConfig {
     pub core: CoreConfig,
     pub grpc: GrpcConfig,
@@ -304,26 +307,6 @@ pub struct AppConfig {
     pub logging: LoggingConfig,
 }
 
-impl Default for AppConfig {
-    fn default() -> Self {
-        Self {
-            core: CoreConfig::default(),
-            grpc: GrpcConfig::default(),
-            rest_gateway: RestGatewayConfig::default(),
-            storage: StorageConfig::default(),
-            event_bus: EventBusConfig::default(),
-            rule_engine: RuleEngineConfig::default(),
-            risk_engine: RiskEngineConfig::default(),
-            correlation_engine: CorrelationConfig::default(),
-            ai_engine: AiEngineConfig::default(),
-            plugin_manager: PluginManagerConfig::default(),
-            collectors: CollectorsConfig::default(),
-            threat_intel: ThreatIntelConfig::default(),
-            privacy: PrivacyConfig::default(),
-            logging: LoggingConfig::default(),
-        }
-    }
-}
 
 impl AppConfig {
     /// Get a configuration section by path
@@ -352,6 +335,7 @@ impl AppConfig {
 
 /// Core service configuration
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
+#[serde(default)]
 pub struct CoreConfig {
     #[validate(length(min = 1))]
     pub host_id: String,
@@ -406,6 +390,7 @@ impl Default for CoreConfig {
 
 /// gRPC server configuration
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
+#[serde(default)]
 pub struct GrpcConfig {
     pub enabled: bool,
     
@@ -435,6 +420,7 @@ impl Default for GrpcConfig {
 
 /// REST gateway configuration
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
+#[serde(default)]
 pub struct RestGatewayConfig {
     pub enabled: bool,
     
@@ -459,6 +445,7 @@ impl Default for RestGatewayConfig {
 
 /// Storage configuration
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
+#[serde(default)]
 pub struct StorageConfig {
     #[validate(length(min = 1))]
     pub sqlite_path: String,
@@ -492,14 +479,14 @@ impl Default for StorageConfig {
             duckdb_memory_limit_mb: 256,
             duckdb_threads: 2,
             retention: vec![
-                RetentionPolicy { event_type: "sentinel.process.*".to_string(), max_age_days: 30, max_count: 1_000_000 },
-                RetentionPolicy { event_type: "sentinel.network.*".to_string(), max_age_days: 14, max_count: 500_000 },
-                RetentionPolicy { event_type: "sentinel.file.*".to_string(), max_age_days: 30, max_count: 200_000 },
-                RetentionPolicy { event_type: "sentinel.registry.*".to_string(), max_age_days: 90, max_count: 100_000 },
-                RetentionPolicy { event_type: "sentinel.usb.*".to_string(), max_age_days: 90, max_count: 10_000 },
-                RetentionPolicy { event_type: "sentinel.browser.*".to_string(), max_age_days: 7, max_count: 50_000 },
-                RetentionPolicy { event_type: "sentinel.startup.*".to_string(), max_age_days: 180, max_count: 5_000 },
-                RetentionPolicy { event_type: "*".to_string(), max_age_days: 7, max_count: 100_000 },
+                RetentionPolicy { event_type_pattern: "sentinel.process.*".to_string(), max_age_days: 30, max_count: 1_000_000 },
+                RetentionPolicy { event_type_pattern: "sentinel.network.*".to_string(), max_age_days: 14, max_count: 500_000 },
+                RetentionPolicy { event_type_pattern: "sentinel.file.*".to_string(), max_age_days: 30, max_count: 200_000 },
+                RetentionPolicy { event_type_pattern: "sentinel.registry.*".to_string(), max_age_days: 90, max_count: 100_000 },
+                RetentionPolicy { event_type_pattern: "sentinel.usb.*".to_string(), max_age_days: 90, max_count: 10_000 },
+                RetentionPolicy { event_type_pattern: "sentinel.browser.*".to_string(), max_age_days: 7, max_count: 50_000 },
+                RetentionPolicy { event_type_pattern: "sentinel.startup.*".to_string(), max_age_days: 180, max_count: 5_000 },
+                RetentionPolicy { event_type_pattern: "*".to_string(), max_age_days: 7, max_count: 100_000 },
             ],
             aggregations: vec![
                 AggregationConfig { name: "hourly_risk".to_string(), interval: "1h".to_string(), retention_days: 90 },
@@ -508,15 +495,6 @@ impl Default for StorageConfig {
             ],
         }
     }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, Validate)]
-pub struct RetentionPolicy {
-    pub event_type: String,
-    #[validate(range(min = 1, max = 3650))]
-    pub max_age_days: u32,
-    #[validate(range(min = 100, max = 10_000_000))]
-    pub max_count: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
@@ -529,6 +507,7 @@ pub struct AggregationConfig {
 
 /// Event bus configuration
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
+#[serde(default)]
 pub struct EventBusConfig {
     #[validate(range(min = 100, max = 100000))]
     pub ingest_channel_size: usize,
@@ -563,6 +542,7 @@ impl Default for EventBusConfig {
 
 /// Rule engine configuration
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
+#[serde(default)]
 pub struct RuleEngineConfig {
     pub rules_directories: Vec<String>,
     
@@ -613,6 +593,7 @@ pub struct RiskMultiplierConfig {
 
 /// Risk engine configuration
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
+#[derive(Default)]
 pub struct RiskEngineConfig {
     pub decay_half_life: DecayHalfLifeConfig,
     
@@ -623,16 +604,6 @@ pub struct RiskEngineConfig {
     pub asset_criticality: AssetCriticalityConfig,
 }
 
-impl Default for RiskEngineConfig {
-    fn default() -> Self {
-        Self {
-            decay_half_life: DecayHalfLifeConfig::default(),
-            alert_thresholds: AlertThresholdsConfig::default(),
-            escalation: EscalationConfig::default(),
-            asset_criticality: AssetCriticalityConfig::default(),
-        }
-    }
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct DecayHalfLifeConfig {
@@ -756,6 +727,7 @@ impl Default for FlowTrackingConfig {
 
 /// AI engine configuration
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
+#[serde(default)]
 pub struct AiEngineConfig {
     pub enabled: bool,
     
@@ -953,6 +925,7 @@ pub enum SandboxProfile {
 
 /// Collectors global configuration
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
+#[serde(default)]
 pub struct CollectorsConfig {
     #[validate(range(min = 0.0, max = 1.0))]
     pub sample_rate: f64,
@@ -993,6 +966,7 @@ pub enum BackpressureResponse {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
+#[serde(default)]
 pub struct ProcessCollectorConfig {
     pub enabled: bool,
     #[validate(range(min = 0.0, max = 1.0))]
@@ -1033,6 +1007,7 @@ impl Default for ProcessCollectorConfig {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
+#[serde(default)]
 pub struct NetworkCollectorConfig {
     pub enabled: bool,
     #[validate(range(min = 0.0, max = 1.0))]
@@ -1074,6 +1049,7 @@ impl Default for NetworkCollectorConfig {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
+#[serde(default)]
 pub struct FileCollectorConfig {
     pub enabled: bool,
     #[validate(range(min = 0.0, max = 1.0))]
@@ -1126,6 +1102,7 @@ impl Default for FileCollectorConfig {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
+#[serde(default)]
 pub struct RegistryCollectorConfig {
     pub enabled: bool,
     #[validate(range(min = 0.0, max = 1.0))]
@@ -1162,6 +1139,7 @@ impl Default for RegistryCollectorConfig {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
+#[serde(default)]
 pub struct UsbCollectorConfig {
     pub enabled: bool,
     #[validate(range(min = 0.0, max = 1.0))]
@@ -1199,6 +1177,7 @@ impl Default for UsbCollectorConfig {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
+#[serde(default)]
 pub struct BrowserCollectorConfig {
     pub enabled: bool,
     #[validate(range(min = 0.0, max = 1.0))]
@@ -1246,6 +1225,7 @@ pub enum IncognitoMode {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
+#[serde(default)]
 pub struct StartupCollectorConfig {
     pub enabled: bool,
     #[validate(range(min = 1, max = 168))]
@@ -1319,6 +1299,7 @@ pub struct ThreatIntelProviderConfig {
 
 /// Privacy configuration
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
+#[serde(default)]
 pub struct PrivacyConfig {
     pub telemetry_enabled: bool,
     pub crash_reporting: bool,

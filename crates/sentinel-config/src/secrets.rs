@@ -14,6 +14,7 @@ use age::{Decryptor, Encryptor, Identity, x25519};
 
 /// Secrets manager for handling encrypted configuration values
 #[derive(Clone)]
+#[allow(dead_code)]
 pub struct SecretsManager {
     identity: Option<x25519::Identity>,
     recipient: Option<x25519::Recipient>,

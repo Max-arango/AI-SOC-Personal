@@ -124,3 +124,6 @@ tests/fixtures/*.evtx
 # Profiler output
 perf.data
 perf.data.old
+
+# Confidential planning documents
+documents-confidential/

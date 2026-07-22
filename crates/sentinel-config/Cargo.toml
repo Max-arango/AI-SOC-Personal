@@ -20,6 +20,7 @@ notify = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }
 schemars = "0.8"
+jsonschema = { workspace = true }
 validator = { version = "0.16", features = ["derive"] }
 age = { workspace = true }
 secrecy = { workspace = true }

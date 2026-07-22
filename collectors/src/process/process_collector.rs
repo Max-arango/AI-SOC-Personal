@@ -3,9 +3,10 @@
 use std::sync::Arc;
 use async_trait::async_trait;
 use tokio::sync::mpsc;
-use tracing::{debug, error, info, warn};
+use tracing::{error, info};
 
 use crate::framework::*;
+use sentinel_config::ProcessCollectorConfig;
 use sentinel_core::{
     CollectorError, CollectorHealth, CollectorMetrics, CollectorState, EventId,
 };
@@ -13,6 +14,7 @@ use sentinel_core::traits::{Collector, CollectorContext, ConfigSchema, ProcessIn
 use sentinel_events::{Event, Severity, ProcessContext, ProcessEvent, UserContext, CodeSigningInfo};
 
 /// Process collector implementation
+#[allow(dead_code)]
 pub struct ProcessCollector {
     id: String,
     name: String,
@@ -54,7 +56,7 @@ impl ProcessCollector {
         let event_tx = self.event_tx.clone().unwrap();
         let platform = self.platform.clone();
         let backpressure_rx = self.backpressure_rx.clone();
-        let config = self.config.clone();
+        let _config = self.config.clone();
         
         tokio::spawn(async move {
             let mut interval = tokio::time::interval(tokio::time::Duration::from_millis(100));
@@ -190,58 +192,6 @@ impl CollectorImpl for ProcessCollector {
     async fn do_reconfigure(&mut self, config: serde_json::Value) -> sentinel_core::Result<()> {
         self.do_reconfigure_inner(config).await?;
         Ok(())
-    }
-}
-
-/// Process collector configuration
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub struct ProcessCollectorConfig {
-    pub enabled: bool,
-    #[serde(default = "default_sample_rate")]
-    pub sample_rate: f64,
-    #[serde(default = "default_true")]
-    pub include_command_line: bool,
-    #[serde(default)]
-    pub include_environment: bool,
-    #[serde(default = "default_true")]
-    pub resolve_signatures: bool,
-    #[serde(default = "default_ancestry_depth")]
-    pub track_ancestry_depth: u32,
-    #[serde(default = "default_true")]
-    pub monitor_injection: bool,
-    #[serde(default = "default_true")]
-    pub monitor_hollowing: bool,
-    #[serde(default = "default_true")]
-    pub monitor_dumps: bool,
-    #[serde(default)]
-    pub exclude_paths: Vec<String>,
-}
-
-fn default_sample_rate() -> f64 { 1.0 }
-fn default_true() -> bool { true }
-fn default_ancestry_depth() -> u32 { 10 }
-
-impl Default for ProcessCollectorConfig {
-    fn default() -> Self {
-        Self {
-            enabled: true,
-            sample_rate: 1.0,
-            include_command_line: true,
-            include_environment: false,
-            resolve_signatures: true,
-            track_ancestry_depth: 10,
-            monitor_injection: true,
-            monitor_hollowing: true,
-            monitor_dumps: true,
-            exclude_paths: vec![
-                "C:\\Windows\\System32\\*".to_string(),
-                "C:\\Program Files\\*".to_string(),
-                "/usr/bin/*".to_string(),
-                "/bin/*".to_string(),
-                "/sbin/*".to_string(),
-                "/lib*".to_string(),
-            ],
-        }
     }
 }
 
@@ -446,31 +396,128 @@ mod windows {
 #[cfg(target_os = "linux")]
 mod linux {
     use super::*;
-    
+    use std::collections::HashSet;
+    use sysinfo::{Pid, RefreshKind, System};
+
     pub struct LinuxProcessCollector {
         config: ProcessCollectorConfig,
+        system: System,
+        known_pids: HashSet<Pid>,
     }
-    
+
     impl LinuxProcessCollector {
         pub async fn new(config: &ProcessCollectorConfig) -> Result<Self, CollectorError> {
-            Ok(Self { config: config.clone() })
+            let mut system = System::new_with_specifics(RefreshKind::new());
+            system.refresh_all();
+            let known_pids: HashSet<Pid> = system.processes().keys().copied().collect();
+            Ok(Self {
+                config: config.clone(),
+                system,
+                known_pids,
+            })
         }
     }
-    
+
     #[async_trait]
     impl OsProcessCollector for LinuxProcessCollector {
         async fn start(&mut self) -> Result<(), CollectorError> {
-            // Start auditd/netlink/eBPF
             Ok(())
         }
-        
+
         async fn stop(&mut self) -> Result<(), CollectorError> {
             Ok(())
         }
-        
+
         async fn poll(&mut self) -> Result<Vec<Arc<Event>>, CollectorError> {
-            Ok(vec![])
+            let mut events = Vec::new();
+
+            self.system.refresh_all();
+            let current_pids: HashSet<Pid> = self.system.processes().keys().copied().collect();
+
+            // Detect new processes (created)
+            for pid in current_pids.difference(&self.known_pids) {
+                if let Some(proc) = self.system.process(*pid) {
+                    if let Some(event) = build_process_event(
+                        proc,
+                        "sentinel.process.create",
+                        2,
+                    ) {
+                        events.push(Arc::new(event));
+                    }
+                }
+            }
+
+            // Detect terminated processes
+            for _pid in self.known_pids.difference(&current_pids) {
+                events.push(Arc::new(Event {
+                    id: sentinel_core::Ulid::new().to_string(),
+                    r#type: "sentinel.process.terminate".into(),
+                    source: "process".into(),
+                    severity: 2,
+                    risk_score: 5,
+                    host_id: String::new(),
+                    schema_version: 1,
+                    process: Some(ProcessContext {
+                        pid: _pid.as_u32(),
+                        name: "(terminated)".into(),
+                        ..Default::default()
+                    }),
+                    ..Default::default()
+                }));
+            }
+
+            self.known_pids = current_pids;
+
+            Ok(events)
         }
+    }
+
+    fn build_process_event(
+        proc: &sysinfo::Process,
+        event_type: &str,
+        severity: i32,
+    ) -> Option<Event> {
+        let uid = proc
+            .user_id()
+            .map(|u| u.to_string())
+            .unwrap_or_default();
+
+        Some(Event {
+            id: sentinel_core::Ulid::new().to_string(),
+            r#type: event_type.into(),
+            source: "process".into(),
+            severity,
+            risk_score: if event_type.contains("create") { 10 } else { 5 },
+            host_id: String::new(),
+            schema_version: 1,
+            process: Some(ProcessContext {
+                pid: proc.pid().as_u32(),
+                ppid: proc.parent().map(|p| p.as_u32()).unwrap_or(0),
+                name: proc.name().to_string_lossy().into_owned(),
+                path: proc
+                    .exe()
+                    .map(|p| p.to_string_lossy().into_owned())
+                    .unwrap_or_default(),
+                command_line: proc
+                    .cmd()
+                    .iter()
+                    .map(|s| s.to_string_lossy())
+                    .collect::<Vec<_>>()
+                    .join(" "),
+                cwd: String::new(),
+                user: Some(UserContext {
+                    sid: uid.clone(),
+                    username: uid,
+                    domain: String::new(),
+                    is_elevated: proc
+                        .user_id()
+                        .is_some_and(|u| u.to_string() == "0"),
+                    is_system: false,
+                }),
+                ..Default::default()
+            }),
+            ..Default::default()
+        })
     }
 }
 

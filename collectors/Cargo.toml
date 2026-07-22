@@ -28,3 +28,5 @@ sentinel-core = { path = "../crates/sentinel-core" }
 sentinel-events = { path = "../crates/sentinel-events" }
 sentinel-config = { path = "../crates/sentinel-config" }
 sentinel-event-bus = { path = "../crates/sentinel-event-bus" }
+
+sysinfo = { workspace = true }

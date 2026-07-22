@@ -27,3 +27,5 @@ sentinel-config = { path = "../sentinel-config" }
 async-trait = "0.1"
 prost = "0.12"
 prost-types = "0.12"
+[dev-dependencies]
+tempfile = { workspace = true }

@@ -6,3 +6,8 @@ license = { workspace = true }
 publish = false
 
 [dependencies]
+chrono = { workspace = true }
+parking_lot = { workspace = true }
+tracing = { workspace = true }
+sentinel-core = { path = "../sentinel-core" }
+sentinel-events = { path = "../sentinel-events" }

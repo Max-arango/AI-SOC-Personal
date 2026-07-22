@@ -126,7 +126,7 @@ impl TopicRouter {
             }
         }
         if let Some(min_risk) = filter.min_risk_score {
-            if (event.risk_score as u32) < min_risk {
+            if event.risk_score < min_risk {
                 return false;
             }
         }
@@ -169,7 +169,7 @@ impl TopicRouter {
 pub struct EventBusImpl {
     config: ChannelConfig,
     ingest_tx: mpsc::Sender<Arc<Event>>,
-    ingest_rx: mpsc::Receiver<Arc<Event>>,
+    ingest_rx: Arc<tokio::sync::Mutex<mpsc::Receiver<Arc<Event>>>>,
     router: Arc<TopicRouter>,
     backpressure_tx: watch::Sender<BackpressureSignal>,
     _backpressure_rx: watch::Receiver<BackpressureSignal>,
@@ -191,7 +191,7 @@ impl EventBusImpl {
         Self {
             config,
             ingest_tx,
-            ingest_rx,
+            ingest_rx: Arc::new(tokio::sync::Mutex::new(ingest_rx)),
             router,
             backpressure_tx,
             _backpressure_rx: backpressure_rx,
@@ -213,7 +213,11 @@ impl EventBusImpl {
     }
 
     /// Run the event bus processing loop until shutdown.
-    pub async fn run(mut self) -> Result<()> {
+    ///
+    /// This borrows `&self` (not `self`) so the same bus instance can be shared
+    /// via `Arc` and keep accepting `publish`/`subscribe` calls while the
+    /// routing loop runs in a spawned task.
+    pub async fn run(&self) -> Result<()> {
         info!("Starting event bus");
         let backpressure_monitor = self.start_backpressure_monitor();
         let mut shutdown_rx = self.shutdown_rx.clone();
@@ -228,8 +232,9 @@ impl EventBusImpl {
         Ok(())
     }
 
-    async fn process_events(&mut self) {
-        while let Some(event) = self.ingest_rx.recv().await {
+    async fn process_events(&self) {
+        let mut ingest_rx = self.ingest_rx.lock().await;
+        while let Some(event) = ingest_rx.recv().await {
             self.stats.events_published.fetch_add(1, Ordering::Relaxed);
             self.ingest_depth.fetch_sub(1, Ordering::Relaxed);
             if let Err(e) = self.router.route(event).await {
@@ -303,13 +308,15 @@ impl EventBus for EventBusImpl {
     }
 
     async fn subscribe_type(&self, event_type: &str) -> CoreResult<EventSubscription> {
-        let mut filter = EventFilter::default();
-        filter.event_types = Some(vec![event_type.to_string()]);
+        let filter = EventFilter {
+            event_types: Some(vec![event_type.to_string()]),
+            ..Default::default()
+        };
         self.subscribe(filter).await
     }
 
     fn backpressure(&self) -> BackpressureSignal {
-        self.backpressure_tx.subscribe().borrow().clone()
+        *self.backpressure_tx.subscribe().borrow()
     }
 
     fn stats(&self) -> EventBusStats {
@@ -341,39 +348,62 @@ mod tests {
             payload: None,
             tags: vec![],
             metadata: None,
-            risk_score: 0.0,
+            risk_score: 0,
             correlation: None,
             host_id: "host-1".to_string(),
             schema_version: 1,
         })
     }
 
+    /// Spawn the routing loop of a shared bus and return the handle plus a
+    /// shutdown guard that stops the loop when dropped.
+    fn spawn_bus() -> (Arc<EventBusImpl>, tokio::task::JoinHandle<()>) {
+        let bus = Arc::new(EventBusImpl::new(ChannelConfig::default()));
+        let runner = bus.clone();
+        let handle = tokio::spawn(async move {
+            let _ = runner.run().await;
+        });
+        (bus, handle)
+    }
+
     #[tokio::test]
     async fn test_publish_subscribe() {
-        let bus = EventBusImpl::new(ChannelConfig::default());
+        let (bus, handle) = spawn_bus();
         let mut sub = bus.subscribe_type("*").await.unwrap();
 
         let event = make_event("process.create", sentinel_core::Severity::Info);
         bus.publish(event.clone()).await.unwrap();
 
-        let received = sub.receiver.recv().await.unwrap();
+        let received = tokio::time::timeout(Duration::from_secs(5), sub.receiver.recv())
+            .await
+            .expect("timed out waiting for routed event")
+            .unwrap();
         assert_eq!(received.r#type, "process.create");
+
+        bus.shutdown();
+        handle.abort();
     }
 
     #[tokio::test]
     async fn test_event_filter() {
-        let bus = EventBusImpl::new(ChannelConfig::default());
+        let (bus, handle) = spawn_bus();
         let mut filter = EventFilter::default();
         filter.event_types = Some(vec!["process.create".to_string()]);
         let mut sub = bus.subscribe(filter).await.unwrap();
 
         let matching = make_event("process.create", sentinel_core::Severity::Warning);
-        let non_matching = make_event("file.write", Severity::Warning);
+        let non_matching = make_event("file.write", sentinel_core::Severity::Warning);
 
         bus.publish(non_matching).await.unwrap();
         bus.publish(matching).await.unwrap();
 
-        let received = sub.receiver.recv().await.unwrap();
+        let received = tokio::time::timeout(Duration::from_secs(5), sub.receiver.recv())
+            .await
+            .expect("timed out waiting for routed event")
+            .unwrap();
         assert_eq!(received.r#type, "process.create");
+
+        bus.shutdown();
+        handle.abort();
     }
 }

@@ -8,6 +8,7 @@ members = [
 ]
 exclude = [
     "ui/tauri-app/node_modules",
+    "ui/tauri-app/src-tauri",
     "target",
     "collectors/src",
 ]
@@ -35,6 +36,7 @@ serde_json = "1.0"
 toml = "0.8"
 config = { version = "0.14", features = ["toml"] }
 notify = "6.1"
+jsonschema = "0.18"
 uuid = { version = "1.7", features = ["v4", "v7", "serde", "fast-rng"] }
 ulid = { version = "1.1", features = [] }
 chrono = { version = "0.4", features = ["serde"] }
@@ -50,8 +52,8 @@ prost = "0.12"
 prost-types = "0.12"
 tonic-reflection = "0.10"
 tonic-health = "0.10"
-grpcio = "0.12"
 tonic-build = "0.10"
+protoc-bin-vendored = "3"
 
 # CEL (Rule Engine)
 cel = { version = "0.14", features = ["chrono", "json"] }
@@ -71,6 +73,7 @@ windows = { version = "0.58", features = [
     "Win32_Management_Wmi",
 ], target = "cfg(windows)" }
 libc = { version = "0.2" }
+sysinfo = "0.31"
 nix = { version = "0.27" }
 objc2 = { version = "0.5" }
 
@@ -83,7 +86,7 @@ secrecy = "0.8"
 zeroize = "1.7"
 
 # AI
-ollama-rs = "0.5"
+ollama-rs = "0.3"
 tokenizers = "0.15"
 
 # Plugin System
@@ -114,10 +117,12 @@ dead_code = "warn"
 non_ascii_idents = "warn"
 
 [workspace.lints.clippy]
-all = "warn"
-pedantic = "warn"
-nursery = "warn"
-cargo = "warn"
+# Lint groups: base warnings at low priority so individual overrides can win.
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+cargo = { level = "warn", priority = -1 }
+# Overrides for patterns common in our codebase.
 missing_docs_in_private_items = "allow"
 module_name_repetitions = "allow"
 multiple_crate_versions = "allow"

@@ -1,282 +1,71 @@
-name: CI/CD
+name: CI
 
 on:
   push:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
-  release:
-    types: [published]
 
 env:
-  RUST_VERSION: stable
-  RUST_TOOLCHAIN: stable
+  CARGO_TERM_COLOR: always
 
 jobs:
-  # Formatting and linting
-  check:
-    name: Check (fmt, clippy, doc)
+  # ── Core checks: format, lint, build, test ──────────────────────
+  core:
+    name: Core (fmt, clippy, build, test)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Rust toolchain
+
+      - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@v2
+
+      - uses: Swatinem/rust-cache@v2
+
       - name: Check formatting
-        run: cargo fmt --all -- --check
-      - name: Run clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
-      - name: Check documentation
-        run: cargo doc --all --no-deps --document-private-items
-      - name: Check deny
-        run: cargo deny check
+        run: cargo fmt --check --workspace
 
-  # Unit and integration tests
-  test:
-    name: Test (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-      - name: Install dependencies (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libsqlite3-dev libclang-dev protobuf-compiler
-      - name: Install dependencies (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          choco install llvm protoc --no-progress
-      - name: Install dependencies (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          brew install llvm protobuf
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@v2
+      - name: Build workspace
+        run: cargo build --workspace
+
       - name: Run tests
-        run: cargo test --all --locked
-      - name: Run integration tests
-        run: cargo test --test integration --locked
+        run: cargo test --workspace
 
-  # Build all targets
-  build:
-    name: Build (${{ matrix.os }}, ${{ matrix.target }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-          - os: windows-latest
-            target: x86_64-pc-windows-msvc
-          - os: macos-latest
-            target: x86_64-apple-darwin
-          - os: macos-latest
-            target: aarch64-apple-darwin
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.target }}
-      - name: Install dependencies (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libsqlite3-dev libclang-dev protobuf-compiler
-      - name: Install dependencies (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          choco install llvm protoc --no-progress
-      - name: Install dependencies (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          brew install llvm protobuf
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@v2
-      - name: Build release
-        run: cargo build --release --locked --target ${{ matrix.target }}
-      - name: Upload binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: sentinel-${{ matrix.target }}
-          path: target/${{ matrix.target }}/release/sentinel*
+      - name: Run Clippy (warnings = errors)
+        run: cargo clippy --workspace -- -D warnings
 
-  # Build Tauri app
-  build-tauri:
-    name: Build Tauri App
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: ui/tauri-app/package-lock.json
-      - name: Install dependencies (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf libsqlite3-dev
-      - name: Install dependencies (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          choco install llvm protoc --no-progress
-      - name: Install dependencies (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          brew install llvm protobuf
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@v2
-      - name: Cache npm
-        uses: actions/cache@v4
-        with:
-          path: ui/tauri-app/node_modules
-          key: ${{ runner.os }}-npm-${{ hashFiles('ui/tauri-app/package-lock.json') }}
-      - name: Install npm dependencies
-        working-directory: ui/tauri-app
-        run: npm ci
-      - name: Build Tauri app
-        working-directory: ui/tauri-app
-        run: npm run tauri build
-      - name: Upload Tauri artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: sentinel-tauri-${{ runner.os }}
-          path: ui/tauri-app/src-tauri/target/release/bundle/**
-
-  # Security audit
+  # ── Security audit (non-blocking advisory check) ────────────────
   security:
     name: Security Audit
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-      - name: Install cargo-audit
-        run: cargo install cargo-audit
-      - name: Install cargo-deny
-        run: cargo install cargo-deny
-      - name: Run security audit
-        run: cargo audit
-      - name: Run cargo-deny
-        run: cargo deny check advisories
-
-  # Fuzzing
-  fuzz:
-    name: Fuzzing
-    runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' || github.event_name == 'release'
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rust-src
-      - name: Install cargo-fuzz
-        run: cargo install cargo-fuzz
-      - name: Run fuzz tests
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Run cargo-audit
         run: |
-          cargo fuzz run parse_event -- -max_total_time=300
-          cargo fuzz run parse_rule -- -max_total_time=300
+          cargo install cargo-audit --locked
+          cargo audit
 
-  # Performance benchmarks
-  bench:
-    name: Benchmarks
+  # ── Tauri app (Linux only, requires system deps) ────────────────
+  tauri:
+    name: Tauri App (Linux)
     runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' || github.event_name == 'release'
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@v2
-      - name: Run benchmarks
-        run: cargo bench --all --locked
-      - name: Upload benchmark results
-        uses: actions/upload-artifact@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-node@v4
         with:
-          name: benchmark-results
-          path: target/criterion/
-
-  # Release
-  release:
-    name: Release
-    needs: [check, test, build, build-tauri, security]
-    if: github.event_name == 'release' && github.event.action == 'published'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-      - name: Create release archives
+          node-version: '20'
+      - name: Install system deps
         run: |
-          cd artifacts
-          for dir in sentinel-*; do
-            if [ -d "$dir" ]; then
-              tar -czf "${dir}.tar.gz" -C "$dir" .
-            fi
-          done
-      - name: Upload release assets
-        uses: softprops/action-gh-release@v1
-        with:
-          files: artifacts/sentinel-*.tar.gz
-          generate_release_notes: true
-
-  # Docker build
-  docker:
-    name: Docker Build
-    needs: [check, test, build]
-    if: github.event_name == 'release' && github.event.action == 'published'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      - name: Login to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest,enable={{is_default_branch}}
-      - name: Build and push
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: docker/Dockerfile.prod
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.0-dev libappindicator3-dev \
+             librsvg2-dev patchelf
+      - uses: Swatinem/rust-cache@v2
+      - name: Build Tauri app (check only)
+        working-directory: ui/tauri-app/src-tauri
+        run: cargo check

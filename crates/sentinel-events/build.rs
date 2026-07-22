@@ -6,6 +6,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .join("..")
         .join("proto");
 
+    // Reproducible builds: use a vendored protoc so contributors do not need a
+    // system-wide protobuf-compiler installation.
+    std::env::set_var("PROTOC", protoc_bin_vendored::protoc_bin_path()?);
+
     tonic_build::configure()
         .build_server(true)
         .build_client(true)

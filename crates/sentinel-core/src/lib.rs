@@ -19,8 +19,8 @@ pub use traits::{
     ConfigSchema, ConfigWatcher, ConnectionInfo, EventBus, EventBusStats, EventCursor,
     EventFilter, EventQuery, EventRepository, EventSubscription, FileAction, FileEvent,
     FileWatcher, MitreMapping, Module, OsAbstraction, PluginInfo, PluginManager, PluginState,
-    ProcessInfo, RegistryAction, RegistryEvent, RegistryWatcher, RiskConfig, RiskMultiplier,
-    Rule, RuleAction, RuleActionType, RuleRepository, RuleTest, StartupItem, StartupLocation,
+    ProcessInfo, RegistryAction, RegistryEvent, RegistryWatcher, RetentionPolicy,
+    RiskConfig, RiskMultiplier, Rule, RuleAction, RuleActionType, RuleRepository, RuleTest, StartupItem, StartupLocation,
     SuppressionRule, UsbAction, UsbDeviceInfo, UsbEvent, UsbWatcher, UserInfo,
 };
 
@@ -69,10 +69,6 @@ impl Ulid {
         ulid::Ulid::from_string(s)
             .map(Ulid)
             .map_err(|e| crate::errors::SentinelError::Parse(format!("invalid ULID: {e}")))
-    }
-
-    pub fn to_string(&self) -> String {
-        self.0.to_string()
     }
 
     pub fn inner(&self) -> ulid::Ulid {
@@ -158,18 +154,51 @@ impl HostIdentity {
     }
 }
 
-/// Severity levels matching syslog/RFC5424
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, serde::Serialize, serde::Deserialize)]
+/// Severity levels matching syslog/RFC5424.
+///
+/// The discriminants mirror the `sentinel_events::Severity` protobuf enum
+/// so the two representations are interchangeable without conversion.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, serde::Serialize, Default)]
 #[repr(u8)]
 pub enum Severity {
-    Debug = 0,
-    Info = 1,
-    Notice = 2,
-    Warning = 3,
-    Error = 4,
-    Critical = 5,
-    Alert = 6,
-    Emergency = 7,
+    Debug = 1,
+    #[default]
+    Info = 2,
+    Notice = 3,
+    Warning = 4,
+    Error = 5,
+    Critical = 6,
+    Alert = 7,
+    Emergency = 8,
+}
+
+impl<'de> serde::Deserialize<'de> for Severity {
+    /// Accepts case-insensitive syslog names ("warning", "ERROR", ...) plus the
+    /// alert-level vocabulary used in rule files ("LOW", "MEDIUM", "HIGH",
+    /// "CRITICAL"), mapped onto the syslog scale.
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        match s.to_ascii_uppercase().as_str() {
+            "DEBUG" => Ok(Severity::Debug),
+            "INFO" | "LOW" => Ok(Severity::Info),
+            "NOTICE" => Ok(Severity::Notice),
+            "WARNING" | "MEDIUM" => Ok(Severity::Warning),
+            "ERROR" | "HIGH" => Ok(Severity::Error),
+            "CRITICAL" => Ok(Severity::Critical),
+            "ALERT" => Ok(Severity::Alert),
+            "EMERGENCY" => Ok(Severity::Emergency),
+            other => Err(serde::de::Error::unknown_variant(
+                other,
+                &[
+                    "DEBUG", "INFO", "NOTICE", "WARNING", "ERROR", "CRITICAL", "ALERT", "EMERGENCY",
+                    "LOW", "MEDIUM", "HIGH",
+                ],
+            )),
+        }
+    }
 }
 
 impl Severity {
@@ -190,12 +219,6 @@ impl Severity {
 impl fmt::Display for Severity {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.as_str())
-    }
-}
-
-impl Default for Severity {
-    fn default() -> Self {
-        Severity::Info
     }
 }
 

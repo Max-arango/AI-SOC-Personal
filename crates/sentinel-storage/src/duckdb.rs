@@ -3,15 +3,14 @@
 use std::path::Path;
 use std::sync::Arc;
 use anyhow::{Context, Result};
-use duckdb::{Connection, params, OptionalExt};
+use duckdb::{Connection, params};
 use tokio::sync::Mutex;
-use tracing::{debug, info, warn};
-use chrono::{DateTime, Utc};
-use uuid::Uuid;
+use tracing::info;
+use chrono::Utc;
 
 use sentinel_core::{
-    traits::{EventRepository, EventQuery, EventCursor, AggregationQuery, AggregationResult, AggregationBucket, RetentionPolicy},
-    EventId, Severity, Result as CoreResult, SentinelError,
+    traits::{EventQuery, EventCursor, AggregationQuery, AggregationResult, AggregationBucket, RetentionPolicy},
+    EventId, Result as CoreResult,
 };
 use sentinel_events::Event;
 
@@ -150,8 +149,14 @@ impl DuckDbStorage {
         )?;
         
         for event in events {
-            let process_json = event.process.as_ref().map(crate::conv::debug_json).unwrap_or_default();
-            let payload_json = event.payload.as_ref().map(crate::conv::debug_json).unwrap_or_default();
+            let process_json = event.process.as_ref()
+                .map(crate::conv::process_to_json)
+                .map(|v| v.to_string())
+                .unwrap_or_default();
+            let payload_json = event.payload.as_ref()
+                .map(crate::conv::payload_to_json)
+                .map(|v| v.to_string())
+                .unwrap_or_default();
             let tags = event.tags.join(",");
             let metadata_json = event.metadata.as_ref()
                 .map(|m| crate::conv::struct_to_json(m).to_string())
@@ -168,7 +173,7 @@ impl DuckDbStorage {
                 event.source,
                 timestamp,
                 ingest_timestamp,
-                event.severity as i32,
+                { event.severity },
                 process_json,
                 payload_json,
                 tags,
@@ -373,11 +378,9 @@ impl DuckDbStorage {
     pub async fn apply_retention(&self, policy: RetentionPolicy) -> Result<u64> {
         let conn = self.conn.lock().await;
         
-        let sql = format!(
-            "DELETE FROM events WHERE type LIKE ? AND timestamp < datetime('now', ?) AND id IN (
+        let sql = "DELETE FROM events WHERE type LIKE ? AND timestamp < datetime('now', ?) AND id IN (
                 SELECT id FROM events WHERE type LIKE ? AND timestamp < datetime('now', ?) ORDER BY timestamp DESC LIMIT ?
-            )"
-        );
+            )".to_string();
         
         let max_age = format!("-{} days", policy.max_age_days);
         

@@ -8,32 +8,37 @@ use std::sync::Arc;
 use anyhow::{Context, Result};
 use clap::Parser;
 use tokio::signal;
-use tracing::{error, info};
+use tokio::sync::watch;
+use tracing::{error, info, warn};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use sentinel_core::{ModuleContext, ShutdownSignal};
+use sentinel_ai::{AiConfig, AiEngine, OllamaProvider};
+use sentinel_core::{ChannelConfig, EventBus};
 use sentinel_config::ConfigManager;
-use sentinel_storage::StorageManager;
+use sentinel_correlation::{CorrelationConfig, CorrelationEngine};
 use sentinel_event_bus::EventBusImpl;
+use sentinel_events::{Event, ProcessContext, UserContext};
+use sentinel_risk::{RiskConfig, RiskEngine};
 use sentinel_rule_engine::RuleEngine;
+use sentinel_storage::sqlite::SqliteStorage;
+
+mod alert_manager;
+use alert_manager::AlertManager;
+use tokio::sync::mpsc;
 
 #[derive(Parser, Debug)]
 #[command(name = "sentinel-core-service")]
 #[command(about = "Sentinel AI Core Service", long_about = None)]
 struct Args {
-    /// Configuration file paths
     #[arg(short, long, value_delimiter = ',')]
     config: Vec<PathBuf>,
-    
-    /// Run in foreground (don't daemonize)
+
     #[arg(short, long)]
     foreground: bool,
-    
-    /// Validate configuration and exit
+
     #[arg(long)]
     validate_config: bool,
-    
-    /// Log level
+
     #[arg(short, long, default_value = "info")]
     log_level: String,
 }
@@ -41,56 +46,54 @@ struct Args {
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Args::parse();
-    
-    // Initialize logging
+
     init_logging(&args.log_level)?;
-    
+
     info!("Starting Sentinel AI Core Service");
-    
-    // Load configuration
+
     let config_paths = if args.config.is_empty() {
         default_config_paths()
     } else {
         args.config
     };
-    
-    let config_manager = ConfigManager::new(config_paths.clone()).await
+
+    let config_manager = ConfigManager::new(config_paths.clone())
+        .await
         .context("Failed to load configuration")?;
-    
+
     if args.validate_config {
-        info!("Configuration validation requested");
-        let config = config_manager.get();
-        println!("Configuration valid: {}", config.core.instance_name);
+        let cfg = config_manager.get();
+        println!("Configuration valid: {}", cfg.core.instance_name);
         return Ok(());
     }
-    
-    // Create shutdown signal
-    let (shutdown, shutdown_tx) = ShutdownSignal::new();
-    let shutdown_wait = shutdown.clone();
-    
-    // Handle shutdown signals
+
+    // ── Shutdown signal ─────────────────────────────────────────
+    let (_shutdown_tx, mut shutdown_rx) = watch::channel(false);
+
+    let shutdown_tx2 = _shutdown_tx.clone();
     tokio::spawn(async move {
         match signal::ctrl_c().await {
             Ok(()) => {
                 info!("Received Ctrl+C, initiating shutdown");
-                let _ = shutdown_tx.send(true);
+                let _ = shutdown_tx2.send(true);
             }
             Err(e) => {
                 error!("Failed to listen for Ctrl+C: {}", e);
             }
         }
-        
+
         #[cfg(unix)]
         {
             use tokio::signal::unix::{signal, SignalKind};
-            let mut sigterm = signal(SignalKind::terminate()).unwrap();
-            sigterm.recv().await;
-            info!("Received SIGTERM, initiating shutdown");
-            let _ = shutdown_tx.send(true);
+            if let Ok(mut sigterm) = signal(SignalKind::terminate()) {
+                sigterm.recv().await;
+                info!("Received SIGTERM, initiating shutdown");
+                let _ = shutdown_tx2.send(true);
+            }
         }
     });
-    
-    // Initialize components
+
+    // ── Storage (SQLite only for MVP) ─────────────────────────
     let storage_cfg = config_manager.get().storage.clone();
     let sqlite_cfg = sentinel_storage::sqlite::SqliteConfig {
         path: storage_cfg.sqlite_path.clone(),
@@ -98,72 +101,253 @@ async fn main() -> Result<()> {
         busy_timeout_ms: storage_cfg.sqlite_busy_timeout_ms,
         max_connections: 5,
     };
-    let duckdb_cfg = sentinel_storage::duckdb::DuckDbConfig {
-        path: storage_cfg.duckdb_path.clone(),
-        memory_limit_mb: storage_cfg.duckdb_memory_limit_mb,
-        threads: storage_cfg.duckdb_threads,
-        read_only: false,
-    };
-    let storage = StorageManager::new(&sqlite_cfg, &duckdb_cfg)
+    let sqlite = Arc::new(
+        sentinel_storage::sqlite::SqliteStorage::new(&sqlite_cfg)
+            .await
+            .context("Failed to initialize SQLite")?,
+    );
+    sentinel_storage::migrations::run_all(sqlite.pool())
         .await
-        .context("Failed to initialize storage")?;
-    
+        .context("Failed to run SQLite migrations")?;
+
+    // ── Event Bus ───────────────────────────────────────────────
     let bus_cfg = config_manager.get().event_bus.clone();
-    let channel_cfg = sentinel_core::ChannelConfig {
+    let channel_cfg = ChannelConfig {
         ingest: bus_cfg.ingest_channel_size,
         broadcast: bus_cfg.broadcast_channel_size,
         storage: bus_cfg.storage_channel_size,
         plugin: bus_cfg.plugin_channel_size,
         ipc: bus_cfg.ipc_channel_size,
     };
-    let event_bus = EventBusImpl::new(channel_cfg);
-    let _rule_engine = RuleEngine::new(&config_manager.get().rule_engine).await
-        .context("Failed to initialize rule engine")?;
-    
-    // Create module context
-    let _module_ctx = ModuleContext::new(
-        Arc::new(event_bus),
-        Arc::new(storage),
-        Arc::new(config_manager),
-        Arc::new(sentinel_core::metrics::MetricsRegistry::new()),
-        Arc::new(sentinel_plugins::PluginManager::new()),
-        shutdown,
+    let bus_impl = Arc::new(EventBusImpl::new(channel_cfg));
+    let bus: Arc<dyn EventBus> = bus_impl.clone();
+
+    // Spawn the event-bus routing loop (requires the concrete type)
+    let bus_runner = bus_impl.clone();
+    let bus_handle = tokio::spawn(async move {
+        bus_runner.run().await;
+    });
+
+    // ── Rule Engine ─────────────────────────────────────────────
+    let rule_engine = Arc::new(
+        RuleEngine::new(&config_manager.get().rule_engine)
+            .await
+            .context("Failed to initialize rule engine")?,
     );
-    
-    // Start components
-    info!("Starting core components");
-    
-    // TODO: Start collectors, correlation engine, risk engine, AI engine, plugin manager
-    
-    // Wait for shutdown
-    shutdown_wait.wait().await;
-    
-    info!("Shutting down gracefully");
-    
-    // TODO: Stop all components
-    
+
+    // ── M2: Correlation + Risk + Alerts ─────────────────────────
+    let correlation = Arc::new(CorrelationEngine::new(CorrelationConfig::default()));
+    let risk = Arc::new(RiskEngine::new(RiskConfig::default()));
+    let alert_mgr = Arc::new(AlertManager::new(sqlite.alerts().await));
+
+    // ── M3: AI Engine ──────────────────────────────────────────
+    let ai_config = AiConfig::default();
+    let ai = Arc::new(AiEngine::new(
+        ai_config.clone(),
+        Box::new(OllamaProvider::new(&ai_config)),
+    ));
+    info!("AI engine initialised (model: {}, enabled: {})", ai_config.model, ai_config.enabled);
+
+    // Subscribe rule engine to ALL events ("*")
+    let mut rule_sub = bus
+        .subscribe_type("*")
+        .await
+        .map_err(|e| anyhow::anyhow!("Failed to subscribe: {e}"))?;
+
+    // Synthetic test event (verification)
+    {
+        let test_bus = bus.clone();
+        tokio::spawn(async move {
+            tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+            let test_event = Arc::new(Event {
+                id: "test-startup".into(),
+                r#type: "test.event".into(),
+                source: "core-service".into(),
+                severity: 1,
+                risk_score: 0,
+                host_id: "local".into(),
+                schema_version: 1,
+                ..Default::default()
+            });
+            if let Err(e) = test_bus.publish(test_event).await {
+                warn!("Failed to publish test event: {e}");
+            } else {
+                info!("Published start-up test event");
+            }
+        });
+    }
+
+    // ── Linux process watcher (M1 — real process events) ───────
+    #[cfg(target_os = "linux")]
+    {
+        let watcher_bus = bus.clone();
+        tokio::spawn(async move {
+            use std::collections::HashSet;
+            let mut sys = sysinfo::System::new();
+            sys.refresh_all();
+            let mut known: HashSet<sysinfo::Pid> =
+                sys.processes().keys().copied().collect();
+            let mut tick = tokio::time::interval(std::time::Duration::from_secs(5));
+            tick.tick().await; // skip first immediate tick
+            loop {
+                tick.tick().await;
+                sys.refresh_all();
+                let current: HashSet<sysinfo::Pid> =
+                    sys.processes().keys().copied().collect();
+
+                for pid in current.difference(&known) {
+                    if let Some(proc) = sys.process(*pid) {
+                        let event = Arc::new(Event {
+                            id: sentinel_core::Ulid::new().to_string(),
+                            r#type: "sentinel.process.create".into(),
+                            source: "process".into(),
+                            severity: 2,
+                            risk_score: 10,
+                            host_id: String::new(),
+                            schema_version: 1,
+                            process: Some(ProcessContext {
+                                pid: pid.as_u32(),
+                                ppid: proc.parent().map(|p| p.as_u32()).unwrap_or(0),
+                                name: proc.name().to_string_lossy().into_owned(),
+                                path: proc.exe().map(|p| p.to_string_lossy().into_owned()).unwrap_or_default(),
+                                command_line: proc.cmd().iter().map(|s| s.to_string_lossy()).collect::<Vec<_>>().join(" "),
+                                user: Some(UserContext {
+                                    sid: proc.user_id().map(|u| u.to_string()).unwrap_or_default(),
+                                    username: proc.user_id().map(|u| u.to_string()).unwrap_or_default(),
+                                    domain: String::new(),
+                                    is_elevated: false,
+                                    is_system: false,
+                                }),
+                                ..Default::default()
+                            }),
+                            ..Default::default()
+                        });
+                        if let Err(e) = watcher_bus.publish(event).await {
+                            warn!("Process collector publish failed: {e}");
+                        }
+                    }
+                }
+                known = current;
+            }
+        });
+        info!("Linux process watcher started (5s interval)");
+    }
+
+    info!("All core components started");
+
+    // ── Main event loop: route events + wait for shutdown ─────────
+    loop {
+        tokio::select! {
+            Some(event) = rule_sub.receiver.recv() => {
+                // Feed into correlation engine
+                let chain = correlation.ingest(&event);
+
+                // Evaluate rules
+                let result = rule_engine.evaluate(&event).await;
+                if !result.matches.is_empty() {
+                    info!(
+                        "Rule engine: {} matches for event {} (type={}, {} rules in {:?})",
+                        result.matches.len(), event.id, event.r#type,
+                        result.rules_evaluated, result.evaluation_time,
+                    );
+                    for m in &result.matches {
+                        // Calculate cumulative risk along the chain
+                        let score = risk.calculate(
+                            m.risk_score,
+                            "Warning", // use rule severity label
+                            1.0,       // default asset multiplier
+                            Some(&chain.id),
+                        );
+
+                        // Generate alert if above threshold
+                        if let Some(alert) = risk.should_alert(
+                            &m.rule_id,
+                            &m.rule_name,
+                            score,
+                            &event.source,
+                            vec![event.id.clone()],
+                            Some(chain.id.clone()),
+                        ) {
+                            info!("  → ALERT [{}] {} (risk={})", alert.severity as i32, alert.rule_name, alert.risk_score);
+
+                            // Persist alert
+                            if let Err(e) = alert_mgr.create(
+                                &alert.rule_id,
+                                alert.risk_score,
+                                m.severity,
+                                alert.event_ids.clone(),
+                                serde_json::json!({"chain_id": chain.id, "source": event.source}),
+                            ).await {
+                                error!("Failed to persist alert: {e}");
+                            }
+
+                            // AI explanation (async, non-blocking)
+                            let ai_clone = ai.clone();
+                            let alert_clone = alert.clone();
+                            let event_clone = event.clone();
+                            tokio::spawn(async move {
+                                let explanation = ai_clone.explain_alert(
+                                    &sentinel_core::traits::Alert {
+                                        id: sentinel_core::Ulid::new(),
+                                        rule_id: alert_clone.rule_id.clone(),
+                                        correlation_id: sentinel_core::Ulid::new(),
+                                        risk_score: alert_clone.risk_score,
+                                        severity: sentinel_core::Severity::Info,
+                                        state: sentinel_core::traits::AlertState::New,
+                                        created_at: chrono::Utc::now(),
+                                        updated_at: chrono::Utc::now(),
+                                        acknowledged_by: None,
+                                        acknowledged_at: None,
+                                        events: vec![],
+                                        context: serde_json::Value::Null,
+                                        ai_summary: None,
+                                    },
+                                    &[event_clone],
+                                ).await;
+                                info!("AI explanation: {}", explanation);
+                            });
+                        } else {
+                            info!("  → MATCH {} [risk={} below alert threshold]", m.rule_name, m.risk_score);
+                        }
+                    }
+                }
+            }
+            _ = tokio::time::sleep(std::time::Duration::from_millis(500)) => {}
+            Ok(()) = shutdown_rx.changed() => {
+                info!("Shutting down");
+                break;
+            }
+        }
+    }
+
+    bus_impl.shutdown();
+
     info!("Sentinel AI Core Service stopped");
     Ok(())
 }
 
 fn init_logging(log_level: &str) -> Result<()> {
     let level: tracing::Level = log_level.parse()?;
-    
+
     let file_appender = tracing_appender::rolling::daily("logs", "sentinel.log");
     let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
-    
+
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::new(level.to_string()))
-        .with(tracing_subscriber::fmt::layer()
-            .json()
-            .with_current_span(true)
-            .with_span_list(true)
-            .with_writer(non_blocking))
-        .with(tracing_subscriber::fmt::layer()
-            .with_writer(std::io::stdout)
-            .with_ansi(true))
+        .with(
+            tracing_subscriber::fmt::layer()
+                .json()
+                .with_current_span(true)
+                .with_span_list(true)
+                .with_writer(non_blocking),
+        )
+        .with(
+            tracing_subscriber::fmt::layer()
+                .with_writer(std::io::stdout)
+                .with_ansi(true),
+        )
         .init();
-    
+
     Ok(())
 }
 

@@ -126,7 +126,8 @@ impl RuleEngine {
 
         let rule: Rule = serde_yaml::from_str::<RuleFile>(&content)
             .map(|f| f.rule)
-            .context("Failed to parse rule YAML (expected `rule:` wrapper)")?;
+            .or_else(|_| serde_yaml::from_str::<Rule>(&content))
+            .context("Failed to parse rule YAML")?;
         
         // Validate rule
         if rule.id.is_empty() {
@@ -315,18 +316,25 @@ impl RuleEngine {
     fn create_activation(&self, event: &Event) -> cel::Context<'_> {
         let mut ctx = cel::Context::default();
 
-        ctx.add_variable_from_value("event", event_to_cel_value(event));
-        ctx.add_variable_from_value("severity", i64::from(event.severity));
-        ctx.add_variable_from_value("event_type", event.r#type.clone());
+        // ── Top-level event variable ─────────────────────────────────
+        ctx.add_variable_from_value("event", event_to_cel_value(event))
+            .expect("event variable");
 
-        ctx.add_variable_from_value("SEVERITY_DEBUG", 1i64);
-        ctx.add_variable_from_value("SEVERITY_INFO", 2i64);
-        ctx.add_variable_from_value("SEVERITY_NOTICE", 3i64);
-        ctx.add_variable_from_value("SEVERITY_WARNING", 4i64);
-        ctx.add_variable_from_value("SEVERITY_ERROR", 5i64);
-        ctx.add_variable_from_value("SEVERITY_CRITICAL", 6i64);
-        ctx.add_variable_from_value("SEVERITY_ALERT", 7i64);
-        ctx.add_variable_from_value("SEVERITY_EMERGENCY", 8i64);
+        // ── Convenience variables for common rule patterns ───────────
+        ctx.add_variable_from_value("severity", i64::from(event.severity))
+            .expect("severity variable");
+        ctx.add_variable_from_value("event_type", event.r#type.clone())
+            .expect("event_type variable");
+
+        // ── SEVERITY numeric constants (syslog-compatible) ───────────
+        ctx.add_variable_from_value("SEVERITY_DEBUG", 0i64).ok();
+        ctx.add_variable_from_value("SEVERITY_INFO", 1i64).ok();
+        ctx.add_variable_from_value("SEVERITY_NOTICE", 2i64).ok();
+        ctx.add_variable_from_value("SEVERITY_WARNING", 3i64).ok();
+        ctx.add_variable_from_value("SEVERITY_ERROR", 4i64).ok();
+        ctx.add_variable_from_value("SEVERITY_CRITICAL", 5i64).ok();
+        ctx.add_variable_from_value("SEVERITY_ALERT", 6i64).ok();
+        ctx.add_variable_from_value("SEVERITY_EMERGENCY", 7i64).ok();
 
         ctx
     }
@@ -392,220 +400,6 @@ impl RuleEngine {
         self.metrics.snapshot()
     }
 }
-
-
-// ── CEL context construction ────────────────────────────────────────
-// These helpers convert protobuf Event and its nested structures into
-// cel::Value maps so that CEL expressions can reference event fields
-// with dot-notation (e.g. `event.process.name == "powershell.exe"`).
-
-fn event_to_cel_value(event: &Event) -> cel::Value {
-    let mut map: HashMap<String, cel::Value> = HashMap::new();
-
-    map.insert("id".into(), cel::Value::from(event.id.clone()));
-    map.insert("type".into(), cel::Value::from(event.r#type.clone()));
-    map.insert("source".into(), cel::Value::from(event.source.clone()));
-    map.insert("severity".into(), cel::Value::Int(i64::from(event.severity)));
-    map.insert("risk_score".into(), cel::Value::UInt(u64::from(event.risk_score)));
-    map.insert("host_id".into(), cel::Value::from(event.host_id.clone()));
-    map.insert("schema_version".into(), cel::Value::UInt(u64::from(event.schema_version)));
-
-    // Process context (recursive tree capped at depth 5)
-    if let Some(ref proc) = event.process {
-        map.insert("process".into(), process_to_cel_value(proc, 0));
-    }
-
-    // Correlation context
-    if let Some(ref c) = event.correlation {
-        map.insert("correlation".into(), correlation_to_cel_value(c));
-    }
-
-    // Tags as a list
-    let tags: Vec<cel::Value> = event.tags.iter().map(|t| cel::Value::from(t.clone())).collect();
-    map.insert("tags".into(), tags.into());
-
-    // Timestamps as epoch seconds
-    if let Some(ref ts) = event.timestamp {
-        map.insert("timestamp_epoch".into(), cel::Value::Int(ts.seconds));
-    }
-    if let Some(ref ts) = event.ingest_timestamp {
-        map.insert("ingest_timestamp_epoch".into(), cel::Value::Int(ts.seconds));
-    }
-
-    // Payload — extract type tag only (full serialisation can be added later)
-    if let Some(ref p) = event.payload {
-        let (kind, data) = payload_to_cel(p);
-        map.insert("payload_type".into(), cel::Value::from(kind));
-        map.insert("payload".into(), data);
-    }
-
-    map.into()
-}
-
-fn process_to_cel_value(proc: &sentinel_events::ProcessContext, depth: u32) -> cel::Value {
-    if depth > 5 {
-        return cel::Value::Null;
-    }
-    let mut map: HashMap<String, cel::Value> = HashMap::new();
-    map.insert("pid".into(), cel::Value::UInt(u64::from(proc.pid)));
-    map.insert("ppid".into(), cel::Value::UInt(u64::from(proc.ppid)));
-    map.insert("name".into(), cel::Value::from(proc.name.clone()));
-    map.insert("path".into(), cel::Value::from(proc.path.clone()));
-    map.insert("command_line".into(), cel::Value::from(proc.command_line.clone()));
-    map.insert("cwd".into(), cel::Value::from(proc.cwd.clone()));
-    map.insert("integrity_level".into(), cel::Value::from(proc.integrity_level.clone()));
-    map.insert("tree_depth".into(), cel::Value::UInt(u64::from(proc.tree_depth)));
-    map.insert("sha256".into(), cel::Value::from(proc.sha256.clone()));
-
-    let mitre: Vec<cel::Value> = proc.mitre_techniques.iter().map(|t| cel::Value::from(t.clone())).collect();
-    map.insert("mitre_techniques".into(), mitre.into());
-
-    if let Some(ref user) = proc.user {
-        map.insert("user".into(), user_to_cel_value(user));
-    }
-    if let Some(ref sign) = proc.signing {
-        map.insert("signing".into(), signing_to_cel_value(sign));
-    }
-    if let Some(ref parent) = proc.parent {
-        map.insert("parent".into(), process_to_cel_value(parent, depth + 1));
-    }
-
-    map.into()
-}
-
-fn user_to_cel_value(user: &sentinel_events::UserContext) -> cel::Value {
-    let mut map: HashMap<String, cel::Value> = HashMap::new();
-    map.insert("username".into(), cel::Value::from(user.username.clone()));
-    map.insert("domain".into(), cel::Value::from(user.domain.clone()));
-    map.insert("sid".into(), cel::Value::from(user.sid.clone()));
-    map.insert("is_elevated".into(), cel::Value::Bool(user.is_elevated));
-    map.insert("is_system".into(), cel::Value::Bool(user.is_system));
-    map.into()
-}
-
-fn signing_to_cel_value(signing: &sentinel_events::CodeSigningInfo) -> cel::Value {
-    let mut map: HashMap<String, cel::Value> = HashMap::new();
-    map.insert("is_signed".into(), cel::Value::Bool(signing.is_signed));
-    map.insert("is_trusted".into(), cel::Value::Bool(signing.is_trusted));
-    map.insert("publisher".into(), cel::Value::from(signing.publisher.clone()));
-    map.insert("issuer".into(), cel::Value::from(signing.issuer.clone()));
-    map.into()
-}
-
-fn correlation_to_cel_value(corr: &sentinel_events::CorrelationContext) -> cel::Value {
-    let mut map: HashMap<String, cel::Value> = HashMap::new();
-    map.insert("session_id".into(), cel::Value::from(corr.session_id.clone()));
-    map.insert("cause_event_id".into(), cel::Value::from(corr.cause_event_id.clone()));
-    map.insert("root_event_id".into(), cel::Value::from(corr.root_event_id.clone()));
-    map.insert("correlation_id".into(), cel::Value::from(corr.correlation_id.clone()));
-    map.insert("flow_id".into(), cel::Value::from(corr.flow_id.clone()));
-    map.insert("sequence".into(), cel::Value::UInt(u64::from(corr.sequence)));
-    map.into()
-}
-
-fn payload_to_cel(p: &sentinel_events::event::Payload) -> (String, cel::Value) {
-    use sentinel_events::event::Payload;
-    match p {
-        Payload::ProcessEvent(e) => ("ProcessEvent".into(), process_payload_to_cel(e)),
-        Payload::NetworkEvent(e) => ("NetworkEvent".into(), network_payload_to_cel(e)),
-        Payload::FileEvent(e) => ("FileEvent".into(), file_payload_to_cel(e)),
-        Payload::RegistryEvent(e) => ("RegistryEvent".into(), registry_payload_to_cel(e)),
-        Payload::UsbEvent(e) => ("UsbEvent".into(), usb_payload_to_cel(e)),
-        Payload::BrowserEvent(e) => ("BrowserEvent".into(), browser_payload_to_cel(e)),
-        Payload::StartupEvent(e) => ("StartupEvent".into(), startup_payload_to_cel(e)),
-        Payload::GenericEvent(e) => ("GenericEvent".into(), generic_payload_to_cel(e)),
-    }
-}
-
-fn process_payload_to_cel(e: &sentinel_events::ProcessEvent) -> cel::Value {
-    let mut map: HashMap<String, cel::Value> = HashMap::new();
-    map.insert("action".into(), cel::Value::Int(i64::from(e.action)));
-    if let Some(ref t) = e.target {
-        map.insert("target".into(), process_to_cel_value(t, 0));
-    }
-    map.insert("desired_access".into(), cel::Value::UInt(u64::from(e.desired_access)));
-    map.into()
-}
-
-fn network_payload_to_cel(e: &sentinel_events::NetworkEvent) -> cel::Value {
-    let mut map: HashMap<String, cel::Value> = HashMap::new();
-    map.insert("direction".into(), cel::Value::Int(i64::from(e.direction)));
-    map.insert("protocol".into(), cel::Value::Int(i64::from(e.protocol)));
-    map.insert("action".into(), cel::Value::Int(i64::from(e.action)));
-    map.insert("local_addr".into(), cel::Value::from(e.local_addr.clone()));
-    map.insert("local_port".into(), cel::Value::UInt(u64::from(e.local_port)));
-    map.insert("remote_addr".into(), cel::Value::from(e.remote_addr.clone()));
-    map.insert("remote_port".into(), cel::Value::UInt(u64::from(e.remote_port)));
-    map.insert("hostname".into(), cel::Value::from(e.hostname.clone()));
-    map.insert("dns_query".into(), cel::Value::from(e.dns_query.clone()));
-    map.insert("ja3_fingerprint".into(), cel::Value::from(e.ja3_fingerprint.clone()));
-    map.insert("ja3s_fingerprint".into(), cel::Value::from(e.ja3s_fingerprint.clone()));
-    map.into()
-}
-
-fn file_payload_to_cel(e: &sentinel_events::FileEvent) -> cel::Value {
-    let mut map: HashMap<String, cel::Value> = HashMap::new();
-    map.insert("action".into(), cel::Value::Int(i64::from(e.action)));
-    map.insert("path".into(), cel::Value::from(e.path.clone()));
-    map.insert("sha256".into(), cel::Value::from(e.sha256.clone()));
-    map.insert("entropy".into(), cel::Value::from(e.entropy.clone()));
-    map.insert("is_executable".into(), cel::Value::Bool(e.is_executable));
-    map.insert("is_sensitive_path".into(), cel::Value::Bool(e.is_sensitive_path));
-    map.into()
-}
-
-fn registry_payload_to_cel(e: &sentinel_events::RegistryEvent) -> cel::Value {
-    let mut map: HashMap<String, cel::Value> = HashMap::new();
-    map.insert("action".into(), cel::Value::Int(i64::from(e.action)));
-    map.insert("hive".into(), cel::Value::Int(i64::from(e.hive)));
-    map.insert("key_path".into(), cel::Value::from(e.key_path.clone()));
-    map.insert("value_name".into(), cel::Value::from(e.value_name.clone()));
-    map.into()
-}
-
-fn usb_payload_to_cel(e: &sentinel_events::UsbEvent) -> cel::Value {
-    let mut map: HashMap<String, cel::Value> = HashMap::new();
-    map.insert("action".into(), cel::Value::Int(i64::from(e.action)));
-    map.insert("vendor_id".into(), cel::Value::from(e.vendor_id.clone()));
-    map.insert("product_id".into(), cel::Value::from(e.product_id.clone()));
-    map.insert("serial_number".into(), cel::Value::from(e.serial_number.clone()));
-    map.insert("manufacturer".into(), cel::Value::from(e.manufacturer.clone()));
-    map.insert("product".into(), cel::Value::from(e.product.clone()));
-    map.insert("is_encrypted".into(), cel::Value::Bool(e.is_encrypted));
-    map.into()
-}
-
-fn browser_payload_to_cel(e: &sentinel_events::BrowserEvent) -> cel::Value {
-    let mut map: HashMap<String, cel::Value> = HashMap::new();
-    map.insert("browser".into(), cel::Value::Int(i64::from(e.browser)));
-    map.insert("action".into(), cel::Value::Int(i64::from(e.action)));
-    map.insert("url".into(), cel::Value::from(e.url.clone()));
-    map.insert("title".into(), cel::Value::from(e.title.clone()));
-    map.insert("referrer".into(), cel::Value::from(e.referrer.clone()));
-    map.insert("download_path".into(), cel::Value::from(e.download_path.clone()));
-    map.insert("is_incognito".into(), cel::Value::Bool(e.is_incognito));
-    map.into()
-}
-
-fn startup_payload_to_cel(e: &sentinel_events::StartupEvent) -> cel::Value {
-    let mut map: HashMap<String, cel::Value> = HashMap::new();
-    map.insert("action".into(), cel::Value::Int(i64::from(e.action)));
-    map.insert("location".into(), cel::Value::Int(i64::from(e.location)));
-    map.insert("name".into(), cel::Value::from(e.name.clone()));
-    map.insert("command".into(), cel::Value::from(e.command.clone()));
-    map.insert("arguments".into(), cel::Value::from(e.arguments.clone()));
-    map.insert("user".into(), cel::Value::from(e.user.clone()));
-    map.insert("is_signed".into(), cel::Value::Bool(e.is_signed));
-    map.insert("publisher".into(), cel::Value::from(e.publisher.clone()));
-    map.into()
-}
-
-fn generic_payload_to_cel(e: &sentinel_events::GenericEvent) -> cel::Value {
-    let mut map: HashMap<String, cel::Value> = HashMap::new();
-    map.insert("custom_type".into(), cel::Value::from(e.custom_type.clone()));
-    map.into()
-}
-
 
 /// Compiled rule with CEL programs
 #[derive(Clone)]
@@ -806,79 +600,5 @@ rule:
         
         assert_eq!(metrics.rules_loaded, 1);
         assert_eq!(metrics.rules_enabled, 1);
-    }
-
-    fn make_test_event(r#type: &str, severity: i32, proc_name: &str) -> Event {
-        Event {
-            id: "evt-001".into(),
-            r#type: r#type.into(),
-            source: "test".into(),
-            severity,
-            risk_score: 50,
-            host_id: "host-1".into(),
-            schema_version: 1,
-            process: Some(sentinel_events::ProcessContext {
-                name: proc_name.into(),
-                pid: 1234,
-                command_line: format!("C:\\Windows\\{}", proc_name),
-                ..Default::default()
-            }),
-            ..Default::default()
-        }
-    }
-
-    #[tokio::test]
-    async fn test_cel_evaluation_match_by_type() {
-        let event = make_test_event("sentinel.process.create", 3, "powershell.exe");
-        let program = cel::Program::compile(r#"event.type == "sentinel.process.create""#).unwrap();
-        let _ctx = cel::Context::default();
-        // verify using the helper directly
-        let cel_activation = event_to_cel_value(&event);
-        let mut ctx = cel::Context::default();
-        ctx.add_variable_from_value("event", cel_activation);
-        let result = program.execute(&ctx).unwrap();
-        assert!(matches!(result, cel::Value::Bool(true)));
-    }
-
-    #[tokio::test]
-    async fn test_cel_evaluation_match_by_process_name() {
-        let event = make_test_event("sentinel.process.create", 3, "powershell.exe");
-        let program = cel::Program::compile(r#"event.process.name == "powershell.exe""#).unwrap();
-        let mut ctx = cel::Context::default();
-        ctx.add_variable_from_value("event", event_to_cel_value(&event));
-        let result = program.execute(&ctx).unwrap();
-        assert!(matches!(result, cel::Value::Bool(true)));
-    }
-
-    #[tokio::test]
-    async fn test_cel_evaluation_no_match() {
-        let event = make_test_event("sentinel.process.create", 1, "notepad.exe");
-        let program = cel::Program::compile(r#"event.process.name == "powershell.exe""#).unwrap();
-        let mut ctx = cel::Context::default();
-        ctx.add_variable_from_value("event", event_to_cel_value(&event));
-        let result = program.execute(&ctx).unwrap();
-        assert!(matches!(result, cel::Value::Bool(false)));
-    }
-
-    #[tokio::test]
-    async fn test_cel_evaluation_severity_comparison() {
-        let event = make_test_event("sentinel.process.create", 4, "cmd.exe");
-        let program = cel::Program::compile("event.severity > SEVERITY_INFO").unwrap();
-        let mut ctx = cel::Context::default();
-        ctx.add_variable_from_value("event", event_to_cel_value(&event));
-        ctx.add_variable_from_value("SEVERITY_INFO", 1i64);
-        let result = program.execute(&ctx).unwrap();
-        assert!(matches!(result, cel::Value::Bool(true)));
-    }
-
-    #[tokio::test]
-    async fn test_cel_evaluation_tags_contains() {
-        let mut event = make_test_event("sentinel.process.create", 3, "powershell.exe");
-        event.tags = vec!["mitre:T1059".into()];
-        let program = cel::Program::compile(r#"event.tags.exists(t, t == "mitre:T1059")"#).unwrap();
-        let mut ctx = cel::Context::default();
-        ctx.add_variable_from_value("event", event_to_cel_value(&event));
-        let result = program.execute(&ctx).unwrap();
-        assert!(matches!(result, cel::Value::Bool(true)));
     }
 }

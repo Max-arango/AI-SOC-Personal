@@ -111,7 +111,7 @@ fn migrate_to_v1(config: &mut super::AppConfig) -> Result<()> {
 pub trait VersionedConfig: Serialize + for<'de> Deserialize<'de> {
     const VERSION: u32;
     
-    fn migrate(value: &mut Value) -> Result<()> {
+    fn migrate(_value: &mut Value) -> Result<()> {
         Ok(())
     }
 }
@@ -161,7 +161,7 @@ impl MigrationPlan {
 /// Run migration plan with user confirmation for manual steps
 pub async fn run_migration_plan(
     plan: &MigrationPlan,
-    config: &mut super::AppConfig,
+    _config: &mut super::AppConfig,
     confirm: bool,
 ) -> Result<()> {
     for step in &plan.steps {

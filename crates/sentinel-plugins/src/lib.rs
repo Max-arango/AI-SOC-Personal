@@ -13,6 +13,7 @@ use tokio::sync::RwLock;
 
 /// In-memory plugin manager.
 pub struct PluginManager {
+    #[allow(dead_code)]
     plugins: RwLock<HashMap<String, sentinel_core::traits::PluginInfo>>,
 }
 

@@ -4,26 +4,25 @@
 
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::Duration;
 
 use anyhow::Result;
 use async_trait::async_trait;
 use parking_lot::RwLock;
-use serde::{Deserialize, Serialize};
 use tokio::sync::{mpsc, watch};
-use tracing::{debug, error, info, warn};
+use tracing::info;
 
 use sentinel_core::{
-    traits::{Collector, CollectorContext, CollectorHealth, CollectorMetrics, CollectorState, ConfigProvider, EventBus, OsAbstraction},
-    BackpressureSignal, EventId, Result as CoreResult, SentinelError,
+    traits::{Collector, CollectorContext, CollectorHealth, CollectorMetrics, CollectorState, EventBus, OsAbstraction},
+    BackpressureSignal, ConfigProvider as ConfigProviderTrait, Result as CoreResult, SentinelError,
 };
 use sentinel_events::Event;
-use sentinel_core::ConfigProvider as ConfigProviderTrait;
 
 /// Collector manager for lifecycle management
+#[allow(dead_code)]
 pub struct CollectorManager {
     collectors: RwLock<HashMap<String, Box<dyn Collector>>>,
     contexts: RwLock<HashMap<String, CollectorContext>>,
+    #[allow(dead_code)]
     event_bus: Arc<dyn EventBus>,
     config: Arc<dyn ConfigProviderTrait>,
     os: Arc<dyn OsAbstraction>,
@@ -31,6 +30,7 @@ pub struct CollectorManager {
     backpressure_rx: watch::Receiver<BackpressureSignal>,
 }
 
+#[allow(clippy::await_holding_lock)]
 impl CollectorManager {
     /// Create new collector manager
     pub fn new(
@@ -55,8 +55,17 @@ impl CollectorManager {
     pub async fn register(&self, mut collector: Box<dyn Collector>) -> Result<()> {
         let id = collector.id().to_string();
         
-        // Create context
-        let (event_tx, event_rx) = mpsc::channel(1000);
+        // Create context with a forwarding task that bridges the collector
+        // output channel into the shared event bus.
+        let (event_tx, mut event_rx) = mpsc::channel(1000);
+        {
+            let bus = self.event_bus.clone();
+            tokio::spawn(async move {
+                while let Some(event) = event_rx.recv().await {
+                    let _ = bus.publish(event).await;
+                }
+            });
+        }
         let context = CollectorContext {
             event_tx,
             backpressure_rx: self.backpressure_rx.clone(),
@@ -92,7 +101,15 @@ impl CollectorManager {
         if let Some(mut collector) = collectors.remove(id) {
             collector.stop(true).await?;
             
-            let (event_tx, _) = mpsc::channel(1000);
+            let (event_tx, mut event_rx) = mpsc::channel(1000);
+            {
+                let bus = self.event_bus.clone();
+                tokio::spawn(async move {
+                    while let Some(event) = event_rx.recv().await {
+                        let _ = bus.publish(event).await;
+                    }
+                });
+            }
             let context = CollectorContext {
                 event_tx,
                 backpressure_rx: self.backpressure_rx.clone(),

@@ -125,6 +125,7 @@ impl EventRepository for DuckDbEventRepository {
 }
 
 /// Aggregation result cursor
+#[allow(dead_code)]
 pub struct AggregationCursor {
     rows: Vec<sentinel_core::traits::AggregationBucket>,
     index: usize,

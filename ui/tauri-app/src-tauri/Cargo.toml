@@ -8,15 +8,10 @@ tauri-build = { version = "1.5", features = [] }
 
 [dependencies]
 tauri = { version = "1.5", features = [
-    "system-tray",
+    "api-all",
     "global-shortcut",
     "notification",
-    "dialog",
-    "fs",
-    "shell",
-    "window",
-    "clipboard",
-    "protocol",
+    "devtools",
 ] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
@@ -29,9 +24,9 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt", "json"]
 url = "2.5"
 
 # Core Sentinel crates (for types and utilities)
-sentinel-core = { path = "../../crates/sentinel-core" }
-sentinel-events = { path = "../../crates/sentinel-events" }
-sentinel-config = { path = "../../crates/sentinel-config" }
-sentinel-storage = { path = "../../crates/sentinel-storage" }
-sentinel-event-bus = { path = "../../crates/sentinel-event-bus" }
-sentinel-rule-engine = { path = "../../crates/sentinel-rule-engine" }
+sentinel-core = { path = "../../../crates/sentinel-core" }
+sentinel-events = { path = "../../../crates/sentinel-events" }
+sentinel-config = { path = "../../../crates/sentinel-config" }
+sentinel-storage = { path = "../../../crates/sentinel-storage" }
+sentinel-event-bus = { path = "../../../crates/sentinel-event-bus" }
+sentinel-rule-engine = { path = "../../../crates/sentinel-rule-engine" }

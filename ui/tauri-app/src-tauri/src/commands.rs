@@ -1,87 +1,82 @@
-// Tauri command handlers
 use tauri::command;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
-use sentinel_core::Result as CoreResult;
+
+type CmdResult<T> = Result<T, String>;
 
 #[command]
-async fn greet(name: String) -> String {
-    format!("Hello, {}! Welcome to Sentinel AI.", name)
+pub async fn get_health(state: tauri::State<'_, std::sync::Arc<crate::state::AppState>>) -> CmdResult<HealthResponse> {
+    state.health_check().await
 }
 
 #[command]
-async fn get_health(state: tauri::State<'_, Arc<crate::state::AppState>>) -> CoreResult<HealthResponse> {
-    state.health().await
+pub async fn get_status(state: tauri::State<'_, std::sync::Arc<crate::state::AppState>>) -> CmdResult<StatusResponse> {
+    state.get_status().await
 }
 
 #[command]
-async fn get_status(state: tauri::State<'_, Arc<crate::state::AppState>>) -> CoreResult<StatusResponse> {
-    state.status().await
-}
-
-#[command]
-async fn query_events(
-    state: tauri::State<'_, Arc<crate::state::AppState>>,
+pub async fn query_events(
+    state: tauri::State<'_, std::sync::Arc<crate::state::AppState>>,
     query: EventQuery,
-) -> CoreResult<EventsResponse> {
+) -> CmdResult<EventsResponse> {
     state.query_events(query).await
 }
 
 #[command]
-async fn get_alerts(
-    state: tauri::State<'_, Arc<crate::state::AppState>>,
+pub async fn get_alerts(
+    state: tauri::State<'_, std::sync::Arc<crate::state::AppState>>,
     query: AlertQuery,
-) -> CoreResult<AlertsResponse> {
+) -> CmdResult<AlertsResponse> {
     state.get_alerts(query).await
 }
 
 #[command]
-async fn get_processes(
-    state: tauri::State<'_, Arc<crate::state::AppState>>,
+pub async fn get_processes(
+    state: tauri::State<'_, std::sync::Arc<crate::state::AppState>>,
     query: ProcessQuery,
-) -> CoreResult<ProcessesResponse> {
+) -> CmdResult<ProcessesResponse> {
     state.get_processes(query).await
 }
 
 #[command]
-async fn get_network_connections(
-    state: tauri::State<'_, Arc<crate::state::AppState>>,
+pub async fn get_network_connections(
+    state: tauri::State<'_, std::sync::Arc<crate::state::AppState>>,
     query: NetworkQuery,
-) -> CoreResult<NetworkResponse> {
+) -> CmdResult<NetworkResponse> {
     state.get_network_connections(query).await
 }
 
 #[command]
-async fn explain_alert(
-    state: tauri::State<'_, Arc<crate::state::AppState>>,
+pub async fn explain_alert(
+    state: tauri::State<'_, std::sync::Arc<crate::state::AppState>>,
     alert_id: String,
-) -> CoreResult<ExplanationResponse> {
+) -> CmdResult<ExplanationResponse> {
     state.explain_alert(alert_id).await
 }
 
 #[command]
-async fn chat_ai(
-    state: tauri::State<'_, Arc<crate::state::AppState>>,
+pub async fn chat_ai(
+    state: tauri::State<'_, std::sync::Arc<crate::state::AppState>>,
     message: String,
     conversation_id: Option<String>,
-) -> CoreResult<ChatResponse> {
+) -> CmdResult<ChatResponse> {
     state.chat_ai(message, conversation_id).await
 }
 
 #[command]
-async fn get_config(state: tauri::State<'_, Arc<crate::state::AppState>>) -> CoreResult<ConfigResponse> {
+pub async fn get_config(state: tauri::State<'_, std::sync::Arc<crate::state::AppState>>) -> CmdResult<ConfigResponse> {
     state.get_config().await
 }
 
 #[command]
-async fn update_config(
-    state: tauri::State<'_, Arc<crate::state::AppState>>,
+pub async fn update_config(
+    state: tauri::State<'_, std::sync::Arc<crate::state::AppState>>,
     config: serde_json::Value,
-) -> CoreResult<ConfigResponse> {
+) -> CmdResult<ConfigResponse> {
     state.update_config(config).await
 }
 
-// Request/Response types
+// ── Request / Response types ────────────────────────────────────
+
 #[derive(Debug, Deserialize)]
 pub struct EventQuery {
     pub start_time: Option<String>,
