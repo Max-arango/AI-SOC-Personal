@@ -1,493 +1,412 @@
-# Sentinel AI v2.0 — Plan Maestro
+# Sentinel AI v2.0 — Plan Maestro Hardened
 
-> Documento estratégico con la visión, fases, y roadmap desde el MVP actual (v0.1.0) hasta la plataforma enterprise-ready (v2.0).
-
----
-
-## Resumen Ejecutivo
-
-**Estado actual (v0.1.0):** MVP funcional en Linux con pipeline completo (collectors → rules → correlation → risk → alerts), 8 plugins de notificación/threat intel, gRPC API, y UI Tauri v2 con datos reales.
-
-**Objetivo v2.0:** Plataforma de seguridad multiplataforma con capacidades EDR, correlación multi-host, ML on-device, compliance automatizado, y marketplace de plugins.
-
-**Esfuerzo estimado:** v1.0 (~6 meses) + v2.0 (~12 meses) = ~18 meses desde v0.1.0.
+> Documento estratégico blindado contra los riesgos identificados en la auditoría de seguridad (AUDITORIA_CRITICA_V2.md). Cada feature incluye sus mitigaciones como requisito obligatorio, no como "nice to have".
 
 ---
 
-## Mapa de Versiones
+## Principios de Seguridad (Override All)
 
-```
-v0.1.0 (HOY)        v1.0 (6 meses)         v2.0 (18 meses)
-┌──────────┐       ┌────────────────┐      ┌─────────────────────────┐
-│ MVP Linux│──────►│ Multiplataforma │─────►│ Plataforma Enterprise    │
-│ Pipeline │       │ Colectores real │      │ Multi-host + ML + EDR   │
-│ 8 plugins│       │ Windows/macOS   │      │ Cloud + Compliance      │
-└──────────┘       │ Browser + UI    │      │ Mobile + Marketplace    │
-                    └────────────────┘      └─────────────────────────┘
-```
+Estos principios son **vinculantes**. Ninguna feature de v2.0 puede violarlos. Si una feature los contradice, la feature se rediseña o se descarta.
 
----
-
-# PARTE 1: CAMINO A v1.0 (Prerrequisito de v2.0)
-
-v1.0 debe ser un producto completo y estable antes de abordar las capacidades enterprise de v2.0.
-
-## v1.0 — Milestones
-
-### M1: Windows + macOS (Meses 1-3)
-
-| Tarea | Detalle |
-|---|---|
-| Process Collector Windows | ETW (Microsoft-Windows-Kernel-Process) |
-| Process Collector macOS | Endpoint Security Framework (ES_EVENT_TYPE_NOTIFY_EXEC) |
-| Network Collector Windows | ETW (Microsoft-Windows-TCPIP) + WFP |
-| Network Collector macOS | Endpoint Security + /dev/bpf |
-| File Collector Windows | USN Journal + ReadDirectoryChangesW |
-| File Collector macOS | FSEvents + Endpoint Security |
-| Registry Collector (Windows) | CmRegisterCallbackEx |
-| USB Collector cross-platform | udev (Linux), IOKit (macOS), WM_DEVICECHANGE (Windows) |
-| Browser Collector | Native messaging + SQLite (Chrome, Firefox, Edge) |
-| OS Abstraction Crates | Implementar `sentinel-os-windows`, `sentinel-os-macos`, `sentinel-os-common` |
-| Installers | .exe/.msi (Windows), .dmg/.pkg (macOS), .deb/.AppImage (Linux) |
-| Code Signing | EV certificates + notarization |
-
-### M2: Dashboard Completo (Meses 2-4)
-
-| Tarea | Detalle |
-|---|---|
-| Process Tree View | D3.js / react-flow con colores por riesgo |
-| Network Map | Conexiones con geolocalización (MaxMind GeoIP local) |
-| MITRE ATT&CK Heatmap | Técnicas detectadas coloreadas por frecuencia |
-| File Timeline | Actividad de archivos con hashes y entropía |
-| Alert Workflow | acknowledge, investigate, resolve, false positive |
-| Event Explorer | Filtros avanzados + virtual scrolling para millones de eventos |
-| AI Chat Panel | Contexto de eventos + alertas, respuestas streaming |
-| Plugin Manager UI | Instalar, configurar, habilitar/deshabilitar plugins |
-| System Tray | Minimizar a bandeja, notificaciones push, menú contextual |
-| Keyboard Shortcuts | Navegación rápida entre vistas |
-
-### M3: Reglas + Threat Intel (Meses 3-5)
-
-| Tarea | Detalle |
-|---|---|
-| 50+ reglas YAML | Cobertura completa MITRE ATT&CK (todas las tácticas) |
-| Sigma Rule Importer | Convertir reglas Sigma → CEL automáticamente |
-| Threat Intel Framework | IOC local (STIX/CSV), feeds remotos |
-| TI Plugins adicionales | AlienVault OTX, Hybrid Analysis, URLhaus |
-| Rule Testing Framework | Tests unitarios para reglas, fixtures de eventos simulados |
-| Community Rule Repo | Repositorio GitHub de reglas comunitarias |
-
-### M4: Hardening (Meses 4-6)
-
-| Tarea | Detalle |
-|---|---|
-| Performance | <5% CPU, <100MB RAM, benchmarks en CI |
-| Backpressure System | Rate limiting adaptativo por collector |
-| Error Recovery | Watchdog, reinicio automático de collectors caídos |
-| Security Audit | Revisión de seguridad third-party |
-| Fuzzing | libFuzzer para parsing de eventos, protobuf, reglas CEL |
-| Penetration Testing | Pruebas de sandbox escape en plugins |
-| Accessibility | WCAG 2.1 AA en UI |
-| i18n | EN, ES, FR, DE, PT, JA (react-i18next) |
-| Documentation | Guía de usuario, admin, developer, API reference |
-| CI/CD | Multi-OS build matrix, release automation, SBOM |
-
----
-
-# PARTE 2: v2.0 — PLATAFORMA ENTERPRISE
-
-## Visión v2.0
-
-Sentinel AI evoluciona de un asistente de seguridad **single-host** a una **plataforma de seguridad distribuida** con capacidades EDR, correlación avanzada, ML on-device, y gestión centralizada.
-
-## Pilares de v2.0
-
-| Pilar | Descripción | Valor |
+| # | Principio | Significado |
 |---|---|---|
-| **Multi-Host** | Gestión centralizada de múltiples endpoints | Empresas, familias, labs |
-| **EDR** | Response actions: kill process, quarantine file, isolate host | Respuesta activa a amenazas |
-| **ML On-Device** | Detección de anomalías sin enviar datos a la nube | Zero-trust, privacidad |
-| **Cloud Sync (opt-in)** | Backup cifrado, threat intel compartida, UI remota | Continuidad, colaboración |
-| **Compliance** | CIS Benchmarks, informe GDPR, STIG | Empresas reguladas |
-| **SIEM/SOAR** | Conectores Splunk, Elastic, Sentinel, webhooks | Integración enterprise |
-| **Plugin Marketplace** | Plugins firmados, revisados, auto-update | Ecosistema |
-| **Mobile Companion** | Dashboard read-only, push alerts | Movilidad |
+| P1 | **Local-first permanente** | El agente debe ser 100% funcional sin conexión al Management Server. El servidor añade valor, no es requisito de funcionamiento. |
+| P2 | **Data minimization by default** | El agente nunca envía datos crudos al servidor. Solo agregados, hashes, o datos con redacción automática de PII. |
+| P3 | **Privacy budget por host** | Cada host tiene un perfil de privacidad configurable que controla qué comparte y con quién. |
+| P4 | **Human-in-the-loop para acciones destructivas** | Kill, quarantine, isolate, y remote shell requieren confirmación humana. Nunca automático. |
+| P5 | **Opt-in granular** | Cada feature que comparte datos fuera del host es opt-in individual. No hay "all or nothing". |
+| P6 | **Defense in depth** | Cada capa asume que la anterior fue comprometida. mTLS no es suficiente; los datos se protegen en tránsito Y en reposo Y en uso. |
+| P7 | **Supply chain integrity** | Todo artefacto descargable (plugins, modelos ML, reglas) debe ser firmado, verificable, y con transparencia log. |
+| P8 | **Threat model primero** | Ninguna feature se implementa sin un threat model documentado que cubra los 4 adversarios: externo, interno, supply chain, pasivo. |
 
 ---
 
-## Arquitectura v2.0
+## Modo Dual: Personal + Enterprise
+
+v2.0 ofrece **dos modos de operación mutuamente excluyentes** que comparten el mismo core pero difieren en arquitectura de despliegue.
+
+### Modo Personal (hereda v0.1.0)
 
 ```
-┌──────────────────────────────────────────────────────────────────────┐
-│                     SENTINEL AI v2.0                                  │
-├──────────────────────────────────────────────────────────────────────┤
-│                                                                       │
-│  ┌─────────────┐   ┌──────────────┐   ┌──────────────┐              │
-│  │ Mobile App  │   │ Desktop UI   │   │ Web Console  │              │
-│  │ (iOS/Android)│   │ (Tauri v2)  │   │ (React SPA)  │              │
-│  └──────┬──────┘   └──────┬───────┘   └──────┬───────┘              │
-│         │                 │                  │                        │
-│         └─────────┬───────┴──────────────────┘                        │
-│                   ▼                                                   │
-│  ┌─────────────────────────────────────────┐                         │
-│  │          Management Server               │                         │
-│  │  ┌─────────┐ ┌────────┐ ┌────────────┐  │                         │
-│  │  │Fleet    │ │Cross-  │ │Alert       │  │                         │
-│  │  │Manager  │ │Host    │ │Aggregator  │  │                         │
-│  │  │         │ │Correl. │ │            │  │                         │
-│  │  └─────────┘ └────────┘ └────────────┘  │                         │
-│  │  ┌─────────┐ ┌────────┐ ┌────────────┐  │                         │
-│  │  │Policy   │ │Compli- │ │Plugin      │  │                         │
-│  │  │Engine   │ │ance    │ │Registry    │  │                         │
-│  │  └─────────┘ └────────┘ └────────────┘  │                         │
-│  └──────────────────┬──────────────────────┘                         │
-│                     │ gRPC + mTLS                                     │
-│         ┌───────────┼───────────┐                                     │
-│         ▼           ▼           ▼                                     │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐                              │
-│  │ Agent    │ │ Agent    │ │ Agent    │  ... (N agents)              │
-│  │ Host A   │ │ Host B   │ │ Host C   │                              │
-│  │ (Linux)  │ │ (Win)    │ │ (macOS)  │                              │
-│  └──────────┘ └──────────┘ └──────────┘                              │
-│         │           │           │                                     │
-│         └───────────┴───────────┘                                     │
-│                     │                                                 │
-│  ┌──────────────────┴──────────────────────┐                         │
-│  │           Cloud Sync (opt-in)            │                         │
-│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ │                         │
-│  │  │Encrypted │ │Threat    │ │Remote UI │ │                         │
-│  │  │Backup    │ │Intel     │ │Proxy     │ │                         │
-│  │  └──────────┘ └──────────┘ └──────────┘ │                         │
-│  └─────────────────────────────────────────┘                         │
-│                                                                       │
-└──────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────┐
+│         Modo Personal         │
+│                               │
+│  ┌─────────────────────────┐ │
+│  │   Tauri UI (local)      │ │
+│  └───────────┬─────────────┘ │
+│              │ IPC            │
+│  ┌───────────▼─────────────┐ │
+│  │   Core Service (local)  │ │
+│  │   Collectors             │ │
+│  │   Rules → Risk → Alerts │ │
+│  │   AI (Ollama local)     │ │
+│  │   SQLite + DuckDB       │ │
+│  └─────────────────────────┘ │
+│                               │
+│  ┌─────────────────────────┐ │
+│  │   Plugins (local)       │ │
+│  │   Notificaciones salen  │ │
+│  │   solo si el usuario    │ │
+│  │   configura webhooks    │ │
+│  └─────────────────────────┘ │
+└──────────────────────────────┘
+   Cero dependencia externa.
+   Cero datos a la nube.
+   Cero servidor central.
+```
+
+### Modo Enterprise (v2.0)
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                     Modo Enterprise                           │
+│                                                               │
+│  Management Server (HA: active-passive)                       │
+│  ┌──────────────────────────────────────────────────────┐    │
+│  │ Fleet Manager │ Cross-Host Correl │ Alert Aggregator │    │
+│  │ Policy Engine │ Compliance Engine │ Plugin Registry  │    │
+│  └──────────────────────┬───────────────────────────────┘    │
+│                         │ gRPC + mTLS (PSK fallback)         │
+│         ┌───────────────┼───────────────┐                    │
+│         ▼               ▼               ▼                    │
+│  ┌──────────┐    ┌──────────┐    ┌──────────┐               │
+│  │ Agent A  │    │ Agent B  │    │ Agent N  │               │
+│  │ (Local)  │    │ (Local)  │    │ (Local)  │               │
+│  │ ┌──────┐ │    │ ┌──────┐ │    │ ┌──────┐ │               │
+│  │ │Core  │ │    │ │Core  │ │    │ │Core  │ │               │
+│  │ │Local │ │    │ │Local │ │    │ │Local │ │               │
+│  │ └──────┘ │    │ └──────┘ │    │ └──────┘ │               │
+│  └──────────┘    └──────────┘    └──────────┘               │
+│       │               │               │                      │
+│       └───────────────┴───────────────┘                      │
+│                       │                                       │
+│              ┌────────▼────────┐                              │
+│              │ Cloud Sync      │  (opt-in por feature)       │
+│              │ Encrypted Backup│                              │
+│              │ Threat Intel    │                              │
+│              │ Remote UI Proxy │                              │
+│              └─────────────────┘                              │
+└──────────────────────────────────────────────────────────────┘
+
+Cada agente es completamente funcional SIN el Management Server.
+El servidor central añade: fleet view, cross-host correlation, central policy, compliance reports.
+Si el servidor cae → los agentes siguen funcionando localmente.
 ```
 
 ---
 
-## Features Detalladas
+## Privacy Budget por Host
 
-### 1. Multi-Host Management
+Cada agente expone un perfil de privacidad que controla **exactamente qué datos comparte** con el Management Server. El usuario configura esto desde la UI local del agente.
 
-| Componente | Descripción |
-|---|---|
-| **Management Server** | `sentinel-mgmt` binary: API central, fleet queries, policy distribution |
-| **Agent Registration** | Enrolamiento con PSK o mTLS, certificados x509 |
-| **Fleet Overview** | Dashboard multi-host: health, risk, alerts por endpoint |
-| **Fleet Queries** | Osquery-style: `SELECT * FROM processes WHERE name LIKE '%powershell%'` |
-| **Policy Engine** | Distribuir reglas, configuraciones, exclusiones a grupos de hosts |
-| **Cross-Host Correlation** | Detectar ataques que saltan entre hosts (lateral movement chains) |
-| **Host Groups** | Tags: production, staging, user-workstations, servers |
-| **RBAC** | Roles: admin, analyst, viewer; permisos por grupo de hosts |
-| **Audit Log** | Quién hizo qué, cuándo (para compliance) |
+```yaml
+# ~/.config/sentinel/privacy.toml
+[privacy]
+mode = "enterprise"  # personal | enterprise
 
-#### Protocolo de Comunicación
+[privacy.sharing]
+command_lines = "redacted"     # full | redacted | none
+file_paths = "anonymized"     # full | anonymized | none
+network_ips = "anonymized"    # full | anonymized | none
+user_names = "hashed"          # full | hashed | none
+process_names = "full"         # full | hashed | none
 
+[privacy.fleet_queries]
+require_approval = true        # el usuario del host debe aprobar cada fleet query
+auto_approve_localhost = true  # queries desde la misma máquina se auto-aprueban
+max_rows_per_query = 1000
+
+[privacy.ml]
+federated_learning = false     # compartir pesos de modelo
+differential_privacy_epsilon = 8.0  # ε para DP-SGD (solo si federated=true)
+
+[privacy.notifications]
+silent_push_only = true        # Firebase/APNs solo despiertan la app, sin datos
+local_websocket_fallback = true
+
+[privacy.siem]
+enabled = false
+redact_pii = true
+field_whitelist = ["event_type", "severity", "risk_score", "source"]
 ```
-Agent ←→ Management Server via gRPC + mTLS
 
-Services:
-  AgentService:
-    rpc Register(RegisterRequest) returns (RegisterResponse);
-    rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
-    rpc StreamEvents(stream Event) returns (stream Command);
-    rpc ExecuteCommand(CommandRequest) returns (CommandResponse);
+---
 
-  ManagementService:
-    rpc QueryFleet(FleetQuery) returns (FleetResponse);
-    rpc PushPolicy(PolicyUpdate) returns (stream PolicyAck);
-    rpc GetAgentStatus(AgentId) returns (AgentStatus);
-```
+## Agent Autonomy Guarantee
 
-### 2. EDR — Endpoint Detection & Response
+**Regla dura:** el agente (core-service) debe ser 100% funcional sin el Management Server. El servidor central es un add-on, no un dependency.
 
-| Acción | Descripción | Riesgo |
+| Capacidad | Sin Management Server | Con Management Server |
 |---|---|---|
-| **Kill Process** | Terminar PID sospechoso | Medio |
-| **Quarantine File** | Mover archivo a zona segura, hashear | Medio |
-| **Block Network** | Añadir regla iptables/nftables/WFP | Alto |
-| **Isolate Host** | Bloquear todo tráfico excepto al management server | Alto |
-| **Collect Forensic Snapshot** | Process list, network, files, registry, memory strings | Bajo |
-| **Remote Shell** | Shell read-only (auditado) para investigación | Alto |
-| **Remediation Playbook** | Secuencia de acciones automatizadas (ej: detect → kill → quarantine → notify) | — |
+| Collectors | ✅ Funcionan | ✅ Funcionan |
+| Rules (CEL) | ✅ Evalúan localmente | ✅ + reciben actualizaciones del servidor |
+| Correlation | ✅ Cadenas locales | ✅ + cross-host chains |
+| Risk Scoring | ✅ Scores locales | ✅ + fleet risk aggregation |
+| Alertas | ✅ Generadas localmente | ✅ + fleet alert dashboard |
+| Notificaciones | ✅ Discord/Telegram/Email directos | ✅ + notificaciones centralizadas |
+| AI (Ollama) | ✅ Explicaciones locales | ✅ + fleet AI insights |
+| Storage | ✅ SQLite local | ✅ + PostgreSQL central (backup) |
+| Dashboard | ✅ Tauri UI local | ✅ + Web Console multi-host |
+| EDR Actions | ✅ Kill/Quarantine locales | ✅ + fleet-wide commands |
+| Compliance | ❌ Sin reports centralizados | ✅ CIS/GDPR reports |
 
-#### Ejemplo Playbook YAML:
+**Fallback automático:** el agente monitorea el heartbeat con el Management Server. Si pierde conexión por más de 60 segundos, entra en **Modo Autónomo**. Cuando el servidor vuelve, sincroniza eventos buffereados (con backpressure para no saturar).
+
+---
+
+## Threat Model (STRIDE)
+
+Antes de implementar cualquier feature de v2.0, se debe evaluar contra estos 4 adversarios:
+
+### Adversario A1 — Externo (compromete el Management Server)
+
+| Vector | Mitigación |
+|---|---|
+| Robo de credenciales admin | MFA obligatorio para admins, WebAuthn |
+| Exploit en gRPC endpoint | Input validation estricto, fuzzing de protobuf |
+| Acceso a DB del servidor | Encryption at rest con clave por host, no clave maestra |
+| Interceptar stream de eventos | mTLS + certificate pinning + PSK fallback |
+
+### Adversario A2 — Interno (administrador malicioso)
+
+| Vector | Mitigación |
+|---|---|
+| Fleet query abusiva | Query audit log inmutable, approval del host, rate limiting |
+| EDR command no autorizado | Human-in-the-loop, quorum requirement, audit |
+| Acceso a eventos de otros deptos | RBAC + host groups + data segmentation |
+| Modificar políticas para debilitar seguridad | Policy versioning + rollback + firma de políticas |
+
+### Adversario A3 — Supply Chain (plugin/actualización maliciosa)
+
+| Vector | Mitigación |
+|---|---|
+| Plugin malicioso en marketplace | Sandbox obligatorio por capability, reproducible builds, Rekor log |
+| Update automático comprometido | Gradual rollout (1% → 10% → 100%), checksum verification, TUF |
+| Modelo ML envenenado | Entrenamiento solo con datos locales verificados, modelo baseline comparación |
+| Regla YAML maliciosa | CEL sandbox ya limita capacidades, review de reglas comunitarias |
+
+### Adversario A4 — Pasivo (observador de red/metadatos)
+
+| Vector | Mitigación |
+|---|---|
+| Metadatos de notificaciones push | Silent push: Firebase/APNs solo despierta, sin contenido |
+| Patrones de tráfico agente↔servidor | Padding de mensajes, timing randomization, traffic shaping |
+| Fingerprinting de versión | No exponer versión exacta en handshake, usar version ranges |
+| Análisis de frecuencia de heartbeat | Heartbeat interval con jitter aleatorio |
+
+---
+
+## Features Hardened
+
+### 1. Multi-Host Management (HARDENED)
+
+**Requisitos de seguridad sobre el plan original:**
+
+| # | Requisito | Obligatorio |
+|---|---|---|
+| 1.1 | Agente funcional sin Management Server (Agent Autonomy Guarantee) | ✅ |
+| 1.2 | Privacy budget por host antes de que el agente envíe su primer evento | ✅ |
+| 1.3 | mTLS con PSK como fallback permanente, no solo fase inicial | ✅ |
+| 1.4 | Certificados con fingerprint pinning (TOFU) para entornos sin PKI | ✅ |
+| 1.5 | Data minimization pipeline: eventos redactados/anonymizados antes de salir del agente | ✅ |
+| 1.6 | Event buffering local con backpressure: si el servidor no responde, buffer local con límite | ✅ |
+| 1.7 | Heartbeat con jitter aleatorio para evitar fingerprinting de red | ✅ |
+
+**Arquitectura de datos:**
+
+```
+Agente
+  │
+  ├─► Pipeline Local (siempre activo)
+  │     Collectors → Rules → Correlation → Risk → Storage (SQLite)
+  │
+  ├─► Privacy Filter (configurable)
+  │     Redact command_lines, anonimizar paths/users/IPs
+  │     → Produce "evento compartible"
+  │
+  ├─► Event Buffer (ring buffer, 10k eventos máx)
+  │     Si Management Server no responde, almacena aquí
+  │     Con backpressure: si se llena, droppea eventos de baja severidad
+  │
+  └─► StreamEvents (gRPC bidireccional)
+        Solo envía eventos que pasaron el Privacy Filter
+        Tipos de evento: aggregated_stats, alert_summary, event_sample
+```
+
+### 2. EDR — Response Actions (HARDENED)
+
+**Tiered Response Model (obligatorio):**
+
+| Tier | Acciones | Requiere |
+|---|---|---|
+| **T1 — Automático** | Notificar, enriquecer evento, actualizar risk score, loggear | Nada |
+| **T2 — Confirmación** | Kill process, quarantine file, block IP | Confirmación de 1 admin |
+| **T3 — Quorum** | Isolate host, network block amplio, remote shell | Confirmación de 2+ admins |
+| **T4 — Break-glass** | Des-aislar host, revertir quarantine, rollback | 1 admin con justificación |
+
+**Nunca automático:** isolate, kill, quarantine, shell. Siempre requieren T2 o superior.
+
+**Playbook re-diseñado:**
 
 ```yaml
 playbook:
   id: "ransomware-response"
   name: "Ransomware Response"
   trigger:
-    rule_ids: ["ransomware-file-encryption", "shadow-copy-delete"]
+    rule_ids: ["ransomware-file-encryption"]
     min_risk: 800
+    cooldown: 3600  # máximo 1 ejecución por hora
+    blast_radius: 3  # máximo 3 hosts afectados simultáneamente
   actions:
-    - action: isolate_host
-    - action: kill_process_tree
-    - action: collect_snapshot
     - action: notify_all
+      tier: T1
       channels: [discord, telegram, email]
-    - action: create_ticket
-      system: "jira"
+    - action: collect_snapshot
+      tier: T1
+    - action: kill_process_tree
+      tier: T2
+      require_confirmation: true
+      timeout: 300  # si no hay confirmación en 5 min, escala
+    - action: isolate_host
+      tier: T3
+      require_quorum: 2
+      auto_revert: 3600  # revertir aislamiento tras 1h si no hay confirmación adicional
 ```
 
-### 3. Machine Learning On-Device
+**Remote Shell específico:**
 
-| Modelo | Técnica | Detección |
+- Solo commands whitelist: `ps`, `netstat`, `ss`, `ls`, `cat /proc/*`, `find`, `lsof`, `last`, `who`, `systemctl status`
+- Proceso con seccomp/AppContainer que bloquea syscalls de escritura, exec, y network
+- Máximo 5 minutos por sesión, requiere T3
+- Auditoría completa: cada comando tecleado se registra con timestamp y hash
+- El agente puede rechazar la sesión si detecta anomalías en el management server
+
+### 3. Machine Learning On-Device (HARDENED)
+
+| # | Requisito | Obligatorio |
 |---|---|---|
-| **Process Anomaly** | Isolation Forest | Process behavior outlier detection |
-| **Network Anomaly** | Autoencoder (LSTM) | Unusual traffic patterns, C2 beaconing |
-| **File Entropy** | Statistical + Heuristic | Packed/encrypted executables |
-| **User Behavior** | Bayesian Changepoint | Deviations from normal activity |
-| **Parent-Child** | Markov Chain | Unusual process lineage |
+| 3.1 | ML 100% local por defecto. Federated learning desactivado. | ✅ |
+| 3.2 | Federated learning: si se activa, requiere Differential Privacy (DP-SGD, ε < 8) | ✅ |
+| 3.3 | Secure Aggregation: el servidor no ve contribuciones individuales, solo el agregado | ✅ |
+| 3.4 | Entrenamiento solo con datos locales verificados (no datos de otros agentes sin sanitizar) | ✅ |
+| 3.5 | Modelo baseline de comparación para detectar envenenamiento de modelo | ✅ |
+| 3.6 | Opt-in granular: el usuario elige qué modelos participan (proceso sí, red no, etc.) | ✅ |
 
-#### Arquitectura ML:
+### 4. Compliance Automation (HARDENED)
 
-```
-┌──────────────────────────────────────────┐
-│              ML Engine (per-agent)        │
-├──────────────────────────────────────────┤
-│  Feature Extractor                        │
-│    └─► Process features (256-dim vector)  │
-│    └─► Network features (128-dim)         │
-│    └─► File features (64-dim)             │
-│                                           │
-│  Model Runtime (ONNX)                     │
-│    └─► Isolation Forest (sklearn → ONNX)  │
-│    └─► Autoencoder (PyTorch → ONNX)       │
-│    └─► Inference < 5ms CPU                │
-│                                           │
-│  Training (offline)                       │
-│    └─► Periodic retraining with local data│
-│    └─► Federated: share model weights,    │
-│        never raw data                     │
-└──────────────────────────────────────────┘
-```
+**Requisitos de arquitectura para cumplimiento real:**
 
-### 4. Compliance Automation
-
-| Framework | Checks |
-|---|---|
-| **CIS Benchmarks** | Level 1 + 2 para Linux, Windows, macOS |
-| **GDPR** | Inventario de datos personales, datos en logs, retention |
-| **PCI-DSS** | Segmentación de red, acceso a datos de tarjeta |
-| **STIG** | DISA STIGs para RHEL, Windows Server |
-| **ISO 27001** | Controles de acceso, monitoreo, respuesta a incidentes |
-
-#### Compliance Engine:
-
-```
-Policy as Code (Rego/OPA):
-
-package sentinel.compliance.cis_ubuntu_22
-
-deny[msg] {
-  input.sysctl["net.ipv4.ip_forward"] != 0
-  msg := "CIS 3.1.1: IP forwarding must be disabled"
-}
-
-deny[msg] {
-  input.sshd_config["PermitRootLogin"] != "no"
-  msg := "CIS 5.2.10: Root login must be disabled"
-}
-```
-
-### 5. SIEM/SOAR Integrations
-
-| Sistema | Tipo | Protocolo |
+| # | Requisito | Obligatorio |
 |---|---|---|
-| **Splunk** | SIEM | HEC (HTTP Event Collector) |
-| **Elastic Stack** | SIEM | Elasticsearch Bulk API |
-| **Microsoft Sentinel** | SIEM | Log Analytics Data Collector |
-| **Wazuh** | XDR | wazuh-syscheckd protocol |
-| **TheHive** | SOAR | REST API (alertas → casos) |
-| **Webhook Genérico** | Custom | JSON POST |
+| 4.1 | El compliance engine corre LOCALMENTE en cada agente, no en el servidor central | ✅ |
+| 4.2 | Los reports de compliance se generan por host y se agregan voluntariamente | ✅ |
+| 4.3 | GDPR: data minimization pipeline es obligatorio (Privacy Filter) | ✅ |
+| 4.4 | GDPR: derecho al olvido — borrar todos los datos de un host en el servidor central | ✅ |
+| 4.5 | GDPR: registro de transferencias internacionales (qué datos salieron, a dónde, cuándo) | ✅ |
+| 4.6 | Cifrado en reposo en el management server con claves por host | ✅ |
 
-### 6. Plugin Marketplace
+### 5. SIEM Connectors (HARDENED)
 
-| Funcionalidad | Detalle |
-|---|---|
-| **Registry** | GitHub Releases + checksums |
-| **Signing** | Plugins firmados con cosign/SSH key |
-| **Review Process** | Automated + manual para featured |
-| **Auto-update** | Check for updates, verify checksum, hot-reload |
-| **Ratings** | Community reviews, downloads, security score |
-| **Categories** | Threat Intel, Notification, Automation, SIEM |
+| # | Requisito | Obligatorio |
+|---|---|---|
+| 5.1 | Field whitelist por destino SIEM (nunca enviar todo) | ✅ |
+| 5.2 | Transformer pipeline: redactar PII antes de enviar | ✅ |
+| 5.3 | Data residency: forzar endpoint del SIEM en misma región | ✅ |
+| 5.4 | Audit log de exfiltración: cuántos eventos, de qué tipo, a qué destino | ✅ |
+| 5.5 | Opt-in por tipo de evento, no all-or-nothing | ✅ |
 
-### 7. Cloud Sync (Opt-in)
+### 6. Plugin Marketplace (HARDENED)
 
-| Feature | Descripción |
-|---|---|
-| **Encrypted Backup** | Config, reglas, eventos cifrados con age/XChaCha20 |
-| **Shared Threat Intel** | IOCs anonimizados compartidos (opt-in) |
-| **Remote UI Proxy** | Acceder al dashboard via tunnel cifrado |
-| **Mobile Push** | Notificaciones push via Firebase/APNs |
-| **Sync Dashboard** | Estado de todos los hosts desde cualquier lugar |
+| # | Requisito | Obligatorio |
+|---|---|---|
+| 6.1 | Sandbox obligatorio: cada plugin se ejecuta con capabilities explícitas, enforce por seccomp/AppContainer | ✅ |
+| 6.2 | Reproducible builds: hash del binario verificable desde el fuente | ✅ |
+| 6.3 | Transparency log (Rekor/Sigstore): cada release registrada en log inmutable | ✅ |
+| 6.4 | Gradual rollout: actualizaciones a 1% → 10% → 50% → 100% | ✅ |
+| 6.5 | Firmado con hardware keys (YubiKey/HSM), no solo SSH | ✅ |
+| 6.6 | Review obligatorio para plugins con capability `network:*` o `event:read` | ✅ |
+| 6.7 | Auto-update deshabilitable por el usuario | ✅ |
 
-### 8. Mobile Companion
+### 7. Cloud Sync (HARDENED)
 
-| Plataforma | Tecnología |
-|---|---|
-| iOS | SwiftUI + gRPC client |
-| Android | Jetpack Compose + gRPC client |
-| Funciones | Dashboard read-only, alert push, acknowledge, chat AI |
-| Autenticación | PSK + mTLS al management server |
+| # | Requisito | Obligatorio |
+|---|---|---|
+| 7.1 | Cada feature de Cloud Sync es opt-in individual | ✅ |
+| 7.2 | Backup cifrado con clave derivada de frase del usuario (nunca en el servidor) | ✅ |
+| 7.3 | Threat intel compartida: solo IOCs, nunca datos de eventos | ✅ |
+| 7.4 | Remote UI proxy: túnel WireGuard, no simple TCP forward | ✅ |
+
+### 8. Mobile Companion (HARDENED)
+
+| # | Requisito | Obligatorio |
+|---|---|---|
+| 8.1 | Silent push: Firebase/APNs solo despierta la app, zero contenido | ✅ |
+| 8.2 | La app consulta al Management Server directamente por los datos (no pasan por Google/Apple) | ✅ |
+| 8.3 | Modo LAN: WebSocket directo al Management Server en red local (sin push, sin cloud) | ✅ |
+| 8.4 | Frecuencia máxima de push: 1 por minuto (anti-timing analysis) | ✅ |
+| 8.5 | Push deshabilitable por el usuario (solo polling) | ✅ |
 
 ---
 
-## Roadmap v2.0
+## Roadmap v2.0 (Ajustado por Seguridad)
 
 ```
-MES  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18
-      ├─────────────┤├─────────────────────┤├──────────────────┤
-      │   FASE 1     ││      FASE 2         ││     FASE 3       │
-      │ Multi-Host   ││   EDR + ML          ││ Compliance +     │
-      │ Foundation   ││                     ││ Ecosystem        │
-      ├─────────────┤├─────────────────────┤├──────────────────┤
-      │ Agent Comm   ││ ML Engine (ONNX)    ││ CIS Benchmarks   │
-      │ Mgmt Server  ││ ML Models Training  ││ SIEM Connectors  │
-      │ Fleet API    ││ Kill/Quarantine     ││ Plugin Registry  │
-      │ Cross-Host   ││ Isolate Host        ││ Mobile App       │
-      │ RBAC/Audit   ││ Forensic Snapshots  ││ Cloud Sync (opt) │
-      │ Policy Engine││ Remediation PBooks  ││ SOAR (TheHive)   │
-      │ Osquery-style││ Remote Shell        ││ Marketplace      │
-      └─────────────┘└─────────────────────┘└──────────────────┘
-                          │ Release v2.0-beta  │   Release v2.0  │
-                          │ Mes 12              │   Mes 18         │
+MES  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20
+      ├─────────────┤├──────────────────────┤├──────────────────────┤
+      │   FASE 1     ││       FASE 2         ││       FASE 3         │
+      │ Multi-Host   ││   EDR + ML +         ││ Compliance +         │
+      │ + Privacy    ││   Seguridad          ││ Ecosystem            │
+      ├─────────────┤├──────────────────────┤├──────────────────────┤
+      │ Threat Model ││ Tiered EDR (T1-T4)   ││ CIS Engine (local)   │
+      │ Privacy Busget││ Human-in-the-loop   ││ GDPR Module          │
+      │ Agent Autonomy││ Playbooks auditados ││ SIEM + Transformer   │
+      │ Mgmt Server HA││ Remote Shell seguro ││ Plugin Sandbox       │
+      │ Data Minimiz. ││ ML + DP-SGD + SecAgg││ Marketplace          │
+      │ mTLS + PSK    ││ Fleet Query limits  ││ Mobile (silent push) │
+      │ Fleet API     ││ Forensic Snapshots  ││ Cloud Sync (opt-in)  │
+      │ Cross-Host    ││                     ││ SOAR (TheHive)       │
+      │ RBAC + Audit  ││                     ││                      │
+      └─────────────┘└──────────────────────┘└──────────────────────┘
 ```
 
 ---
 
-## Fases Detalladas
+## Matriz de Riesgos Actualizada (15 riesgos rastreados)
 
-### FASE 1: Multi-Host Foundation (Meses 1-6)
-
-**Objetivo:** Un management server central que gestione múltiples agentes con políticas centralizadas.
-
-| # | Tarea | Semanas |
-|---|---|---|
-| 1.1 | **Agent Communication Layer**: gRPC bidirectional streaming con mTLS, heartbeats, reconnect | 3 |
-| 1.2 | **Management Server Binary** (`sentinel-mgmt`): API Gateway, agent registry, fleet state | 3 |
-| 1.3 | **Agent Enrolment**: PSK o certificado x509, registro automático, host identity | 2 |
-| 1.4 | **Fleet Dashboard**: vista multi-host en UI (health cards, risk summary, alert feed agregado) | 3 |
-| 1.5 | **Cross-Host Correlation**: chains que saltan entre hosts (ej: phishing → RDP → lateral movement) | 4 |
-| 1.6 | **Policy Engine**: distribuir rules/configs/plugins a grupos de hosts, versionado de políticas | 3 |
-| 1.7 | **Fleet Queries**: Osquery-style SQL para consultar cualquier host en tiempo real | 3 |
-| 1.8 | **RBAC + Audit Log**: roles admin/analyst/viewer, log de todas las acciones | 2 |
-| 1.9 | **Host Groups + Tags**: agrupar hosts por entorno, criticidad, SO | 1 |
-
-**Entregable:** Management server funcional gestionando N agentes, fleet dashboard, cross-host correlation chains.
-
-### FASE 2: EDR + Machine Learning (Meses 7-12)
-
-**Objetivo:** Capacidades de respuesta activa y detección de anomalías con ML local.
-
-| # | Tarea | Semanas |
-|---|---|---|
-| 2.1 | **Process Kill**: matar proceso por PID, con confirmación y registro | 1 |
-| 2.2 | **File Quarantine**: mover archivo a directorio seguro, conservar hash + metadata | 1 |
-| 2.3 | **Network Block**: iptables/nftables (Linux), WFP (Windows), pf (macOS) | 2 |
-| 2.4 | **Host Isolation**: regla DROP all except management server, botón de des-aislar | 2 |
-| 2.5 | **Forensic Snapshot**: colectar procesos, conexiones, archivos, registros en un ZIP cifrado | 2 |
-| 2.6 | **Remote Shell**: terminal read-only vía gRPC stream, auditado, sin ejecución | 2 |
-| 2.7 | **Remediation Playbooks**: YAML-based workflows con acciones encadenadas + condiciones | 2 |
-| 2.8 | **ML Engine Core**: feature extractor pipeline + ONNX runtime integrado | 3 |
-| 2.9 | **Anomaly Detection Models**: Isolation Forest para procesos, Autoencoder para red | 4 |
-| 2.10| **Model Training Pipeline**: scripts offline para entrenar con datos históricos | 3 |
-| 2.11| **Federated Learning (opt-in)**: compartir pesos de modelo, nunca datos crudos | 3 |
-
-**Entregable:** EDR response actions funcionales, ML engine integrado con detección de anomalías, playbooks automatizados.
-
-### FASE 3: Compliance + Ecosystem (Meses 13-18)
-
-**Objetivo:** Cumplimiento normativo automatizado, marketplace de plugins, y mobile companion.
-
-| # | Tarea | Semanas |
-|---|---|---|
-| 3.1 | **CIS Benchmark Engine**: evaluador de políticas OPA/Rego, reportes HTML/PDF | 3 |
-| 3.2 | **CIS Profiles**: Ubuntu 22.04 L1/L2, Windows 11 L1, macOS Ventura L1 | 3 |
-| 3.3 | **GDPR Module**: escaneo de datos personales en logs, métricas de retención | 2 |
-| 3.4 | **SIEM Connectors**: Splunk HEC, Elasticsearch Bulk, Sentinel Log Analytics | 3 |
-| 3.5 | **SOAR Integration**: TheHive API (crear casos desde alertas), webhooks | 2 |
-| 3.6 | **Plugin Registry**: GitHub Releases + API para listar, descargar, verificar plugins | 2 |
-| 3.7 | **Plugin Marketplace UI**: buscar, instalar, calificar plugins desde la UI | 2 |
-| 3.8 | **Mobile iOS App**: SwiftUI dashboard read-only, push notifications, acknowledge alert | 3 |
-| 3.9 | **Mobile Android App**: Jetpack Compose, mismas capacidades | 3 |
-| 3.10| **Cloud Sync**: backup cifrado, threat intel compartida, remote UI proxy | 3 |
-| 3.11| **v2.0 GA**: release completo, docs, migration guide v1→v2, anuncio | 2 |
-
-**Entregable:** Compliance engine con CIS/GDPR reports, SIEM/SOAR conectores, marketplace público, mobile apps.
-
----
-
-## Stack Tecnológico v2.0
-
-| Componente | v0.1.0 (actual) | v1.0 | v2.0 |
+| # | Riesgo | Mitigado por | Estado |
 |---|---|---|---|
-| **Core** | Rust | Rust | Rust |
-| **UI** | Tauri + React | Tauri v2 + React | + React SPA (Web Console) |
-| **Mobile** | — | — | SwiftUI + Jetpack Compose |
-| **API** | gRPC (tonic) | gRPC + mTLS | gRPC + REST Gateway |
-| **DB** | SQLite + DuckDB | + PostgreSQL (mgmt server) | + TimescaleDB |
-| **ML** | — | — | ONNX Runtime |
-| **Compliance** | — | — | OPA/Rego |
-| **Fleet Queries** | — | — | osquery-style SQL |
-| **Auth** | — | PSK | LDAP/OIDC + mTLS |
-| **Message Queue** | Tokio channels | + NATS (mgmt ↔ agent) | NATS |
-| **Cloud** | — | — | Optional: S3/MinIO |
-| **Observability** | Prometheus + Loki | + Grafana dashboards | + OpenTelemetry traces |
+| 1 | Concentración datos en Mgmt Server | Privacy Filter + Data Minimization Pipeline | ✅ Mitigado |
+| 2 | Remote Shell puerta trasera | Command whitelist + seccomp + T3 quorum + JIT | ✅ Mitigado |
+| 3 | EDR playbooks automáticos | Tiered Response (T1-T4) + human-in-the-loop | ✅ Mitigado |
+| 4 | Plugin supply chain | Sandbox + reproducible builds + Rekor + gradual rollout | ✅ Mitigado |
+| 5 | Management Server SPOF | Agent Autonomy Guarantee + HA active-passive + local buffer | ✅ Mitigado |
+| 6 | Mobile push metadatos | Silent push + local fetch + WebSocket LAN mode | ✅ Mitigado |
+| 7 | Fleet queries abusivas | Approval del host + audit log + rate limiting + row limit | ✅ Mitigado |
+| 8 | SIEM exfiltración | Field whitelist + transformer pipeline + data residency | ✅ Mitigado |
+| 9 | Federated learning filtración | DP-SGD (ε<8) + Secure Aggregation + opt-in granular | ✅ Mitigado |
+| 10 | StreamEvents buffer explosion | Batching + sampling adaptativo + NATS pub/sub | ✅ Mitigado |
+| 11 | mTLS dependencia PKI | PSK fallback permanente + TOFU fingerprint pinning | ✅ Mitigado |
+| 12 | Fleet queries DoS | Timeout + row limit + rate limiting + async queries | ✅ Mitigado |
+| 13 | Anonimato inexistente | Documentado como no-anónimo. Modo Personal para anonimato. | ✅ Aceptado |
+| 14 | Cumplimiento auto-contradictorio | Data minimization pipeline + cifrado en reposo + residency control | ✅ Mitigado |
+| 15 | Model inversion ML | DP-SGD + entrenamiento solo local + baseline comparison | ✅ Mitigado |
 
 ---
 
-## Estimación de Recursos
+## Definición de Done (por Feature v2.0)
 
-| Perfil | Fase 1 | Fase 2 | Fase 3 |
-|---|---|---|---|
-| Backend Engineer 1 (Rust, sistemas) | 6 meses | 6 meses | 6 meses |
-| Backend Engineer 2 (Rust, networking, crypto) | 6 meses | 6 meses | 6 meses |
-| ML/Data Engineer | — | 3 meses | 3 meses |
-| Frontend Engineer (React/TS) | 4 meses | 3 meses | 3 meses |
-| Mobile Engineer (Swift/Kotlin) | — | — | 4 meses |
-| Security Engineer (rules, compliance) | 3 meses | 3 meses | 4 meses |
-| DevOps/SRE | 2 meses | 3 meses | 3 meses |
+Toda feature de v2.0 debe cumplir este checklist antes de marcarse como completada:
 
-**Total:** ~4-7 personas × 18 meses para v2.0 completo. Con un equipo de 2-3, priorizar Fase 1 + Fase 2 parcial.
-
----
-
-## Riesgos y Mitigaciones
-
-| Riesgo | Prob. | Impacto | Mitigación |
-|---|---|---|---|
-| Complejidad mTLS + cert management | Alta | Alto | Empezar con PSK, migrar a mTLS en v2.1 |
-| ML falsos positivos | Alta | Medio | Modo "solo alerta" inicial, feedback loop |
-| Latencia fleet queries (>100 agents) | Media | Alto | Arquitectura pub/sub con NATS, queries async |
-| EDR acciones destructivas (kill/isolate) | Media | Crítico | Confirmación manual, dry-run mode, undo |
-| Plugin seguridad (sandbox escape) | Baja | Crítico | gRPC sandbox, seccomp/AppContainer, firmas |
-| Adopción mobile apps | Media | Bajo | Priorizar Web Console responsive primero |
+- [ ] Threat model documentado (A1-A4 evaluados)
+- [ ] Data minimization aplicada (Privacy Filter configurado)
+- [ ] Agent Autonomy verificado (funciona sin Management Server)
+- [ ] Human-in-the-loop para T2+ actions
+- [ ] Audit log de todas las acciones
+- [ ] Tests de seguridad: fuzzing + penetration testing específico de la feature
+- [ ] Documentación de implicaciones de privacidad para el usuario final
+- [ ] Opt-in granular (no all-or-nothing)
+- [ ] Review de código por al menos 1 security engineer
 
 ---
 
-## Métricas de Éxito v2.0
-
-| Métrica | Target |
-|---|---|
-| Agentes gestionados simultáneamente | 1,000+ |
-| Latencia fleet query (P95) | < 2 segundos |
-| Falsos positivos ML | < 5% |
-| Tiempo de respuesta EDR (alert → acción) | < 30 segundos |
-| Cobertura MITRE ATT&CK | > 80% de técnicas |
-| Plugins en marketplace | 50+ |
-| CSAT (customer satisfaction) | > 4.5/5 |
-
----
-
-## Próximos Pasos Inmediatos
-
-1. Completar v0.1.0 → v1.0 (colectores Windows/macOS, browser, dashboard visualizaciones, hardening)
-2. Definir protocolo Agent ↔ Management Server (protobuf)
-3. Prototipo de management server con 2 agentes locales
-4. Primer fleet dashboard con datos mock
-
----
-
-*Plan Version: 1.0 — Para revisión y priorización*
+*Plan Version: 2.0-hardened — Blindado contra 15 riesgos identificados en auditoría*
