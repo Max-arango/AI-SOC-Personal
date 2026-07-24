@@ -1,9 +1,9 @@
 //! Core traits and type definitions for Sentinel AI modules
 
-use std::sync::Arc;
+use crate::{ConfigValue, EventId, ModuleContext, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
-use crate::{ConfigValue, EventId, ModuleContext, Result};
+use std::sync::Arc;
 
 pub use sentinel_events::Event;
 
@@ -12,8 +12,10 @@ pub use sentinel_events::Event;
 pub trait Module: Send + Sync {
     fn name(&self) -> &'static str;
     fn version(&self) -> &'static str;
-    fn dependencies(&self) -> Vec<&'static str> { vec![] }
-    
+    fn dependencies(&self) -> Vec<&'static str> {
+        vec![]
+    }
+
     async fn initialize(&mut self, ctx: &ModuleContext) -> Result<()>;
     async fn start(&mut self) -> Result<()>;
     async fn stop(&mut self, graceful: bool) -> Result<()>;
@@ -21,7 +23,7 @@ pub trait Module: Send + Sync {
         self.stop(true).await?;
         self.start().await
     }
-    
+
     fn health(&self) -> super::health::ComponentHealth;
     fn config_schema(&self) -> ConfigSchema;
 }
@@ -39,16 +41,16 @@ pub struct ConfigSchema {
 pub trait EventBus: Send + Sync {
     /// Publish an event to the bus
     async fn publish(&self, event: Arc<Event>) -> Result<()>;
-    
+
     /// Subscribe to events matching a filter
     async fn subscribe(&self, filter: EventFilter) -> Result<EventSubscription>;
-    
+
     /// Subscribe to all events of a specific type
     async fn subscribe_type(&self, event_type: &str) -> Result<EventSubscription>;
-    
+
     /// Get current backpressure signal
     fn backpressure(&self) -> crate::BackpressureSignal;
-    
+
     /// Get channel statistics
     fn stats(&self) -> EventBusStats;
 }
@@ -88,19 +90,19 @@ pub struct EventBusStats {
 pub trait Storage: Send + Sync {
     /// Event repository
     async fn events(&self) -> Arc<dyn EventRepository>;
-    
+
     /// Rule repository
     async fn rules(&self) -> Arc<dyn RuleRepository>;
-    
+
     /// Alert repository
     async fn alerts(&self) -> Arc<dyn AlertRepository>;
-    
+
     /// Configuration repository
     async fn config(&self) -> Arc<dyn ConfigRepository>;
-    
+
     /// Run migrations
     async fn migrate(&self) -> Result<()>;
-    
+
     /// Health check
     async fn health(&self) -> Result<()>;
 }
@@ -289,7 +291,10 @@ pub struct RiskMultiplier {
 pub struct RuleAction {
     /// Rule files use `type:` (documented format); `action_type` stays as an
     /// accepted alias for backwards compatibility.
-    #[serde(rename = "type", alias = "action_type")]
+    #[serde(
+        rename = "type",
+        alias = "action_type"
+    )]
     pub action_type: RuleActionType,
     pub config: serde_json::Value,
 }
@@ -322,7 +327,12 @@ pub struct RuleTest {
 pub trait AlertRepository: Send + Sync {
     async fn create(&self, alert: &Alert) -> Result<()>;
     async fn get(&self, id: &crate::AlertId) -> Result<Option<Alert>>;
-    async fn update_state(&self, id: &crate::AlertId, state: AlertState, comment: Option<String>) -> Result<()>;
+    async fn update_state(
+        &self,
+        id: &crate::AlertId,
+        state: AlertState,
+        comment: Option<String>,
+    ) -> Result<()>;
     async fn query(&self, query: AlertQuery) -> Result<Vec<Alert>>;
     async fn count(&self, query: &AlertQuery) -> Result<u64>;
 }
@@ -407,7 +417,12 @@ pub trait PluginManager: Send + Sync {
     async fn load(&self, plugin_id: &str) -> Result<()>;
     async fn unload(&self, plugin_id: &str) -> Result<()>;
     async fn configure(&self, plugin_id: &str, config: serde_json::Value) -> Result<()>;
-    async fn execute_action(&self, plugin_id: &str, action: &str, params: serde_json::Value) -> Result<serde_json::Value>;
+    async fn execute_action(
+        &self,
+        plugin_id: &str,
+        action: &str,
+        params: serde_json::Value,
+    ) -> Result<serde_json::Value>;
     fn list(&self) -> Vec<PluginInfo>;
     fn get(&self, plugin_id: &str) -> Option<PluginInfo>;
 }
@@ -444,7 +459,7 @@ pub trait Collector: Send + Sync {
     fn event_types(&self) -> Vec<&str>;
     fn required_capabilities(&self) -> Vec<String>;
     fn config_schema(&self) -> ConfigSchema;
-    
+
     async fn start(&mut self, ctx: CollectorContext) -> Result<()>;
     async fn stop(&mut self, graceful: bool) -> Result<()>;
     async fn health(&self) -> CollectorHealth;
@@ -494,14 +509,14 @@ pub struct CollectorMetrics {
 #[async_trait]
 pub trait OsAbstraction: Send + Sync {
     fn platform(&self) -> &'static str;
-    
+
     // Process enumeration
     async fn list_processes(&self) -> Result<Vec<ProcessInfo>>;
     async fn get_process(&self, pid: u32) -> Result<Option<ProcessInfo>>;
-    
+
     // Network
     async fn list_connections(&self) -> Result<Vec<ConnectionInfo>>;
-    
+
     // File system
     async fn watch_path(&self, path: &str, recursive: bool) -> Result<Arc<dyn FileWatcher>>;
 
@@ -512,10 +527,10 @@ pub trait OsAbstraction: Send + Sync {
     // USB
     async fn list_usb_devices(&self) -> Result<Vec<UsbDeviceInfo>>;
     async fn watch_usb(&self) -> Result<Arc<dyn UsbWatcher>>;
-    
+
     // Browser
     async fn get_browser_data(&self, browser: BrowserType) -> Result<BrowserData>;
-    
+
     // Startup
     async fn list_startup_items(&self) -> Result<Vec<StartupItem>>;
 }

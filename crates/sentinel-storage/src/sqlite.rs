@@ -1,16 +1,19 @@
 //! SQLite storage for metadata, config, rules, alerts
 
+use anyhow::{Context, Result};
+use chrono::Utc;
+use sqlx::{sqlite::SqlitePoolOptions, Row, SqlitePool};
 use std::path::Path;
 use std::sync::Arc;
-use anyhow::{Context, Result};
-use sqlx::{sqlite::SqlitePoolOptions, SqlitePool, Row};
 use tokio::sync::RwLock;
 use tracing::info;
-use chrono::Utc;
 
 use sentinel_core::{
-    traits::{EventRepository, RuleRepository, AlertRepository, ConfigRepository, EventQuery, EventCursor, AggregationQuery, AggregationResult, AggregationBucket, RetentionPolicy},
-    ConfigValue, EventId, AlertId, Result as CoreResult, SentinelError,
+    traits::{
+        AggregationBucket, AggregationQuery, AggregationResult, AlertRepository, ConfigRepository,
+        EventCursor, EventQuery, EventRepository, RetentionPolicy, RuleRepository,
+    },
+    AlertId, ConfigValue, EventId, Result as CoreResult, SentinelError,
 };
 use sentinel_events::Event;
 
@@ -48,29 +51,34 @@ impl SqliteStorage {
     pub async fn new(config: &SqliteConfig) -> Result<Self> {
         // Create parent directory if needed
         if let Some(parent) = Path::new(&config.path).parent() {
-            tokio::fs::create_dir_all(parent).await
+            tokio::fs::create_dir_all(parent)
+                .await
                 .context("Failed to create database directory")?;
         }
-        
+
         let pool = SqlitePoolOptions::new()
             .max_connections(config.max_connections)
             .connect_with(
                 sqlx::sqlite::SqliteConnectOptions::new()
                     .filename(&config.path)
                     .create_if_missing(true)
-                    .journal_mode(if config.wal_mode { sqlx::sqlite::SqliteJournalMode::Wal } else { sqlx::sqlite::SqliteJournalMode::Delete })
-                    .busy_timeout(std::time::Duration::from_millis(config.busy_timeout_ms as u64))
+                    .journal_mode(if config.wal_mode {
+                        sqlx::sqlite::SqliteJournalMode::Wal
+                    } else {
+                        sqlx::sqlite::SqliteJournalMode::Delete
+                    })
+                    .busy_timeout(std::time::Duration::from_millis(config.busy_timeout_ms as u64)),
             )
             .await
             .context("Failed to connect to SQLite")?;
-        
+
         // Enable foreign keys
         sqlx::query("PRAGMA foreign_keys = ON")
             .execute(&pool)
             .await?;
-        
+
         info!("SQLite storage initialized at {}", config.path);
-        
+
         Ok(Self {
             pool,
             event_repo: Arc::new(RwLock::new(None)),
@@ -79,20 +87,18 @@ impl SqliteStorage {
             config_repo: Arc::new(RwLock::new(None)),
         })
     }
-    
+
     /// Get connection pool
     pub fn pool(&self) -> &SqlitePool {
         &self.pool
     }
-    
+
     /// Health check
     pub async fn health(&self) -> Result<()> {
-        sqlx::query("SELECT 1")
-            .execute(&self.pool)
-            .await?;
+        sqlx::query("SELECT 1").execute(&self.pool).await?;
         Ok(())
     }
-    
+
     /// Get or create event repository
     pub async fn events(&self) -> Arc<dyn EventRepository> {
         let mut repo = self.event_repo.write().await;
@@ -101,7 +107,7 @@ impl SqliteStorage {
         }
         repo.clone().unwrap()
     }
-    
+
     /// Get or create rule repository
     pub async fn rules(&self) -> Arc<dyn RuleRepository> {
         let mut repo = self.rule_repo.write().await;
@@ -110,7 +116,7 @@ impl SqliteStorage {
         }
         repo.clone().unwrap()
     }
-    
+
     /// Get or create alert repository
     pub async fn alerts(&self) -> Arc<dyn AlertRepository> {
         let mut repo = self.alert_repo.write().await;
@@ -119,7 +125,7 @@ impl SqliteStorage {
         }
         repo.clone().unwrap()
     }
-    
+
     /// Get or create config repository
     pub async fn config(&self) -> Arc<dyn ConfigRepository> {
         let mut repo = self.config_repo.write().await;
@@ -147,25 +153,34 @@ impl EventRepository for SqliteEventRepository {
         if events.is_empty() {
             return Ok(());
         }
-        
-        let mut tx = self.pool.begin().await
-            .map_err(|e| SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string())))?;
-        
+
+        let mut tx = self.pool.begin().await.map_err(|e| {
+            SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string()))
+        })?;
+
         for event in events {
-            let process_json = event.process.as_ref()
+            let process_json = event
+                .process
+                .as_ref()
                 .map(crate::conv::process_to_json)
                 .map(|v| v.to_string())
                 .unwrap_or_else(|| "{}".to_string());
-            let payload_json = event.payload.as_ref()
+            let payload_json = event
+                .payload
+                .as_ref()
                 .map(crate::conv::payload_to_json)
                 .map(|v| v.to_string())
                 .unwrap_or_else(|| "{}".to_string());
             let tags_json = serde_json::to_string(&event.tags)
                 .map_err(|e| SentinelError::Serialization(e.into()))?;
-            let metadata_json = event.metadata.as_ref()
+            let metadata_json = event
+                .metadata
+                .as_ref()
                 .map(|m| crate::conv::struct_to_json(m).to_string())
                 .unwrap_or_else(|| "{}".to_string());
-            let correlation_json = event.correlation.as_ref()
+            let correlation_json = event
+                .correlation
+                .as_ref()
                 .map(|c| crate::conv::correlation_to_json(c).to_string())
                 .unwrap_or_else(|| "{}".to_string());
             let timestamp = crate::conv::ts_to_rfc3339(&event.timestamp);
@@ -173,7 +188,7 @@ impl EventRepository for SqliteEventRepository {
             let severity = event.severity;
             let risk_score = event.risk_score as i64;
             let schema_version = event.schema_version as i32;
-            
+
             sqlx::query(
                 r#"
                 INSERT INTO events (id, type, source, timestamp, ingest_timestamp, severity, process, payload, tags, metadata, risk_score, correlation, host_id, schema_version)
@@ -198,13 +213,14 @@ impl EventRepository for SqliteEventRepository {
             .await
             .map_err(|e| SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string())))?;
         }
-        
-        tx.commit().await
-            .map_err(|e| SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string())))?;
-        
+
+        tx.commit().await.map_err(|e| {
+            SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string()))
+        })?;
+
         Ok(())
     }
-    
+
     async fn query(&self, query: EventQuery) -> CoreResult<Arc<dyn EventCursor>> {
         let mut sql = String::from("SELECT * FROM events WHERE 1=1");
         let mut params: Vec<String> = Vec::new();
@@ -296,16 +312,12 @@ impl EventRepository for SqliteEventRepository {
             q = q.bind(p);
         }
 
-        let rows = q
-            .fetch_all(&self.pool)
-            .await
-            .map_err(|e| SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string())))?;
+        let rows = q.fetch_all(&self.pool).await.map_err(|e| {
+            SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string()))
+        })?;
 
         let total_count = rows.len() as u64;
-        let events: Vec<Arc<Event>> = rows
-            .iter()
-            .filter_map(|r| row_to_event(r).ok())
-            .collect();
+        let events: Vec<Arc<Event>> = rows.iter().filter_map(|r| row_to_event(r).ok()).collect();
 
         Ok(Arc::new(SqliteEventCursor {
             events,
@@ -313,14 +325,16 @@ impl EventRepository for SqliteEventRepository {
             total_count,
         }))
     }
-    
+
     async fn get(&self, id: &EventId) -> CoreResult<Option<Arc<Event>>> {
         let id_str = id.to_string();
         let row = sqlx::query("SELECT * FROM events WHERE id = ?")
             .bind(&id_str)
             .fetch_optional(&self.pool)
             .await
-            .map_err(|e| SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string())))?;
+            .map_err(|e| {
+                SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string()))
+            })?;
 
         row.map(|r| row_to_event(&r)).transpose()
     }
@@ -352,14 +366,13 @@ impl EventRepository for SqliteEventRepository {
             q = q.bind(p);
         }
 
-        let row = q
-            .fetch_one(&self.pool)
-            .await
-            .map_err(|e| SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string())))?;
+        let row = q.fetch_one(&self.pool).await.map_err(|e| {
+            SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string()))
+        })?;
 
         Ok(row.get::<i64, _>("cnt") as u64)
     }
-    
+
     async fn aggregate(&self, agg: AggregationQuery) -> CoreResult<AggregationResult> {
         let sql = format!(
             "SELECT {}, COUNT(*) as count, AVG(risk_score) as avg_risk, MIN(risk_score) as min_risk, MAX(risk_score) as max_risk 
@@ -368,32 +381,37 @@ impl EventRepository for SqliteEventRepository {
              GROUP BY {}",
             agg.group_by, agg.group_by
         );
-        
+
         let rows = sqlx::query(&sql)
             .bind(agg.start_time.to_rfc3339())
             .bind(agg.end_time.to_rfc3339())
             .fetch_all(&self.pool)
             .await
-            .map_err(|e| SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string())))?;
-        
-        let buckets = rows.into_iter().map(|r| AggregationBucket {
-            key: r.get("group_key"),
-            count: r.get::<i64, _>("count") as u64,
-            avg_risk: r.get::<Option<f64>, _>("avg_risk"),
-            min_risk: r.get::<Option<i64>, _>("min_risk").map(|v| v as u32),
-            max_risk: r.get::<Option<i64>, _>("max_risk").map(|v| v as u32),
-        }).collect();
-        
+            .map_err(|e| {
+                SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string()))
+            })?;
+
+        let buckets = rows
+            .into_iter()
+            .map(|r| AggregationBucket {
+                key: r.get("group_key"),
+                count: r.get::<i64, _>("count") as u64,
+                avg_risk: r.get::<Option<f64>, _>("avg_risk"),
+                min_risk: r.get::<Option<i64>, _>("min_risk").map(|v| v as u32),
+                max_risk: r.get::<Option<i64>, _>("max_risk").map(|v| v as u32),
+            })
+            .collect();
+
         Ok(AggregationResult { buckets })
     }
-    
+
     async fn retention(&self, policy: RetentionPolicy) -> CoreResult<u64> {
         let sql = "DELETE FROM events WHERE type LIKE ? AND timestamp < datetime('now', ?) AND id IN (
             SELECT id FROM events WHERE type LIKE ? AND timestamp < datetime('now', ?) ORDER BY timestamp DESC LIMIT ?
         )";
-        
+
         let max_age = format!("-{} days", policy.max_age_days);
-        
+
         let result = sqlx::query(sql)
             .bind(&policy.event_type_pattern)
             .bind(&max_age)
@@ -402,8 +420,10 @@ impl EventRepository for SqliteEventRepository {
             .bind(policy.max_count as i64)
             .execute(&self.pool)
             .await
-            .map_err(|e| SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string())))?;
-        
+            .map_err(|e| {
+                SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string()))
+            })?;
+
         Ok(result.rows_affected())
     }
 }
@@ -420,8 +440,7 @@ fn row_to_event(row: &sqlx::sqlite::SqliteRow) -> CoreResult<Arc<Event>> {
     let host_id: String = row.get("host_id");
     let schema_version: i32 = row.get("schema_version");
 
-    let process: Option<sentinel_events::ProcessContext> =
-        deser_process_opt(row, "process");
+    let process: Option<sentinel_events::ProcessContext> = deser_process_opt(row, "process");
 
     Ok(Arc::new(Event {
         id,
@@ -441,7 +460,10 @@ fn row_to_event(row: &sqlx::sqlite::SqliteRow) -> CoreResult<Arc<Event>> {
     }))
 }
 
-fn deser_process_opt(row: &sqlx::sqlite::SqliteRow, col: &str) -> Option<sentinel_events::ProcessContext> {
+fn deser_process_opt(
+    row: &sqlx::sqlite::SqliteRow,
+    col: &str,
+) -> Option<sentinel_events::ProcessContext> {
     use sentinel_events::ProcessContext;
     let s: String = row.get(col);
     if s.is_empty() || s == "{}" {
@@ -454,14 +476,31 @@ fn deser_process_opt(row: &sqlx::sqlite::SqliteRow, col: &str) -> Option<sentine
         ppid: o.get("ppid").and_then(|j| j.as_u64()).unwrap_or(0) as u32,
         name: o.get("name").and_then(|j| j.as_str()).unwrap_or("").into(),
         path: o.get("path").and_then(|j| j.as_str()).unwrap_or("").into(),
-        command_line: o.get("command_line").and_then(|j| j.as_str()).unwrap_or("").into(),
+        command_line: o
+            .get("command_line")
+            .and_then(|j| j.as_str())
+            .unwrap_or("")
+            .into(),
         cwd: o.get("cwd").and_then(|j| j.as_str()).unwrap_or("").into(),
-        integrity_level: o.get("integrity_level").and_then(|j| j.as_str()).unwrap_or("").into(),
+        integrity_level: o
+            .get("integrity_level")
+            .and_then(|j| j.as_str())
+            .unwrap_or("")
+            .into(),
         tree_depth: o.get("tree_depth").and_then(|j| j.as_u64()).unwrap_or(0) as u32,
-        sha256: o.get("sha256").and_then(|j| j.as_str()).unwrap_or("").into(),
-        mitre_techniques: o.get("mitre_techniques")
+        sha256: o
+            .get("sha256")
+            .and_then(|j| j.as_str())
+            .unwrap_or("")
+            .into(),
+        mitre_techniques: o
+            .get("mitre_techniques")
             .and_then(|j| j.as_array())
-            .map(|a| a.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+            .map(|a| {
+                a.iter()
+                    .filter_map(|v| v.as_str().map(String::from))
+                    .collect()
+            })
             .unwrap_or_default(),
         ..Default::default()
     })
@@ -517,12 +556,17 @@ impl RuleRepository for SqliteRuleRepository {
         let rows = sqlx::query("SELECT * FROM rules WHERE enabled = 1")
             .fetch_all(&self.pool)
             .await
-            .map_err(|e| SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string())))?;
+            .map_err(|e| {
+                SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string()))
+            })?;
 
-        Ok(rows.into_iter().map(|r| {
-            let rule_json: String = r.get("rule_json");
-            serde_json::from_str(&rule_json).unwrap_or_default()
-        }).collect())
+        Ok(rows
+            .into_iter()
+            .map(|r| {
+                let rule_json: String = r.get("rule_json");
+                serde_json::from_str(&rule_json).unwrap_or_default()
+            })
+            .collect())
     }
 
     async fn get(&self, id: &str) -> CoreResult<Option<sentinel_core::traits::Rule>> {
@@ -530,20 +574,22 @@ impl RuleRepository for SqliteRuleRepository {
             .bind(id)
             .fetch_optional(&self.pool)
             .await
-            .map_err(|e| SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string())))?;
+            .map_err(|e| {
+                SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string()))
+            })?;
 
         Ok(row.map(|r| {
             let rule_json: String = r.get("rule_json");
             serde_json::from_str(&rule_json).unwrap_or_default()
         }))
     }
-    
+
     async fn upsert(&self, rule: &sentinel_core::traits::Rule) -> CoreResult<()> {
-        let rule_json = serde_json::to_string(rule)
-            .map_err(|e| SentinelError::Serialization(e.into()))?;
+        let rule_json =
+            serde_json::to_string(rule).map_err(|e| SentinelError::Serialization(e.into()))?;
         let created = rule.created.to_rfc3339();
         let modified = rule.modified.to_rfc3339();
-        
+
         sqlx::query(
             r#"
             INSERT INTO rules (id, rule_json, enabled, created_at, updated_at)
@@ -571,7 +617,9 @@ impl RuleRepository for SqliteRuleRepository {
             .bind(id)
             .execute(&self.pool)
             .await
-            .map_err(|e| SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string())))?;
+            .map_err(|e| {
+                SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string()))
+            })?;
         Ok(())
     }
 
@@ -583,7 +631,9 @@ impl RuleRepository for SqliteRuleRepository {
             .bind(id)
             .execute(&self.pool)
             .await
-            .map_err(|e| SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string())))?;
+            .map_err(|e| {
+                SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string()))
+            })?;
         Ok(())
     }
 }
@@ -618,8 +668,13 @@ impl AlertRepository for SqliteAlertRepository {
         let created_at = alert.created_at.to_rfc3339();
         let updated_at = alert.updated_at.to_rfc3339();
         let acknowledged_at = alert.acknowledged_at.map(|d| d.to_rfc3339());
-        let events_str = alert.events.iter().map(|e| e.to_string()).collect::<Vec<_>>().join(",");
-        
+        let events_str = alert
+            .events
+            .iter()
+            .map(|e| e.to_string())
+            .collect::<Vec<_>>()
+            .join(",");
+
         sqlx::query(
             r#"
             INSERT INTO alerts (id, rule_id, correlation_id, risk_score, severity, state, created_at, updated_at, acknowledged_by, acknowledged_at, events, context, ai_summary)
@@ -652,12 +707,19 @@ impl AlertRepository for SqliteAlertRepository {
             .bind(&id_str)
             .fetch_optional(&self.pool)
             .await
-            .map_err(|e| SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string())))?;
+            .map_err(|e| {
+                SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string()))
+            })?;
 
         Ok(row.map(|r| row_to_alert(&r)))
     }
 
-    async fn update_state(&self, id: &AlertId, state: sentinel_core::traits::AlertState, comment: Option<String>) -> CoreResult<()> {
+    async fn update_state(
+        &self,
+        id: &AlertId,
+        state: sentinel_core::traits::AlertState,
+        comment: Option<String>,
+    ) -> CoreResult<()> {
         let now = Utc::now().to_rfc3339();
         let id_str = id.to_string();
         let state_i = state as i32;
@@ -674,8 +736,11 @@ impl AlertRepository for SqliteAlertRepository {
 
         Ok(())
     }
-    
-    async fn query(&self, query: sentinel_core::traits::AlertQuery) -> CoreResult<Vec<sentinel_core::traits::Alert>> {
+
+    async fn query(
+        &self,
+        query: sentinel_core::traits::AlertQuery,
+    ) -> CoreResult<Vec<sentinel_core::traits::Alert>> {
         let mut sql = String::from("SELECT * FROM alerts WHERE 1=1");
         let mut params: Vec<String> = Vec::new();
 
@@ -697,10 +762,9 @@ impl AlertRepository for SqliteAlertRepository {
             q = q.bind(p);
         }
 
-        let rows = q
-            .fetch_all(&self.pool)
-            .await
-            .map_err(|e| SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string())))?;
+        let rows = q.fetch_all(&self.pool).await.map_err(|e| {
+            SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string()))
+        })?;
 
         Ok(rows.iter().map(|r| row_to_alert(r)).collect())
     }
@@ -719,10 +783,9 @@ impl AlertRepository for SqliteAlertRepository {
             q = q.bind(p);
         }
 
-        let row = q
-            .fetch_one(&self.pool)
-            .await
-            .map_err(|e| SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string())))?;
+        let row = q.fetch_one(&self.pool).await.map_err(|e| {
+            SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string()))
+        })?;
 
         Ok(row.get::<i64, _>("cnt") as u64)
     }
@@ -798,19 +861,22 @@ impl ConfigRepository for SqliteConfigRepository {
             .bind(key)
             .fetch_optional(&self.pool)
             .await
-            .map_err(|e| SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string())))?;
+            .map_err(|e| {
+                SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string()))
+            })?;
 
         row.map(|r| {
             let value: String = r.get("value");
             serde_json::from_str::<serde_json::Value>(&value)
                 .map(ConfigValue::from)
                 .map_err(|e| SentinelError::Serialization(e.into()))
-        }).transpose()
+        })
+        .transpose()
     }
 
     async fn set(&self, key: &str, value: &ConfigValue) -> CoreResult<()> {
-        let json = serde_json::to_string(value)
-            .map_err(|e| SentinelError::Serialization(e.into()))?;
+        let json =
+            serde_json::to_string(value).map_err(|e| SentinelError::Serialization(e.into()))?;
 
         let updated_at = Utc::now().to_rfc3339();
         sqlx::query(
@@ -832,7 +898,9 @@ impl ConfigRepository for SqliteConfigRepository {
             .bind(key)
             .execute(&self.pool)
             .await
-            .map_err(|e| SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string())))?;
+            .map_err(|e| {
+                SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string()))
+            })?;
         Ok(())
     }
 
@@ -842,22 +910,27 @@ impl ConfigRepository for SqliteConfigRepository {
             .bind(&pattern)
             .fetch_all(&self.pool)
             .await
-            .map_err(|e| SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string())))?;
+            .map_err(|e| {
+                SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string()))
+            })?;
 
-        Ok(rows.into_iter().filter_map(|r| {
-            let value: String = r.get("value");
-            let key: String = r.get("key");
-            let v: serde_json::Value = serde_json::from_str(&value).ok()?;
-            Some((key, ConfigValue::from(v)))
-        }).collect())
+        Ok(rows
+            .into_iter()
+            .filter_map(|r| {
+                let value: String = r.get("value");
+                let key: String = r.get("key");
+                let v: serde_json::Value = serde_json::from_str(&value).ok()?;
+                Some((key, ConfigValue::from(v)))
+            })
+            .collect())
     }
 }
 #[cfg(test)]
 mod tests {
     use super::*;
-    use sentinel_events::Event;
-    use sentinel_core::traits::{EventQuery, EventRepository, EventCursor};
+    use sentinel_core::traits::{EventCursor, EventQuery, EventRepository};
     use sentinel_core::Ulid;
+    use sentinel_events::Event;
     use tempfile::tempdir;
 
     async fn setup() -> (SqliteStorage, tempfile::TempDir) {

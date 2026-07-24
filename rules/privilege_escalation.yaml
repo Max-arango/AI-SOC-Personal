@@ -1,0 +1,34 @@
+rule:
+  id: "rule-011-privilege-escalation"
+  version: 1
+  name: "Suspicious Privilege Escalation"
+  description: "Root or elevated process spawned by non-privileged parent"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "privilege-escalation"
+  subcategory: "exploitation-for-privilege-escalation"
+  mitre:
+    - technique: "T1068"
+      name: "Exploitation for Privilege Escalation"
+      tactic: "Privilege Escalation"
+  severity: "Error"
+  risk:
+    base_score: 80
+    confidence: 0.8
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && event.process.user.is_elevated == true
+    && (event.process.name.lowerAscii().contains("sudo")
+        || event.process.name.lowerAscii().contains("su")
+        || event.process.name.lowerAscii().contains("pkexec")
+        || event.process.command_line.lowerAscii().contains("/etc/shadow")
+        || event.process.command_line.lowerAscii().contains("chmod u+s"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

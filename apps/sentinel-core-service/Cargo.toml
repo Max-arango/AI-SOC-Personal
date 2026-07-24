@@ -46,3 +46,10 @@ sentinel-risk = { path = "../../crates/sentinel-risk" }
 sentinel-correlation = { path = "../../crates/sentinel-correlation" }
 chrono = { workspace = true }
 sentinel-ai = { path = "../../crates/sentinel-ai" }
+sentinel-plugin-discord = { path = "../../plugins/discord" }
+sentinel-plugin-telegram = { path = "../../plugins/telegram" }
+sentinel-plugin-email = { path = "../../plugins/email" }
+sentinel-plugin-abuseipdb = { path = "../../plugins/abuseipdb" }
+sentinel-plugin-shodan = { path = "../../plugins/shodan" }
+sentinel-plugin-slack = { path = "../../plugins/slack" }
+sentinel-plugin-home-assistant = { path = "../../plugins/home-assistant" }

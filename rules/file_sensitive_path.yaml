@@ -1,0 +1,29 @@
+rule:
+  id: "rule-005-suspicious-file-sensitive"
+  version: 1
+  name: "File Modification in Sensitive Path"
+  description: "File created or modified in sensitive system directories"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "defense-evasion"
+  subcategory: "file-deletion"
+  mitre:
+    - technique: "T1070"
+      name: "Indicator Removal"
+      tactic: "Defense Evasion"
+  severity: "Notice"
+  risk:
+    base_score: 60
+    confidence: 0.75
+    multipliers: []
+  condition: >
+    event.type == "sentinel.file.create"
+    && event.tags.exists(t, t == "sensitive_path")
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

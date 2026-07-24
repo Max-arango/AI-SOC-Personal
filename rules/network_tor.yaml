@@ -1,0 +1,31 @@
+rule:
+  id: "rule-006-network-tor-exit"
+  version: 1
+  name: "Connection to TOR Exit Node"
+  description: "Outbound connection to a known TOR-related port"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "command-and-control"
+  subcategory: "proxy"
+  mitre:
+    - technique: "T1090"
+      name: "Proxy"
+      tactic: "Command and Control"
+  severity: "Notice"
+  risk:
+    base_score: 55
+    confidence: 0.75
+    multipliers: []
+  condition: >
+    event.type == "sentinel.network.connect"
+    && (event.process.name.lowerAscii().contains("tor")
+        || event.process.name.lowerAscii().contains("torsocks")
+        || event.process.name.lowerAscii().contains("proxychains"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

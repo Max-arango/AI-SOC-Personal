@@ -12,11 +12,10 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use chrono::{DateTime, Utc};
 use parking_lot::RwLock;
-use tracing::{debug, info};
 use sentinel_core::Ulid;
 use sentinel_events::Event;
+use tracing::info;
 
 // ── Configuration ──────────────────────────────────────────────────
 
@@ -36,8 +35,8 @@ impl Default for CorrelationConfig {
     fn default() -> Self {
         Self {
             chain_timeout_secs: 600,   // 10 min
-            temporal_window_secs: 300,  // 5 min
-            flow_ttl_secs: 172800,      // 48 h
+            temporal_window_secs: 300, // 5 min
+            flow_ttl_secs: 172800,     // 48 h
             max_events_per_chain: 500,
         }
     }
@@ -182,9 +181,7 @@ impl CorrelationEngine {
         if let Some(ref proc) = event.process {
             self.pid_index.write().insert(proc.pid, chain_id.clone());
             if proc.ppid > 0 {
-                self.pid_index
-                    .write()
-                    .insert(proc.ppid, chain_id.clone());
+                self.pid_index.write().insert(proc.ppid, chain_id.clone());
             }
         }
 

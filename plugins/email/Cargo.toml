@@ -6,3 +6,5 @@ license = { workspace = true }
 publish = false
 
 [dependencies]
+tokio = { workspace = true }
+tracing = { workspace = true }

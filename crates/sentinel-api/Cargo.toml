@@ -6,3 +6,24 @@ license = { workspace = true }
 publish = false
 
 [dependencies]
+anyhow = { workspace = true }
+tokio = { workspace = true }
+tonic = { workspace = true }
+prost = { workspace = true }
+prost-types = { workspace = true }
+tonic-reflection = { workspace = true }
+tonic-health = { workspace = true }
+tracing = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+async-trait = "0.1"
+arc-swap = { workspace = true }
+sysinfo = { workspace = true }
+
+sentinel-core = { path = "../sentinel-core" }
+sentinel-events = { path = "../sentinel-events" }
+sentinel-storage = { path = "../sentinel-storage" }
+sentinel-config = { path = "../sentinel-config" }
+sentinel-event-bus = { path = "../sentinel-event-bus" }
+sentinel-ai = { path = "../sentinel-ai" }

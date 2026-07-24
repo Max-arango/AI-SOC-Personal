@@ -1,52 +1,66 @@
-import { 
-  Activity, AlertTriangle, Network, FileText, Shield, Bot,
-  TrendingUp, TrendingDown, Minus, Clock, Users, Server
+import { useQuery } from '@tanstack/react-query';
+import {
+  Activity, AlertTriangle, Network, Shield, Bot,
+  TrendingUp, Clock, Users, Server,
 } from 'lucide-react';
 import { cn, formatRelativeTime, getSeverityColor, getRiskLevel } from '../utils/cn';
-
-const stats = [
-  { name: 'Total Events', value: '12,345', change: '+12%', trend: 'up', icon: Activity, color: 'primary' },
-  { name: 'Active Alerts', value: '23', change: '-5', trend: 'down', icon: AlertTriangle, color: 'danger' },
-  { name: 'Network Connections', value: '1,234', change: '+8%', trend: 'up', icon: Network, color: 'success' },
-  { name: 'Risk Score', value: '342', change: '+15', trend: 'up', icon: Shield, color: 'warning' },
-];
-
-const recentAlerts = [
-  { id: 'ALT-001', title: 'Suspicious PowerShell Execution', severity: 'critical', time: '2 min ago', risk: 940 },
-  { id: 'ALT-002', title: 'Unauthorized Network Connection', severity: 'high', time: '15 min ago', risk: 720 },
-  { id: 'ALT-003', title: 'File Modification in System Directory', severity: 'medium', time: '1 hour ago', risk: 450 },
-  { id: 'ALT-004', title: 'New Persistence Mechanism Detected', severity: 'high', time: '3 hours ago', risk: 680 },
-  { id: 'ALT-005', title: 'Browser Extension Installed', severity: 'low', time: '5 hours ago', risk: 120 },
-];
-
-const topProcesses = [
-  { name: 'powershell.exe', pid: 4521, events: 234, risk: 890, mitre: ['T1059.001'] },
-  { name: 'cmd.exe', pid: 3210, events: 189, risk: 560, mitre: ['T1059.003'] },
-  { name: 'wscript.exe', pid: 1102, events: 67, risk: 420, mitre: ['T1059.005'] },
-  { name: 'rundll32.exe', pid: 5543, events: 45, risk: 380, mitre: ['T1218.011'] },
-];
-
-const mitreHeatmap = [
-  { tactic: 'Initial Access', techniques: 3, risk: 720 },
-  { tactic: 'Execution', techniques: 8, risk: 890 },
-  { tactic: 'Persistence', techniques: 4, risk: 650 },
-  { tactic: 'Privilege Escalation', techniques: 2, risk: 410 },
-  { tactic: 'Defense Evasion', techniques: 5, risk: 580 },
-  { tactic: 'Credential Access', techniques: 1, risk: 230 },
-  { tactic: 'Discovery', techniques: 6, risk: 490 },
-  { tactic: 'Lateral Movement', techniques: 0, risk: 0 },
-  { tactic: 'Collection', techniques: 2, risk: 310 },
-  { tactic: 'Command and Control', techniques: 3, risk: 540 },
-  { tactic: 'Exfiltration', techniques: 1, risk: 180 },
-  { tactic: 'Impact', techniques: 0, risk: 0 },
-];
+import * as api from '../utils/tauriApi';
 
 export default function Dashboard() {
-  const overallRisk = getRiskLevel(342);
-  
+  const health = useQuery({ queryKey: ['health'], queryFn: api.getHealth, refetchInterval: 30000 });
+  const status = useQuery({ queryKey: ['status'], queryFn: api.getStatus, refetchInterval: 10000 });
+  const events = useQuery({
+    queryKey: ['events'],
+    queryFn: () => api.queryEvents({ limit: 100 }),
+    refetchInterval: 5000,
+  });
+  const alerts = useQuery({
+    queryKey: ['alerts'],
+    queryFn: () => api.getAlerts({ limit: 100 }),
+    refetchInterval: 5000,
+  });
+  const processes = useQuery({
+    queryKey: ['processes'],
+    queryFn: () => api.getProcesses({ limit: 200 }),
+    refetchInterval: 10000,
+  });
+
+  const eventCount = events.data?.total_count ?? 0;
+  const alertCount = alerts.data?.total_count ?? 0;
+  const topProcesses = processes.data?.processes ?? [];
+  const recentAlerts = alerts.data?.alerts.slice(0, 5) ?? [];
+
+  const activeAlertCount = alerts.data?.alerts.filter(
+    (a) => a.state === 'new' || a.state === 'acknowledged',
+  ).length ?? 0;
+
+  const stats = [
+    {
+      name: 'Total Events', value: eventCount.toLocaleString(), change: '+0%', trend: 'neutral' as const,
+      icon: Activity, color: 'primary',
+    },
+    {
+      name: 'Active Alerts', value: String(activeAlertCount), change: 'live', trend: 'up' as const,
+      icon: AlertTriangle, color: 'danger',
+    },
+    {
+      name: 'Running Processes', value: String(topProcesses.length), change: 'live', trend: 'up' as const,
+      icon: Network, color: 'success',
+    },
+    {
+      name: 'System Status', value: health.data?.status ?? '...', change: '', trend: 'neutral' as const,
+      icon: Shield, color: 'warning',
+    },
+  ];
+
+  const safeAlerts = recentAlerts.map((a) => ({
+    ...a,
+    title: a.rule_id.replace('_', ' '),
+    time: formatRelativeTime(a.created_at),
+  }));
+
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
@@ -55,15 +69,16 @@ export default function Dashboard() {
         <div className="flex items-center gap-3">
           <div className={cn(
             'flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium',
-            overallRisk.color
+            alertCount > 0
+              ? 'bg-danger-100 text-danger-800 dark:bg-danger-900/30 dark:text-danger-300'
+              : 'bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-300',
           )}>
             <Shield className="h-4 w-4" />
-            <span>Overall Risk: {overallRisk.label}</span>
+            <span>{alertCount > 0 ? `${alertCount} alerts` : 'No alerts'}</span>
           </div>
         </div>
       </div>
-      
-      {/* Stats Grid */}
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
           <div key={stat.name} className="card p-6">
@@ -79,140 +94,121 @@ export default function Dashboard() {
             <div className="mt-4 flex items-center gap-2">
               <span className={cn(
                 'text-sm font-medium',
-                stat.trend === 'up' ? 'text-success-600 dark:text-success-400' : 'text-danger-600 dark:text-danger-400'
+                stat.trend === 'up' ? 'text-success-600 dark:text-success-400' : 'text-gray-500',
               )}>
-                {stat.trend === 'up' ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-                {stat.change}
+                {stat.trend === 'up' ? <TrendingUp className="h-4 w-4 inline" /> : null}
+                {' '}{stat.change}
               </span>
-              <span className="text-sm text-gray-500 dark:text-gray-400">vs last hour</span>
             </div>
           </div>
         ))}
       </div>
-      
-      {/* Main Content Grid */}
+
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Left Column - Recent Alerts & Top Processes */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Recent Alerts */}
           <div className="card">
             <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Alerts</h2>
             </div>
             <div className="table-container">
-              <table className="table">
-                <thead>
-                  <tr className="border-b border-gray-200 dark:border-gray-700">
-                    <th className="px-6 py-3">Alert</th>
-                    <th className="px-6 py-3">Severity</th>
-                    <th className="px-6 py-3">Risk</th>
-                    <th className="px-6 py-3">Time</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {recentAlerts.map((alert) => {
-                    const riskLevel = getRiskLevel(alert.risk);
-                    return (
-                      <tr key={alert.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                        <td className="px-6 py-4">
-                          <p className="font-medium text-gray-900 dark:text-white">{alert.title}</p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">{alert.id}</p>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={cn('badge', getSeverityColor(alert.severity))}>
-                            {alert.severity}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={cn('badge', riskLevel.color)}>
-                            {alert.risk}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                          {alert.time}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+              {safeAlerts.length === 0 ? (
+                <div className="p-12 text-center">
+                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-success-100 dark:bg-success-900/30">
+                    <Shield className="h-6 w-6 text-success-600 dark:text-success-400" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">No alerts detected</h3>
+                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    Your system is clean. Alerts will appear here when suspicious activity is detected.
+                  </p>
+                </div>
+              ) : (
+                <table className="table">
+                  <thead>
+                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                      <th className="px-6 py-3">Alert</th>
+                      <th className="px-6 py-3">Severity</th>
+                      <th className="px-6 py-3">Risk</th>
+                      <th className="px-6 py-3">State</th>
+                      <th className="px-6 py-3">Time</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                    {safeAlerts.map((alert) => {
+                      const riskLevel = getRiskLevel(alert.risk_score);
+                      const severityStr = typeof alert.severity === 'string' ? alert.severity : `Level ${alert.severity}`;
+                      return (
+                        <tr key={alert.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                          <td className="px-6 py-4">
+                            <p className="font-medium text-gray-900 dark:text-white">{alert.title}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">{alert.id}</p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={cn('badge', getSeverityColor(severityStr))}>{severityStr}</span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={cn('badge', riskLevel.color)}>{alert.risk_score}</span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={cn('badge', alert.state === 'new'
+                              ? 'bg-danger-100 text-danger-800 dark:bg-danger-900/30 dark:text-danger-300'
+                              : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200')}>{alert.state}</span>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{alert.time}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
-          
-          {/* Top Risky Processes */}
+
           <div className="card">
             <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Top Risky Processes</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Running Processes</h2>
             </div>
             <div className="table-container">
-              <table className="table">
-                <thead>
-                  <tr className="border-b border-gray-200 dark:border-gray-700">
-                    <th className="px-6 py-3">Process</th>
-                    <th className="px-6 py-3">PID</th>
-                    <th className="px-6 py-3">Events</th>
-                    <th className="px-6 py-3">Risk</th>
-                    <th className="px-6 py-3">MITRE</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {topProcesses.map((proc) => {
-                    const riskLevel = getRiskLevel(proc.risk);
-                    return (
-                      <tr key={proc.pid} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                        <td className="px-6 py-4">
-                          <p className="font-mono font-medium text-gray-900 dark:text-white">{proc.name}</p>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{proc.pid}</td>
-                        <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{proc.events}</td>
-                        <td className="px-6 py-4">
-                          <span className={cn('badge', riskLevel.color)}>{proc.risk}</span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex flex-wrap gap-1">
-                            {proc.mitre.map((t) => (
-                              <span key={t} className="badge-gray text-xs">{t}</span>
-                            ))}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+              {topProcesses.length === 0 ? (
+                <div className="p-12 text-center">
+                  <p className="text-gray-500 dark:text-gray-400">Loading process data...</p>
+                </div>
+              ) : (
+                <table className="table">
+                  <thead>
+                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                      <th className="px-6 py-3">Process</th>
+                      <th className="px-6 py-3">PID</th>
+                      <th className="px-6 py-3">CPU</th>
+                      <th className="px-6 py-3">Memory</th>
+                      <th className="px-6 py-3">User</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                    {topProcesses.slice(0, 10).map((proc) => {
+                      const memMB = Math.round(proc.memory_bytes / 1024 / 1024);
+                      return (
+                        <tr key={`${proc.pid}-${proc.name}`} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                          <td className="px-6 py-4">
+                            <p className="font-mono font-medium text-gray-900 dark:text-white">{proc.name}</p>
+                            {proc.cmd && (
+                              <p className="text-xs text-gray-400 dark:text-gray-500 truncate max-w-xs">{proc.cmd}</p>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{proc.pid}</td>
+                          <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{proc.cpu_usage.toFixed(1)}%</td>
+                          <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{memMB} MB</td>
+                          <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{proc.user_id ?? '-'}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
         </div>
-        
-        {/* Right Column - MITRE Heatmap & Quick Stats */}
+
         <div className="space-y-6">
-          {/* MITRE ATT&CK Heatmap */}
-          <div className="card">
-            <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">MITRE ATT&CK Coverage</h2>
-            </div>
-            <div className="p-6 space-y-3">
-              {mitreHeatmap.map((tactic) => (
-                <div key={tactic.tactic} className="flex items-center gap-3">
-                  <div className="w-40 text-sm font-medium text-gray-700 dark:text-gray-300">{tactic.tactic}</div>
-                  <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full rounded-full transition-all"
-                      style={{ 
-                        width: `${Math.min(tactic.risk / 10, 100)}%`,
-                        backgroundColor: tactic.risk > 700 ? '#ef4444' : tactic.risk > 400 ? '#f59e0b' : tactic.risk > 100 ? '#3b82f6' : '#22c55e'
-                      }}
-                    />
-                  </div>
-                  <span className="w-16 text-right text-sm font-mono text-gray-500 dark:text-gray-400">
-                    {tactic.techniques} tech
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          {/* Quick Stats */}
           <div className="card p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Statistics</h3>
             <div className="space-y-4">
@@ -223,7 +219,7 @@ export default function Dashboard() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Uptime</p>
-                    <p className="font-medium text-gray-900 dark:text-white">2d 14h 32m</p>
+                    <p className="font-medium text-gray-900 dark:text-white">{status.data?.uptime ?? '...'}</p>
                   </div>
                 </div>
               </div>
@@ -233,8 +229,8 @@ export default function Dashboard() {
                     <Users className="h-5 w-5 text-success-600 dark:text-success-400" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Monitored Users</p>
-                    <p className="font-medium text-gray-900 dark:text-white">12</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Total Events</p>
+                    <p className="font-medium text-gray-900 dark:text-white">{eventCount.toLocaleString()}</p>
                   </div>
                 </div>
               </div>
@@ -244,22 +240,51 @@ export default function Dashboard() {
                     <Server className="h-5 w-5 text-amber-600 dark:text-amber-400" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Active Collectors</p>
-                    <p className="font-medium text-gray-900 dark:text-white">7 / 7</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Running Processes</p>
+                    <p className="font-medium text-gray-900 dark:text-white">{topProcesses.length.toLocaleString()}</p>
                   </div>
                 </div>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/30">
-                    <Bot className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  <div className={cn(
+                    'flex h-10 w-10 items-center justify-center rounded-lg',
+                    health.data?.status === 'healthy'
+                      ? 'bg-success-100 dark:bg-success-900/30'
+                      : 'bg-danger-100 dark:bg-danger-900/30',
+                  )}>
+                    <Bot className={cn(
+                      'h-5 w-5',
+                      health.data?.status === 'healthy'
+                        ? 'text-success-600 dark:text-success-400'
+                        : 'text-danger-600 dark:text-danger-400',
+                    )} />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">AI Explanations</p>
-                    <p className="font-medium text-gray-900 dark:text-white">23 today</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">System Health</p>
+                    <p className="font-medium text-gray-900 dark:text-white capitalize">{health.data?.status ?? '...'}</p>
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <div className="card p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Component Status</h3>
+            <div className="space-y-2">
+              {health.data?.components ? Object.entries(health.data.components).map(([name, state]) => (
+                <div key={name} className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400 capitalize">{name.replace('_', ' ')}</span>
+                  <span className={cn(
+                    'badge text-xs',
+                    state === 'healthy'
+                      ? 'bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-300'
+                      : 'bg-danger-100 text-danger-800 dark:bg-danger-900/30 dark:text-danger-300',
+                  )}>{state}</span>
+                </div>
+              )) : (
+                <p className="text-sm text-gray-400">Loading...</p>
+              )}
             </div>
           </div>
         </div>

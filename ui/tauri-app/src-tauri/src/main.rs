@@ -7,9 +7,15 @@ mod state;
 
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_opener::init())
         .setup(|app| {
-            let s = state::AppState::new(app.handle());
-            app.manage(s);
+            let handle = app.handle().clone();
+            tauri::async_runtime::block_on(async move {
+                let s = state::AppState::new(handle).await;
+                app.manage(s);
+            });
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

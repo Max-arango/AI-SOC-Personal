@@ -2,8 +2,8 @@
 //!
 //! Handles loading, validation, hot-reload, and secrets management for TOML configuration.
 
-pub mod schema;
 pub mod migration;
+pub mod schema;
 pub mod secrets;
 
 use std::collections::HashMap;
@@ -21,7 +21,10 @@ use tracing::{error, info};
 use validator::Validate;
 
 use async_trait::async_trait;
-use sentinel_core::{BackpressureConfig, ConfigError as CoreConfigError, ConfigProvider, ConfigSchema, ConfigValue, ConfigWatcher, RetentionPolicy, Result as CoreResult, SentinelError};
+use sentinel_core::{
+    BackpressureConfig, ConfigError as CoreConfigError, ConfigProvider, ConfigSchema, ConfigValue,
+    ConfigWatcher, Result as CoreResult, RetentionPolicy, SentinelError,
+};
 
 /// Main configuration manager
 pub struct ConfigManager {
@@ -40,7 +43,7 @@ impl ConfigManager {
     /// Create a new configuration manager
     pub async fn new(config_paths: Vec<PathBuf>) -> Result<Self> {
         let (watch_tx, _watch_rx) = watch::channel(());
-        
+
         let mut manager = Self {
             config: Arc::new(ArcSwap::new(Arc::new(AppConfig::default()))),
             watcher: None,
@@ -49,20 +52,20 @@ impl ConfigManager {
             secrets_manager: secrets::SecretsManager::new(),
             config_paths,
         };
-        
+
         // Load initial configuration
         manager.load().await?;
-        
+
         // Start file watcher for hot-reload
         manager.start_watcher().await?;
-        
+
         Ok(manager)
     }
-    
+
     /// Load configuration from all sources
     pub async fn load(&mut self) -> Result<()> {
         let mut builder = Config::builder();
-        
+
         // Add configuration files in priority order (last wins)
         for path in &self.config_paths {
             if path.exists() {
@@ -70,38 +73,41 @@ impl ConfigManager {
                 info!("Loading config from: {}", path.display());
             }
         }
-        
+
         // Add environment variables with SENTINEL_ prefix
         builder = builder.add_source(
             Environment::with_prefix("SENTINEL")
                 .separator("__")
-                .try_parsing(true)
+                .try_parsing(true),
         );
-        
-        let raw_config = builder.build()
+
+        let raw_config = builder
+            .build()
             .map_err(|e| SentinelError::Config(CoreConfigError::Parse(e.to_string())))?;
-        
+
         // Deserialize and validate
-        let mut app_config: AppConfig = raw_config.try_deserialize()
+        let mut app_config: AppConfig = raw_config
+            .try_deserialize()
             .map_err(|e| SentinelError::Config(CoreConfigError::Parse(e.to_string())))?;
-        
+
         // Decrypt secrets
         self.secrets_manager.decrypt_config(&mut app_config).await?;
-        
+
         // Validate
-        app_config.validate()
+        app_config
+            .validate()
             .map_err(|e| anyhow::anyhow!("Configuration validation failed: {}", e))?;
-        
+
         // Run migrations if needed
         migration::migrate(&mut app_config)?;
-        
+
         // Store
         self.config.store(Arc::new(app_config));
-        
+
         info!("Configuration loaded successfully");
         Ok(())
     }
-    
+
     /// Start file watcher for hot-reload
     async fn start_watcher(&mut self) -> Result<()> {
         let (tx, mut rx) = mpsc::channel(1);
@@ -109,7 +115,7 @@ impl ConfigManager {
         let config_swap = Arc::clone(&self.config);
         let schema_registry = self.schema_registry.clone();
         let secrets_manager = self.secrets_manager.clone();
-        
+
         let mut watcher: RecommendedWatcher = Watcher::new(
             move |res: notify::Result<Event>| {
                 if let Ok(event) = res {
@@ -120,42 +126,44 @@ impl ConfigManager {
             },
             notify::Config::default(),
         )?;
-        
+
         for path in &config_paths {
             if let Some(parent) = path.parent() {
                 watcher.watch(parent, RecursiveMode::NonRecursive)?;
             }
         }
-        
+
         self.watcher = Some(watcher);
-        
+
         // Spawn reload task
         tokio::spawn(async move {
             while rx.recv().await.is_some() {
                 // Debounce
                 tokio::time::sleep(Duration::from_millis(500)).await;
-                
+
                 // Drain any additional events
                 while rx.try_recv().is_ok() {}
-                
+
                 info!("Configuration file changed, reloading...");
-                
+
                 if let Err(e) = Self::reload_static(
                     &config_swap,
                     &config_paths,
                     &schema_registry,
                     &secrets_manager,
-                ).await {
+                )
+                .await
+                {
                     error!("Failed to reload configuration: {}", e);
                 } else {
                     info!("Configuration reloaded successfully");
                 }
             }
         });
-        
+
         Ok(())
     }
-    
+
     /// Static reload function for the watcher task
     async fn reload_static(
         config_swap: &Arc<ArcSwap<AppConfig>>,
@@ -164,60 +172,63 @@ impl ConfigManager {
         secrets_manager: &secrets::SecretsManager,
     ) -> Result<()> {
         let mut builder = Config::builder();
-        
+
         for path in config_paths {
             if path.exists() {
                 builder = builder.add_source(File::from(path.clone()).format(FileFormat::Toml));
             }
         }
-        
+
         builder = builder.add_source(
             Environment::with_prefix("SENTINEL")
                 .separator("__")
-                .try_parsing(true)
+                .try_parsing(true),
         );
-        
-        let raw_config = builder.build()
+
+        let raw_config = builder
+            .build()
             .map_err(|e| SentinelError::Config(CoreConfigError::Parse(e.to_string())))?;
-        let mut app_config: AppConfig = raw_config.try_deserialize()
+        let mut app_config: AppConfig = raw_config
+            .try_deserialize()
             .map_err(|e| SentinelError::Config(CoreConfigError::Parse(e.to_string())))?;
-        
+
         secrets_manager.decrypt_config(&mut app_config).await?;
-        app_config.validate()
+        app_config
+            .validate()
             .map_err(|e| anyhow::anyhow!("Configuration validation failed: {}", e))?;
-        
+
         migration::migrate(&mut app_config)?;
-        
+
         config_swap.store(Arc::new(app_config));
         Ok(())
     }
-    
+
     /// Get current configuration
     pub fn get(&self) -> Arc<AppConfig> {
         self.config.load_full()
     }
-    
+
     /// Get a typed configuration section
     pub fn get_typed<T: for<'de> Deserialize<'de>>(&self, path: &str) -> CoreResult<Option<T>> {
         let config = self.get();
         config.get_section(path)
     }
-    
+
     /// Watch for configuration changes
     pub fn watch(&self, path: &str) -> CoreResult<ConfigWatcher> {
         let (_tx, rx) = watch::channel(self.get_section_value(path)?);
-        
+
         // In a real implementation, this would be connected to the watcher
         // For now, return a watcher that never updates
         Ok(ConfigWatcher { receiver: rx })
     }
-    
+
     /// Get a specific section value
     fn get_section_value(&self, path: &str) -> CoreResult<ConfigValue> {
         let config = self.get();
         config.get_section_value(path)
     }
-    
+
     /// Validate configuration without applying
     pub fn validate(&self, config_toml: &str) -> CoreResult<ValidateConfigResponse> {
         let mut builder = Config::builder();
@@ -225,23 +236,21 @@ impl ConfigManager {
         builder = builder.add_source(
             Environment::with_prefix("SENTINEL")
                 .separator("__")
-                .try_parsing(true)
+                .try_parsing(true),
         );
-        
-        let raw_config = builder.build()
+
+        let raw_config = builder
+            .build()
             .map_err(|e| SentinelError::Config(CoreConfigError::Parse(e.to_string())))?;
-        let mut app_config: AppConfig = raw_config.try_deserialize()
+        let mut app_config: AppConfig = raw_config
+            .try_deserialize()
             .map_err(|e| SentinelError::Config(CoreConfigError::Parse(e.to_string())))?;
-        
+
         // Try to decrypt secrets (will fail if keys not available)
         let _ = futures::executor::block_on(self.secrets_manager.decrypt_config(&mut app_config));
-        
+
         match app_config.validate() {
-            Ok(_) => Ok(ValidateConfigResponse {
-                valid: true,
-                errors: vec![],
-                warnings: vec![],
-            }),
+            Ok(_) => Ok(ValidateConfigResponse { valid: true, errors: vec![], warnings: vec![] }),
             Err(e) => Ok(ValidateConfigResponse {
                 valid: false,
                 errors: vec![ConfigError { path: "".to_string(), message: e.to_string() }],
@@ -249,21 +258,26 @@ impl ConfigManager {
             }),
         }
     }
-    
+
     /// Update configuration (partial or full)
-    pub async fn update(&self, config_toml: &str, validate_only: bool) -> CoreResult<ValidateConfigResponse> {
+    pub async fn update(
+        &self,
+        config_toml: &str,
+        validate_only: bool,
+    ) -> CoreResult<ValidateConfigResponse> {
         let validation = self.validate(config_toml)?;
-        
+
         if !validation.valid || validate_only {
             return Ok(validation);
         }
-        
+
         // Write to the primary config file
         if let Some(primary) = self.config_paths.first() {
-            tokio::fs::write(primary, config_toml).await
+            tokio::fs::write(primary, config_toml)
+                .await
                 .map_err(|e| SentinelError::Config(CoreConfigError::Parse(e.to_string())))?;
         }
-        
+
         // Trigger reload (will happen via watcher)
         Ok(ValidateConfigResponse {
             valid: true,
@@ -274,12 +288,12 @@ impl ConfigManager {
             }],
         })
     }
-    
+
     /// Get schema for a module
     pub fn schema(&self, module: &str) -> Option<ConfigSchema> {
         self.schema_registry.get(module)
     }
-    
+
     /// Get all registered schemas
     pub fn all_schemas(&self) -> Vec<ConfigSchema> {
         self.schema_registry.all()
@@ -307,7 +321,6 @@ pub struct AppConfig {
     pub logging: LoggingConfig,
 }
 
-
 impl AppConfig {
     /// Get a configuration section by path
     pub fn get_section<T: for<'de> Deserialize<'de>>(&self, path: &str) -> CoreResult<Option<T>> {
@@ -319,16 +332,14 @@ impl AppConfig {
             .map(Some)
             .map_err(|e| SentinelError::Config(CoreConfigError::Parse(e.to_string())))
     }
-    
+
     /// Get a section as ConfigValue
     pub fn get_section_value(&self, path: &str) -> CoreResult<ConfigValue> {
         let json = serde_json::to_value(self)
             .map_err(|e| SentinelError::Config(CoreConfigError::Parse(e.to_string())))?;
-        
-        let value = json.get(path)
-            .cloned()
-            .unwrap_or(serde_json::Value::Null);
-        
+
+        let value = json.get(path).cloned().unwrap_or(serde_json::Value::Null);
+
         Ok(ConfigValue::from(value))
     }
 }
@@ -339,29 +350,59 @@ impl AppConfig {
 pub struct CoreConfig {
     #[validate(length(min = 1))]
     pub host_id: String,
-    
+
     pub instance_name: String,
-    
-    #[validate(range(min = 1, max = 300))]
+
+    #[validate(
+        range(
+            min = 1,
+            max = 300
+        )
+    )]
     pub graceful_shutdown_timeout: u32,
-    
-    #[validate(range(min = 1, max = 60))]
+
+    #[validate(
+        range(
+            min = 1,
+            max = 60
+        )
+    )]
     pub health_check_interval: u32,
-    
+
     pub metrics_enabled: bool,
-    
-    #[validate(range(min = 1024, max = 65535))]
+
+    #[validate(
+        range(
+            min = 1024,
+            max = 65535
+        )
+    )]
     pub metrics_port: u16,
-    
-    #[validate(range(min = 64, max = 8192))]
+
+    #[validate(
+        range(
+            min = 64,
+            max = 8192
+        )
+    )]
     pub max_memory_mb: u32,
-    
-    #[validate(range(min = 1, max = 100))]
+
+    #[validate(
+        range(
+            min = 1,
+            max = 100
+        )
+    )]
     pub max_cpu_percent: u8,
-    
-    #[validate(range(min = 100, max = 100000))]
+
+    #[validate(
+        range(
+            min = 100,
+            max = 100000
+        )
+    )]
     pub event_buffer_size: usize,
-    
+
     pub features: Vec<String>,
 }
 
@@ -393,16 +434,26 @@ impl Default for CoreConfig {
 #[serde(default)]
 pub struct GrpcConfig {
     pub enabled: bool,
-    
+
     #[validate(length(min = 1))]
     pub address: String,
-    
+
     pub tls_enabled: bool,
-    
-    #[validate(range(min = 1, max = 100))]
+
+    #[validate(
+        range(
+            min = 1,
+            max = 100
+        )
+    )]
     pub max_message_size_mb: u32,
-    
-    #[validate(range(min = 1, max = 1000))]
+
+    #[validate(
+        range(
+            min = 1,
+            max = 1000
+        )
+    )]
     pub max_concurrent_streams: u32,
 }
 
@@ -423,10 +474,10 @@ impl Default for GrpcConfig {
 #[serde(default)]
 pub struct RestGatewayConfig {
     pub enabled: bool,
-    
+
     #[validate(length(min = 1))]
     pub address: String,
-    
+
     pub cors_origins: Vec<String>,
 }
 
@@ -449,23 +500,38 @@ impl Default for RestGatewayConfig {
 pub struct StorageConfig {
     #[validate(length(min = 1))]
     pub sqlite_path: String,
-    
+
     pub sqlite_wal_mode: bool,
-    
-    #[validate(range(min = 1000, max = 60000))]
+
+    #[validate(
+        range(
+            min = 1000,
+            max = 60000
+        )
+    )]
     pub sqlite_busy_timeout_ms: u32,
-    
+
     #[validate(length(min = 1))]
     pub duckdb_path: String,
-    
-    #[validate(range(min = 64, max = 2048))]
+
+    #[validate(
+        range(
+            min = 64,
+            max = 2048
+        )
+    )]
     pub duckdb_memory_limit_mb: u32,
-    
-    #[validate(range(min = 1, max = 16))]
+
+    #[validate(
+        range(
+            min = 1,
+            max = 16
+        )
+    )]
     pub duckdb_threads: u32,
-    
+
     pub retention: Vec<RetentionPolicy>,
-    
+
     pub aggregations: Vec<AggregationConfig>,
 }
 
@@ -479,19 +545,63 @@ impl Default for StorageConfig {
             duckdb_memory_limit_mb: 256,
             duckdb_threads: 2,
             retention: vec![
-                RetentionPolicy { event_type_pattern: "sentinel.process.*".to_string(), max_age_days: 30, max_count: 1_000_000 },
-                RetentionPolicy { event_type_pattern: "sentinel.network.*".to_string(), max_age_days: 14, max_count: 500_000 },
-                RetentionPolicy { event_type_pattern: "sentinel.file.*".to_string(), max_age_days: 30, max_count: 200_000 },
-                RetentionPolicy { event_type_pattern: "sentinel.registry.*".to_string(), max_age_days: 90, max_count: 100_000 },
-                RetentionPolicy { event_type_pattern: "sentinel.usb.*".to_string(), max_age_days: 90, max_count: 10_000 },
-                RetentionPolicy { event_type_pattern: "sentinel.browser.*".to_string(), max_age_days: 7, max_count: 50_000 },
-                RetentionPolicy { event_type_pattern: "sentinel.startup.*".to_string(), max_age_days: 180, max_count: 5_000 },
-                RetentionPolicy { event_type_pattern: "*".to_string(), max_age_days: 7, max_count: 100_000 },
+                RetentionPolicy {
+                    event_type_pattern: "sentinel.process.*".to_string(),
+                    max_age_days: 30,
+                    max_count: 1_000_000,
+                },
+                RetentionPolicy {
+                    event_type_pattern: "sentinel.network.*".to_string(),
+                    max_age_days: 14,
+                    max_count: 500_000,
+                },
+                RetentionPolicy {
+                    event_type_pattern: "sentinel.file.*".to_string(),
+                    max_age_days: 30,
+                    max_count: 200_000,
+                },
+                RetentionPolicy {
+                    event_type_pattern: "sentinel.registry.*".to_string(),
+                    max_age_days: 90,
+                    max_count: 100_000,
+                },
+                RetentionPolicy {
+                    event_type_pattern: "sentinel.usb.*".to_string(),
+                    max_age_days: 90,
+                    max_count: 10_000,
+                },
+                RetentionPolicy {
+                    event_type_pattern: "sentinel.browser.*".to_string(),
+                    max_age_days: 7,
+                    max_count: 50_000,
+                },
+                RetentionPolicy {
+                    event_type_pattern: "sentinel.startup.*".to_string(),
+                    max_age_days: 180,
+                    max_count: 5_000,
+                },
+                RetentionPolicy {
+                    event_type_pattern: "*".to_string(),
+                    max_age_days: 7,
+                    max_count: 100_000,
+                },
             ],
             aggregations: vec![
-                AggregationConfig { name: "hourly_risk".to_string(), interval: "1h".to_string(), retention_days: 90 },
-                AggregationConfig { name: "daily_mitre".to_string(), interval: "1d".to_string(), retention_days: 365 },
-                AggregationConfig { name: "process_behavior".to_string(), interval: "1h".to_string(), retention_days: 30 },
+                AggregationConfig {
+                    name: "hourly_risk".to_string(),
+                    interval: "1h".to_string(),
+                    retention_days: 90,
+                },
+                AggregationConfig {
+                    name: "daily_mitre".to_string(),
+                    interval: "1d".to_string(),
+                    retention_days: 365,
+                },
+                AggregationConfig {
+                    name: "process_behavior".to_string(),
+                    interval: "1h".to_string(),
+                    retention_days: 30,
+                },
             ],
         }
     }
@@ -501,7 +611,12 @@ impl Default for StorageConfig {
 pub struct AggregationConfig {
     pub name: String,
     pub interval: String,
-    #[validate(range(min = 1, max = 3650))]
+    #[validate(
+        range(
+            min = 1,
+            max = 3650
+        )
+    )]
     pub retention_days: u32,
 }
 
@@ -509,21 +624,46 @@ pub struct AggregationConfig {
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 #[serde(default)]
 pub struct EventBusConfig {
-    #[validate(range(min = 100, max = 100000))]
+    #[validate(
+        range(
+            min = 100,
+            max = 100000
+        )
+    )]
     pub ingest_channel_size: usize,
-    
-    #[validate(range(min = 100, max = 10000))]
+
+    #[validate(
+        range(
+            min = 100,
+            max = 10000
+        )
+    )]
     pub broadcast_channel_size: usize,
-    
-    #[validate(range(min = 100, max = 50000))]
+
+    #[validate(
+        range(
+            min = 100,
+            max = 50000
+        )
+    )]
     pub storage_channel_size: usize,
-    
-    #[validate(range(min = 100, max = 20000))]
+
+    #[validate(
+        range(
+            min = 100,
+            max = 20000
+        )
+    )]
     pub plugin_channel_size: usize,
-    
-    #[validate(range(min = 100, max = 5000))]
+
+    #[validate(
+        range(
+            min = 100,
+            max = 5000
+        )
+    )]
     pub ipc_channel_size: usize,
-    
+
     pub backpressure: BackpressureConfig,
 }
 
@@ -545,20 +685,35 @@ impl Default for EventBusConfig {
 #[serde(default)]
 pub struct RuleEngineConfig {
     pub rules_directories: Vec<String>,
-    
+
     pub hot_reload: bool,
-    
+
     pub validation_on_load: bool,
-    
-    #[validate(range(min = 1, max = 100000))]
+
+    #[validate(
+        range(
+            min = 1,
+            max = 100000
+        )
+    )]
     pub max_rules: usize,
-    
-    #[validate(range(min = 1, max = 1000))]
+
+    #[validate(
+        range(
+            min = 1,
+            max = 1000
+        )
+    )]
     pub evaluation_timeout_ms: u32,
-    
-    #[validate(range(min = 1, max = 32))]
+
+    #[validate(
+        range(
+            min = 1,
+            max = 32
+        )
+    )]
     pub worker_threads: usize,
-    
+
     pub default_multipliers: Vec<RiskMultiplierConfig>,
 }
 
@@ -576,9 +731,19 @@ impl Default for RuleEngineConfig {
             evaluation_timeout_ms: 50,
             worker_threads: 4,
             default_multipliers: vec![
-                RiskMultiplierConfig { condition: "event.process.user.is_elevated".to_string(), factor: 1.5 },
-                RiskMultiplierConfig { condition: "event.process.signing.is_trusted == false".to_string(), factor: 1.3 },
-                RiskMultiplierConfig { condition: "event.network.geoip.country in ['CN', 'RU', 'KP', 'IR']".to_string(), factor: 1.2 },
+                RiskMultiplierConfig {
+                    condition: "event.process.user.is_elevated".to_string(),
+                    factor: 1.5,
+                },
+                RiskMultiplierConfig {
+                    condition: "event.process.signing.is_trusted == false".to_string(),
+                    factor: 1.3,
+                },
+                RiskMultiplierConfig {
+                    condition: "event.network.geoip.country in ['CN', 'RU', 'KP', 'IR']"
+                        .to_string(),
+                    factor: 1.2,
+                },
             ],
         }
     }
@@ -587,33 +752,56 @@ impl Default for RuleEngineConfig {
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct RiskMultiplierConfig {
     pub condition: String,
-    #[validate(range(min = 0.1, max = 10.0))]
+    #[validate(
+        range(
+            min = 0.1,
+            max = 10.0
+        )
+    )]
     pub factor: f64,
 }
 
 /// Risk engine configuration
-#[derive(Debug, Clone, Serialize, Deserialize, Validate)]
-#[derive(Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Validate, Default)]
 pub struct RiskEngineConfig {
     pub decay_half_life: DecayHalfLifeConfig,
-    
+
     pub alert_thresholds: AlertThresholdsConfig,
-    
+
     pub escalation: EscalationConfig,
-    
+
     pub asset_criticality: AssetCriticalityConfig,
 }
 
-
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct DecayHalfLifeConfig {
-    #[validate(range(min = 1, max = 168))]
+    #[validate(
+        range(
+            min = 1,
+            max = 168
+        )
+    )]
     pub critical: u32,
-    #[validate(range(min = 1, max = 168))]
+    #[validate(
+        range(
+            min = 1,
+            max = 168
+        )
+    )]
     pub high: u32,
-    #[validate(range(min = 1, max = 168))]
+    #[validate(
+        range(
+            min = 1,
+            max = 168
+        )
+    )]
     pub medium: u32,
-    #[validate(range(min = 1, max = 168))]
+    #[validate(
+        range(
+            min = 1,
+            max = 168
+        )
+    )]
     pub low: u32,
 }
 
@@ -625,13 +813,33 @@ impl Default for DecayHalfLifeConfig {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct AlertThresholdsConfig {
-    #[validate(range(min = 0, max = 1000))]
+    #[validate(
+        range(
+            min = 0,
+            max = 1000
+        )
+    )]
     pub low: u32,
-    #[validate(range(min = 0, max = 1000))]
+    #[validate(
+        range(
+            min = 0,
+            max = 1000
+        )
+    )]
     pub medium: u32,
-    #[validate(range(min = 0, max = 1000))]
+    #[validate(
+        range(
+            min = 0,
+            max = 1000
+        )
+    )]
     pub high: u32,
-    #[validate(range(min = 0, max = 1000))]
+    #[validate(
+        range(
+            min = 0,
+            max = 1000
+        )
+    )]
     pub critical: u32,
 }
 
@@ -643,31 +851,70 @@ impl Default for AlertThresholdsConfig {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct EscalationConfig {
-    #[validate(range(min = 1, max = 168))]
+    #[validate(
+        range(
+            min = 1,
+            max = 168
+        )
+    )]
     pub sustained_high_hours: u32,
-    
-    #[validate(range(min = 1, max = 100))]
+
+    #[validate(
+        range(
+            min = 1,
+            max = 100
+        )
+    )]
     pub flapping_max_alerts_per_hour: u32,
-    
-    #[validate(range(min = 1, max = 168))]
+
+    #[validate(
+        range(
+            min = 1,
+            max = 168
+        )
+    )]
     pub auto_acknowledge_low_after_hours: u32,
 }
 
 impl Default for EscalationConfig {
     fn default() -> Self {
-        Self { sustained_high_hours: 2, flapping_max_alerts_per_hour: 10, auto_acknowledge_low_after_hours: 24 }
+        Self {
+            sustained_high_hours: 2,
+            flapping_max_alerts_per_hour: 10,
+            auto_acknowledge_low_after_hours: 24,
+        }
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct AssetCriticalityConfig {
-    #[validate(range(min = 0.1, max = 10.0))]
+    #[validate(
+        range(
+            min = 0.1,
+            max = 10.0
+        )
+    )]
     pub system_process: f64,
-    #[validate(range(min = 0.1, max = 10.0))]
+    #[validate(
+        range(
+            min = 0.1,
+            max = 10.0
+        )
+    )]
     pub domain_admin: f64,
-    #[validate(range(min = 0.1, max = 10.0))]
+    #[validate(
+        range(
+            min = 0.1,
+            max = 10.0
+        )
+    )]
     pub critical_service: f64,
-    #[validate(range(min = 0.1, max = 10.0))]
+    #[validate(
+        range(
+            min = 0.1,
+            max = 10.0
+        )
+    )]
     pub standard_user: f64,
 }
 
@@ -681,19 +928,39 @@ impl Default for AssetCriticalityConfig {
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct CorrelationConfig {
     pub enabled: bool,
-    
-    #[validate(range(min = 100, max = 100000))]
+
+    #[validate(
+        range(
+            min = 100,
+            max = 100000
+        )
+    )]
     pub max_chains: usize,
-    
-    #[validate(range(min = 1, max = 168))]
+
+    #[validate(
+        range(
+            min = 1,
+            max = 168
+        )
+    )]
     pub chain_timeout_hours: u32,
-    
-    #[validate(range(min = 2, max = 20))]
+
+    #[validate(
+        range(
+            min = 2,
+            max = 20
+        )
+    )]
     pub min_chain_length: usize,
-    
-    #[validate(range(min = 0, max = 1000))]
+
+    #[validate(
+        range(
+            min = 0,
+            max = 1000
+        )
+    )]
     pub min_chain_risk: u32,
-    
+
     pub flow_tracking: FlowTrackingConfig,
 }
 
@@ -713,9 +980,19 @@ impl Default for CorrelationConfig {
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct FlowTrackingConfig {
     pub enabled: bool,
-    #[validate(range(min = 1000, max = 1_000_000))]
+    #[validate(
+        range(
+            min = 1000,
+            max = 1_000_000
+        )
+    )]
     pub max_objects: usize,
-    #[validate(range(min = 1, max = 168))]
+    #[validate(
+        range(
+            min = 1,
+            max = 168
+        )
+    )]
     pub ttl_hours: u32,
 }
 
@@ -730,19 +1007,19 @@ impl Default for FlowTrackingConfig {
 #[serde(default)]
 pub struct AiEngineConfig {
     pub enabled: bool,
-    
+
     pub provider: AiProvider,
-    
+
     pub model: String,
-    
+
     pub fallback_models: Vec<String>,
-    
+
     pub ollama: OllamaConfig,
-    
+
     pub llama_cpp: LlamaCppConfig,
-    
+
     pub generation: GenerationConfig,
-    
+
     pub context: ContextConfig,
 }
 
@@ -775,13 +1052,28 @@ pub enum AiProvider {
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct OllamaConfig {
     pub base_url: String,
-    #[validate(range(min = 1, max = 300))]
+    #[validate(
+        range(
+            min = 1,
+            max = 300
+        )
+    )]
     pub timeout_seconds: u32,
     pub keep_alive: String,
-    #[validate(range(min = 512, max = 32768))]
+    #[validate(
+        range(
+            min = 512,
+            max = 32768
+        )
+    )]
     pub num_ctx: u32,
     pub num_gpu: i32,
-    #[validate(range(min = 1, max = 64))]
+    #[validate(
+        range(
+            min = 1,
+            max = 64
+        )
+    )]
     pub num_thread: u32,
 }
 
@@ -802,11 +1094,26 @@ impl Default for OllamaConfig {
 pub struct LlamaCppConfig {
     pub model_path: String,
     pub n_gpu_layers: i32,
-    #[validate(range(min = 1, max = 64))]
+    #[validate(
+        range(
+            min = 1,
+            max = 64
+        )
+    )]
     pub n_threads: u32,
-    #[validate(range(min = 512, max = 32768))]
+    #[validate(
+        range(
+            min = 512,
+            max = 32768
+        )
+    )]
     pub n_ctx: u32,
-    #[validate(range(min = 1, max = 2048))]
+    #[validate(
+        range(
+            min = 1,
+            max = 2048
+        )
+    )]
     pub n_batch: u32,
 }
 
@@ -824,15 +1131,40 @@ impl Default for LlamaCppConfig {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct GenerationConfig {
-    #[validate(range(min = 0.0, max = 2.0))]
+    #[validate(
+        range(
+            min = 0.0,
+            max = 2.0
+        )
+    )]
     pub temperature: f32,
-    #[validate(range(min = 0.0, max = 1.0))]
+    #[validate(
+        range(
+            min = 0.0,
+            max = 1.0
+        )
+    )]
     pub top_p: f32,
-    #[validate(range(min = 1, max = 100))]
+    #[validate(
+        range(
+            min = 1,
+            max = 100
+        )
+    )]
     pub top_k: u32,
-    #[validate(range(min = 0.0, max = 2.0))]
+    #[validate(
+        range(
+            min = 0.0,
+            max = 2.0
+        )
+    )]
     pub repeat_penalty: f32,
-    #[validate(range(min = 1, max = 8192))]
+    #[validate(
+        range(
+            min = 1,
+            max = 8192
+        )
+    )]
     pub max_tokens: u32,
     pub stop_sequences: Vec<String>,
 }
@@ -852,9 +1184,19 @@ impl Default for GenerationConfig {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct ContextConfig {
-    #[validate(range(min = 10, max = 1000))]
+    #[validate(
+        range(
+            min = 10,
+            max = 1000
+        )
+    )]
     pub max_events: usize,
-    #[validate(range(min = 10, max = 500))]
+    #[validate(
+        range(
+            min = 10,
+            max = 500
+        )
+    )]
     pub max_chain_events: usize,
     pub anonymize: bool,
     pub include_process_tree: bool,
@@ -879,14 +1221,19 @@ impl Default for ContextConfig {
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct PluginManagerConfig {
     pub enabled: bool,
-    
+
     pub plugin_directories: Vec<String>,
-    
-    #[validate(range(min = 1, max = 100))]
+
+    #[validate(
+        range(
+            min = 1,
+            max = 100
+        )
+    )]
     pub max_plugins: usize,
-    
+
     pub default_sandbox: SandboxProfile,
-    
+
     pub allowed_capabilities: Vec<String>,
 }
 
@@ -927,11 +1274,16 @@ pub enum SandboxProfile {
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 #[serde(default)]
 pub struct CollectorsConfig {
-    #[validate(range(min = 0.0, max = 1.0))]
+    #[validate(
+        range(
+            min = 0.0,
+            max = 1.0
+        )
+    )]
     pub sample_rate: f64,
-    
+
     pub backpressure_response: BackpressureResponse,
-    
+
     pub process: ProcessCollectorConfig,
     pub network: NetworkCollectorConfig,
     pub file: FileCollectorConfig,
@@ -969,12 +1321,22 @@ pub enum BackpressureResponse {
 #[serde(default)]
 pub struct ProcessCollectorConfig {
     pub enabled: bool,
-    #[validate(range(min = 0.0, max = 1.0))]
+    #[validate(
+        range(
+            min = 0.0,
+            max = 1.0
+        )
+    )]
     pub sample_rate: f64,
     pub include_command_line: bool,
     pub include_environment: bool,
     pub resolve_signatures: bool,
-    #[validate(range(min = 1, max = 50))]
+    #[validate(
+        range(
+            min = 1,
+            max = 50
+        )
+    )]
     pub track_ancestry_depth: u32,
     pub monitor_injection: bool,
     pub monitor_hollowing: bool,
@@ -1010,13 +1372,23 @@ impl Default for ProcessCollectorConfig {
 #[serde(default)]
 pub struct NetworkCollectorConfig {
     pub enabled: bool,
-    #[validate(range(min = 0.0, max = 1.0))]
+    #[validate(
+        range(
+            min = 0.0,
+            max = 1.0
+        )
+    )]
     pub sample_rate: f64,
     pub capture_dns: bool,
     pub capture_http: bool,
     pub capture_tls_fingerprints: bool,
     pub capture_payloads: bool,
-    #[validate(range(min = 0, max = 10_000_000))]
+    #[validate(
+        range(
+            min = 0,
+            max = 10_000_000
+        )
+    )]
     pub max_payload_bytes: u32,
     pub resolve_hostnames: bool,
     pub geoip_enabled: bool,
@@ -1052,13 +1424,23 @@ impl Default for NetworkCollectorConfig {
 #[serde(default)]
 pub struct FileCollectorConfig {
     pub enabled: bool,
-    #[validate(range(min = 0.0, max = 1.0))]
+    #[validate(
+        range(
+            min = 0.0,
+            max = 1.0
+        )
+    )]
     pub sample_rate: f64,
     pub monitor_paths: Vec<String>,
     pub exclude_paths: Vec<String>,
     pub calculate_hashes: bool,
     pub calculate_entropy: bool,
-    #[validate(range(min = 1, max = 1_000_000_000))]
+    #[validate(
+        range(
+            min = 1,
+            max = 1_000_000_000
+        )
+    )]
     pub max_file_size_hash: u64,
     pub monitor_executable_only: bool,
     pub monitor_sensitive_paths: bool,
@@ -1105,13 +1487,23 @@ impl Default for FileCollectorConfig {
 #[serde(default)]
 pub struct RegistryCollectorConfig {
     pub enabled: bool,
-    #[validate(range(min = 0.0, max = 1.0))]
+    #[validate(
+        range(
+            min = 0.0,
+            max = 1.0
+        )
+    )]
     pub sample_rate: f64,
     pub monitor_hives: Vec<String>,
     pub monitor_paths: Vec<String>,
     pub exclude_paths: Vec<String>,
     pub capture_value_data: bool,
-    #[validate(range(min = 1, max = 1_000_000))]
+    #[validate(
+        range(
+            min = 1,
+            max = 1_000_000
+        )
+    )]
     pub max_value_size: u32,
 }
 
@@ -1142,14 +1534,29 @@ impl Default for RegistryCollectorConfig {
 #[serde(default)]
 pub struct UsbCollectorConfig {
     pub enabled: bool,
-    #[validate(range(min = 0.0, max = 1.0))]
+    #[validate(
+        range(
+            min = 0.0,
+            max = 1.0
+        )
+    )]
     pub sample_rate: f64,
     pub monitor_hid: bool,
     pub monitor_mass_storage: bool,
     pub scan_on_mount: bool,
-    #[validate(range(min = 1, max = 1000))]
+    #[validate(
+        range(
+            min = 1,
+            max = 1000
+        )
+    )]
     pub scan_max_files: u32,
-    #[validate(range(min = 1, max = 100_000_000))]
+    #[validate(
+        range(
+            min = 1,
+            max = 100_000_000
+        )
+    )]
     pub scan_max_file_size: u64,
     pub scan_extensions: Vec<String>,
     pub notify_on_new_device: bool,
@@ -1166,9 +1573,15 @@ impl Default for UsbCollectorConfig {
             scan_max_files: 100,
             scan_max_file_size: 10_485_760,
             scan_extensions: vec![
-                ".exe".to_string(), ".dll".to_string(), ".ps1".to_string(),
-                ".bat".to_string(), ".cmd".to_string(), ".vbs".to_string(),
-                ".js".to_string(), ".jar".to_string(), ".scr".to_string(),
+                ".exe".to_string(),
+                ".dll".to_string(),
+                ".ps1".to_string(),
+                ".bat".to_string(),
+                ".cmd".to_string(),
+                ".vbs".to_string(),
+                ".js".to_string(),
+                ".jar".to_string(),
+                ".scr".to_string(),
                 ".lnk".to_string(),
             ],
             notify_on_new_device: true,
@@ -1180,7 +1593,12 @@ impl Default for UsbCollectorConfig {
 #[serde(default)]
 pub struct BrowserCollectorConfig {
     pub enabled: bool,
-    #[validate(range(min = 0.0, max = 1.0))]
+    #[validate(
+        range(
+            min = 0.0,
+            max = 1.0
+        )
+    )]
     pub sample_rate: f64,
     pub browsers: Vec<String>,
     pub monitor_history: bool,
@@ -1192,7 +1610,12 @@ pub struct BrowserCollectorConfig {
     pub incognito_mode: IncognitoMode,
     pub extension_allowlist: Vec<String>,
     pub native_messaging_enabled: bool,
-    #[validate(range(min = 1, max = 3600))]
+    #[validate(
+        range(
+            min = 1,
+            max = 3600
+        )
+    )]
     pub poll_interval_seconds: u32,
 }
 
@@ -1201,7 +1624,12 @@ impl Default for BrowserCollectorConfig {
         Self {
             enabled: true,
             sample_rate: 1.0,
-            browsers: vec!["chrome".to_string(), "edge".to_string(), "firefox".to_string(), "brave".to_string()],
+            browsers: vec![
+                "chrome".to_string(),
+                "edge".to_string(),
+                "firefox".to_string(),
+                "brave".to_string(),
+            ],
             monitor_history: true,
             monitor_downloads: true,
             monitor_extensions: true,
@@ -1228,7 +1656,12 @@ pub enum IncognitoMode {
 #[serde(default)]
 pub struct StartupCollectorConfig {
     pub enabled: bool,
-    #[validate(range(min = 1, max = 168))]
+    #[validate(
+        range(
+            min = 1,
+            max = 168
+        )
+    )]
     pub scan_interval_hours: u32,
     pub monitor_registry_run_keys: bool,
     pub monitor_scheduled_tasks: bool,
@@ -1270,9 +1703,19 @@ impl Default for StartupCollectorConfig {
 pub struct ThreatIntelConfig {
     pub enabled: bool,
     pub providers: Vec<ThreatIntelProviderConfig>,
-    #[validate(range(min = 1, max = 168))]
+    #[validate(
+        range(
+            min = 1,
+            max = 168
+        )
+    )]
     pub update_interval_hours: u32,
-    #[validate(range(min = 1000, max = 10_000_000))]
+    #[validate(
+        range(
+            min = 1000,
+            max = 10_000_000
+        )
+    )]
     pub max_iocs: usize,
 }
 
@@ -1280,9 +1723,12 @@ impl Default for ThreatIntelConfig {
     fn default() -> Self {
         Self {
             enabled: true,
-            providers: vec![
-                ThreatIntelProviderConfig { name: "local".to_string(), provider_type: "file".to_string(), path: Some("data/threat_intel/".to_string()), api_key_secret: None },
-            ],
+            providers: vec![ThreatIntelProviderConfig {
+                name: "local".to_string(),
+                provider_type: "file".to_string(),
+                path: Some("data/threat_intel/".to_string()),
+                api_key_secret: None,
+            }],
             update_interval_hours: 6,
             max_iocs: 1_000_000,
         }
@@ -1331,9 +1777,19 @@ pub struct LoggingConfig {
     pub format: LogFormat,
     pub output: LogOutput,
     pub file_path: String,
-    #[validate(range(min = 1, max = 1000))]
+    #[validate(
+        range(
+            min = 1,
+            max = 1000
+        )
+    )]
     pub max_file_size_mb: u32,
-    #[validate(range(min = 1, max = 100))]
+    #[validate(
+        range(
+            min = 1,
+            max = 100
+        )
+    )]
     pub max_files: u32,
     pub include_timestamp: bool,
     pub include_thread: bool,
@@ -1412,15 +1868,15 @@ impl SchemaRegistry {
     pub fn new() -> Self {
         Self { schemas: HashMap::new() }
     }
-    
+
     pub fn register(&mut self, schema: ConfigSchema) {
         self.schemas.insert(schema.module.clone(), schema);
     }
-    
+
     pub fn get(&self, module: &str) -> Option<ConfigSchema> {
         self.schemas.get(module).cloned()
     }
-    
+
     pub fn all(&self) -> Vec<ConfigSchema> {
         self.schemas.values().cloned().collect()
     }
@@ -1437,11 +1893,11 @@ impl ConfigProvider for ConfigManager {
     async fn get(&self, path: &str) -> CoreResult<Option<ConfigValue>> {
         Ok(self.get().get_section_value(path).ok())
     }
-    
+
     async fn watch(&self, path: &str) -> CoreResult<ConfigWatcher> {
         ConfigManager::watch(self, path)
     }
-    
+
     fn schema(&self) -> &ConfigSchema {
         static EMPTY: std::sync::OnceLock<ConfigSchema> = std::sync::OnceLock::new();
         EMPTY.get_or_init(|| ConfigSchema {

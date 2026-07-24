@@ -403,3 +403,55 @@ enum CollectorState { COLLECTOR_STATE_UNSPECIFIED = 0; COLLECTOR_STOPPED = 1; CO
 message CollectorStatusRequest { string collector_id = 1; }
 message CollectorStatusResponse { CollectorInfo info = 1; google.protobuf.Struct detailed_stats = 2; }
 message RestartCollectorRequest { string collector_id = 1; }
+
+// ============================================================
+// SERVICE DEFINITION
+// ============================================================
+
+service Sentinel {
+  rpc Health(HealthRequest) returns (HealthResponse);
+  rpc Version(VersionRequest) returns (VersionResponse);
+  rpc Status(StatusRequest) returns (StatusResponse);
+
+  rpc QueryEvents(QueryEventsRequest) returns (QueryEventsResponse);
+  rpc GetEvent(GetEventRequest) returns (sentinel.events.v1.Event);
+  rpc EventStats(EventStatsRequest) returns (EventStatsResponse);
+
+  rpc ListProcesses(ListProcessesRequest) returns (ListProcessesResponse);
+  rpc GetProcess(GetProcessRequest) returns (ProcessDetail);
+  rpc GetProcessTree(GetProcessTreeRequest) returns (ProcessTree);
+
+  rpc ListConnections(ListConnectionsRequest) returns (ListConnectionsResponse);
+  rpc ConnectionStats(ConnectionStatsRequest) returns (ConnectionStatsResponse);
+
+  rpc ListAlerts(ListAlertsRequest) returns (ListAlertsResponse);
+  rpc GetAlert(GetAlertRequest) returns (Alert);
+
+  rpc ListRules(ListRulesRequest) returns (ListRulesResponse);
+  rpc CreateRule(CreateRuleRequest) returns (Rule);
+  rpc GetRule(GetRuleRequest) returns (Rule);
+  rpc UpdateRule(UpdateRuleRequest) returns (Rule);
+  rpc DeleteRule(DeleteRuleRequest) returns (google.protobuf.Empty);
+  rpc TestRule(TestRuleRequest) returns (TestRuleResponse);
+
+  rpc RiskSummary(RiskSummaryRequest) returns (RiskSummaryResponse);
+  rpc RiskTimeline(RiskTimelineRequest) returns (RiskTimelineResponse);
+  rpc TopRisks(TopRisksRequest) returns (TopRisksResponse);
+
+  rpc AttackChains(AttackChainsRequest) returns (AttackChainsResponse);
+  rpc ChainDetail(ChainDetailRequest) returns (AttackChainDetail);
+
+  rpc ExplainAlert(ExplainAlertRequest) returns (ExplainAlertResponse);
+  rpc Chat(ChatRequest) returns (ChatResponse);
+
+  rpc GetConfig(GetConfigRequest) returns (ConfigResponse);
+  rpc UpdateConfig(UpdateConfigRequest) returns (ConfigResponse);
+
+  rpc ListPlugins(ListPluginsRequest) returns (ListPluginsResponse);
+  rpc GetPlugin(GetPluginRequest) returns (PluginInfo);
+  rpc ConfigurePlugin(ConfigurePluginRequest) returns (PluginConfig);
+
+  rpc ListCollectors(ListCollectorsRequest) returns (ListCollectorsResponse);
+  rpc CollectorStatus(CollectorStatusRequest) returns (CollectorStatusResponse);
+  rpc RestartCollector(RestartCollectorRequest) returns (google.protobuf.Empty);
+}

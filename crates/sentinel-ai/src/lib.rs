@@ -11,7 +11,7 @@ use ollama_rs::generation::completion::request::GenerationRequest;
 use ollama_rs::models::ModelOptions;
 use ollama_rs::Ollama;
 use tokio::sync::Mutex;
-use tracing::{debug, warn};
+use tracing::warn;
 
 use sentinel_core::traits::Alert;
 use sentinel_events::Event;
@@ -58,24 +58,17 @@ pub struct OllamaProvider {
 
 impl OllamaProvider {
     pub fn new(config: &AiConfig) -> Self {
-        Self {
-            ollama: Ollama::new(config.host.clone(), config.port),
-            config: config.clone(),
-        }
+        Self { ollama: Ollama::new(config.host.clone(), config.port), config: config.clone() }
     }
 }
 
 #[async_trait::async_trait]
 impl AiProvider for OllamaProvider {
     async fn generate(&self, prompt: &str) -> Result<String, AiError> {
-        let options = ModelOptions::default()
-            .temperature(self.config.temperature);
+        let options = ModelOptions::default().temperature(self.config.temperature);
 
-        let request = GenerationRequest::new(
-            self.config.model.clone(),
-            prompt.to_string(),
-        )
-        .options(options);
+        let request =
+            GenerationRequest::new(self.config.model.clone(), prompt.to_string()).options(options);
 
         let resp = tokio::time::timeout(
             std::time::Duration::from_secs(self.config.timeout_secs),
@@ -89,16 +82,10 @@ impl AiProvider for OllamaProvider {
     }
 
     async fn is_available(&self) -> bool {
-        let request = GenerationRequest::new(
-            self.config.model.clone(),
-            "ping".to_string(),
-        );
+        let request = GenerationRequest::new(self.config.model.clone(), "ping".to_string());
         matches!(
-            tokio::time::timeout(
-                std::time::Duration::from_secs(3),
-                self.ollama.generate(request),
-            )
-            .await,
+            tokio::time::timeout(std::time::Duration::from_secs(3), self.ollama.generate(request),)
+                .await,
             Ok(Ok(_))
         )
     }
@@ -130,7 +117,9 @@ impl ContextBuilder {
     pub fn investigate(alert: &Alert, events: &[Arc<Event>]) -> String {
         format!(
             "Recommend 3-5 concrete investigation steps for:\n  Alert: {} (risk={}/1000)\n\n{}\n\nSteps:",
-            alert.rule_id, alert.risk_score, Self::summarise_events(events)
+            alert.rule_id,
+            alert.risk_score,
+            Self::summarise_events(events)
         )
     }
 
@@ -140,15 +129,25 @@ impl ContextBuilder {
         }
         let mut lines = Vec::new();
         for (i, e) in events.iter().enumerate() {
-            let proc = e.process.as_ref().map(|p| {
-                format!(" [{} pid={} cmd={}]",
-                    anonymise_path(&p.name),
-                    p.pid,
-                    anonymise_command(&p.command_line))
-            }).unwrap_or_default();
+            let proc = e
+                .process
+                .as_ref()
+                .map(|p| {
+                    format!(
+                        " [{} pid={} cmd={}]",
+                        anonymise_path(&p.name),
+                        p.pid,
+                        anonymise_command(&p.command_line)
+                    )
+                })
+                .unwrap_or_default();
             lines.push(format!(
                 "  {}. [{}] {} (sev={}){}",
-                i + 1, e.source, e.r#type, e.severity, proc
+                i + 1,
+                e.source,
+                e.r#type,
+                e.severity,
+                proc
             ));
         }
         lines.join("\n")
@@ -169,8 +168,18 @@ fn anonymise_command(cmd: &str) -> String {
         .iter()
         .map(|w| {
             let lower = w.to_lowercase();
-            let key_patterns = ["token=", "password=", "secret=", "key=", "api_key=",
-                                 "token:", "password:", "secret:", "key:", "api_key:"];
+            let key_patterns = [
+                "token=",
+                "password=",
+                "secret=",
+                "key=",
+                "api_key=",
+                "token:",
+                "password:",
+                "secret:",
+                "key:",
+                "api_key:",
+            ];
             for pat in &key_patterns {
                 if lower.starts_with(pat) {
                     if let Some(pos) = w.find(|c| c == '=' || c == ':') {
@@ -194,11 +203,7 @@ pub struct AiEngine {
 
 impl AiEngine {
     pub fn new(config: AiConfig, provider: Box<dyn AiProvider>) -> Self {
-        Self {
-            provider,
-            config,
-            cache: Mutex::new(HashMap::new()),
-        }
+        Self { provider, config, cache: Mutex::new(HashMap::new()) }
     }
 
     pub async fn explain_alert(&self, alert: &Alert, events: &[Arc<Event>]) -> String {
@@ -248,11 +253,11 @@ impl AiEngine {
                 }
                 cache.insert(key.to_string(), cleaned.clone());
                 cleaned
-            }
+            },
             Err(e) => {
                 warn!("AI generation failed: {e}");
                 Self::fallback(&Alert::default())
-            }
+            },
         }
     }
 
@@ -266,7 +271,11 @@ impl AiEngine {
 }
 
 fn sanitise(response: &str) -> String {
-    let s = response.trim().trim_start_matches("```").trim_end_matches("```").trim();
+    let s = response
+        .trim()
+        .trim_start_matches("```")
+        .trim_end_matches("```")
+        .trim();
     if s.len() > 2000 {
         format!("{}…", &s[..1997])
     } else {

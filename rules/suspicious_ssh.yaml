@@ -1,0 +1,31 @@
+rule:
+  id: "rule-002-suspicious-ssh"
+  version: 1
+  name: "Suspicious SSH Connection"
+  description: "Outbound SSH to unusual or known-bad ports"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "lateral-movement"
+  subcategory: "remote-services"
+  mitre:
+    - technique: "T1021.004"
+      name: "SSH"
+      tactic: "Lateral Movement"
+  severity: "Notice"
+  risk:
+    base_score: 50
+    confidence: 0.8
+    multipliers: []
+  condition: >
+    event.type == "sentinel.network.connect"
+    && (event.process.name.lowerAscii().contains("ssh")
+        || event.process.name.lowerAscii().contains("scp")
+        || event.process.name.lowerAscii().contains("sftp"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

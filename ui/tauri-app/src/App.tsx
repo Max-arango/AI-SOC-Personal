@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Activity, AlertTriangle, Network, FileText, Settings, HelpCircle, ChevronLeft, ChevronRight, Sun, Moon, Bot, Shield, Bell } from 'lucide-react';
+import { LayoutDashboard, Activity, AlertTriangle, Network, FileText, Settings, ChevronLeft, ChevronRight, Sun, Moon, Bot, Shield } from 'lucide-react';
 import { useTheme } from './hooks/useTheme';
 import { cn } from './utils/cn';
 

@@ -1,63 +1,14 @@
 # rustfmt configuration for Sentinel AI
+# Only stable-channel options. Nightly options in rustfmt_nightly.toml
 
-# Edition
 edition = "2021"
-
-# Maximum line width
 max_width = 100
-
-# Indentation
-indent_style = "Block"
 tab_spaces = 4
 hard_tabs = false
-
-# Newlines
 newline_style = "Unix"
-
-# Imports
-imports_granularity = "Crate"
-group_imports = "StdExternalCrate"
-imports_indent = "Block"
-
-# Formatting
-format_code_in_doc_comments = true
-format_macro_matchers = true
-format_macro_bodies = true
-
-# Function formatting
-fn_args_layout = "Tall"
-fn_return_indent = "Block"
-fn_single_line = false
-
-# Struct formatting
-struct_lit_single_line = false
-struct_variant_width = 0
-
-# Match formatting
+use_small_heuristics = "Max"
+chain_width = 60
 match_block_trailing_comma = true
 match_arm_leading_pipes = "Never"
-
-# Use small heuristics
-use_small_heuristics = "Max"
-
-# Where clauses
-where_single_line = false
-
-# Attributes
 attr_fn_like_width = 0
-
-# Chains
-chain_width = 60
-
-# Comments
-normalize_comments = true
-comment_width = 80
-
-# Derive
-derive_newline = true
-
-# Empty item single line
-empty_item_single_line = true
-
-# Config version
-version = "Two"
+struct_variant_width = 0

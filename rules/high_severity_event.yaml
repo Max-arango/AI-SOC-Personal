@@ -1,0 +1,25 @@
+rule:
+  id: "rule-008-high-severity-event"
+  version: 1
+  name: "High Severity Event Alert"
+  description: "Any event with severity Error or above"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "general"
+  subcategory: "severity-threshold"
+  mitre: []
+  severity: "Warning"
+  risk:
+    base_score: 50
+    confidence: 0.95
+    multipliers: []
+  condition: >
+    severity >= SEVERITY_ERROR
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

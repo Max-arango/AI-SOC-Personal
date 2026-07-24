@@ -1,0 +1,40 @@
+rule:
+  id: "rule-009-reverse-shell"
+  version: 1
+  name: "Potential Reverse Shell"
+  description: "Shell process with network connectivity to a non-standard port"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "execution"
+  subcategory: "command-and-scripting"
+  mitre:
+    - technique: "T1059"
+      name: "Command and Scripting Interpreter"
+      tactic: "Execution"
+  severity: "Error"
+  risk:
+    base_score: 80
+    confidence: 0.85
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.name.lowerAscii().contains("bash")
+        || event.process.name.lowerAscii().contains("sh")
+        || event.process.name.lowerAscii().contains("zsh")
+        || event.process.name.lowerAscii().contains("nc")
+        || event.process.name.lowerAscii().contains("ncat")
+        || event.process.name.lowerAscii().contains("netcat")
+        || event.process.name.lowerAscii().contains("python"))
+    && (event.process.command_line.lowerAscii().contains("/dev/tcp")
+        || event.process.command_line.lowerAscii().contains("-e /bin/sh")
+        || event.process.command_line.lowerAscii().contains("-e /bin/bash")
+        || event.process.command_line.lowerAscii().contains("socket")
+        || event.process.command_line.lowerAscii().contains("pty"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,29 @@
+rule:
+  id: "rule-007-process-injection"
+  version: 1
+  name: "Process Injection Detected"
+  description: "Process injection or memory manipulation behavior"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "defense-evasion"
+  subcategory: "process-injection"
+  mitre:
+    - technique: "T1055"
+      name: "Process Injection"
+      tactic: "Defense Evasion"
+  severity: "Error"
+  risk:
+    base_score: 85
+    confidence: 0.9
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.inject"
+    || event.type == "sentinel.process.hollow"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

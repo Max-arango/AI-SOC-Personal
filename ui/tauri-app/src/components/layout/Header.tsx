@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Menu, Bell, Search, User, Moon, Sun, ChevronDown, Settings, LogOut } from 'lucide-react';
-import { clsx } from 'clsx';
 import { useTheme } from '@/hooks/useTheme';
 
 export function Header() {

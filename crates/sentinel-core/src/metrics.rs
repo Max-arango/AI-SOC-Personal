@@ -1,11 +1,11 @@
 //! Metrics infrastructure for Sentinel AI
 
-use std::sync::Arc;
 use parking_lot::RwLock;
-use prometheus_client::registry::Registry;
-use prometheus_client::metrics::{counter::Counter, gauge::Gauge, histogram::Histogram};
 use prometheus_client::encoding::text::encode;
+use prometheus_client::metrics::{counter::Counter, gauge::Gauge, histogram::Histogram};
+use prometheus_client::registry::Registry;
 use std::collections::HashMap;
+use std::sync::Arc;
 
 /// Global metrics registry
 pub struct MetricsRegistry {
@@ -20,19 +20,19 @@ impl MetricsRegistry {
             collectors: RwLock::new(HashMap::new()),
         }
     }
-    
+
     pub fn registry(&self) -> Arc<RwLock<Registry>> {
         self.registry.clone()
     }
-    
+
     pub fn register_collector(&self, name: String, collector: Box<dyn Collector>) {
         self.collectors.write().insert(name, collector);
     }
-    
+
     pub fn unregister_collector(&self, name: &str) {
         self.collectors.write().remove(name);
     }
-    
+
     pub fn gather(&self) -> String {
         let mut buffer = String::new();
         encode(&mut buffer, &self.registry.read()).unwrap();
@@ -60,31 +60,23 @@ pub struct CounterBuilder {
 
 impl CounterBuilder {
     pub fn new(name: impl Into<String>) -> Self {
-        Self {
-            name: name.into(),
-            help: String::new(),
-            labels: vec![],
-        }
+        Self { name: name.into(), help: String::new(), labels: vec![] }
     }
-    
+
     pub fn help(mut self, help: impl Into<String>) -> Self {
         self.help = help.into();
         self
     }
-    
+
     pub fn label(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
         self.labels.push((key.into(), value.into()));
         self
     }
-    
+
     pub fn build(self, registry: &MetricsRegistry) -> Counter {
         let counter = Counter::default();
         let mut reg = registry.registry.write();
-        reg.register(
-            self.name.clone(),
-            self.help.clone(),
-            counter.clone(),
-        );
+        reg.register(self.name.clone(), self.help.clone(), counter.clone());
         counter
     }
 }
@@ -98,31 +90,23 @@ pub struct GaugeBuilder {
 
 impl GaugeBuilder {
     pub fn new(name: impl Into<String>) -> Self {
-        Self {
-            name: name.into(),
-            help: String::new(),
-            labels: vec![],
-        }
+        Self { name: name.into(), help: String::new(), labels: vec![] }
     }
-    
+
     pub fn help(mut self, help: impl Into<String>) -> Self {
         self.help = help.into();
         self
     }
-    
+
     pub fn label(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
         self.labels.push((key.into(), value.into()));
         self
     }
-    
+
     pub fn build(self, registry: &MetricsRegistry) -> Gauge {
         let gauge = Gauge::default();
         let mut reg = registry.registry.write();
-        reg.register(
-            self.name.clone(),
-            self.help.clone(),
-            gauge.clone(),
-        );
+        reg.register(self.name.clone(), self.help.clone(), gauge.clone());
         gauge
     }
 }
@@ -140,36 +124,30 @@ impl HistogramBuilder {
         Self {
             name: name.into(),
             help: String::new(),
-            buckets: vec![
-                0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0,
-            ],
+            buckets: vec![0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0],
             labels: vec![],
         }
     }
-    
+
     pub fn help(mut self, help: impl Into<String>) -> Self {
         self.help = help.into();
         self
     }
-    
+
     pub fn buckets(mut self, buckets: Vec<f64>) -> Self {
         self.buckets = buckets;
         self
     }
-    
+
     pub fn label(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
         self.labels.push((key.into(), value.into()));
         self
     }
-    
+
     pub fn build(self, registry: &MetricsRegistry) -> Histogram {
         let histogram = Histogram::new(self.buckets.into_iter());
         let mut reg = registry.registry.write();
-        reg.register(
-            self.name.clone(),
-            self.help.clone(),
-            histogram.clone(),
-        );
+        reg.register(self.name.clone(), self.help.clone(), histogram.clone());
         histogram
     }
 }
@@ -188,7 +166,7 @@ pub struct ModuleMetrics {
 impl ModuleMetrics {
     pub fn new(registry: &MetricsRegistry, module_name: &str) -> Self {
         let prefix = format!("sentinel_{}", module_name.replace('-', "_"));
-        
+
         Self {
             events_processed: CounterBuilder::new(format!("{}_events_processed_total", prefix))
                 .help("Total number of events processed")
@@ -228,7 +206,7 @@ pub struct CollectorMetrics {
 impl CollectorMetrics {
     pub fn new(registry: &MetricsRegistry, collector_id: &str) -> Self {
         let prefix = format!("sentinel_collector_{}", collector_id.replace('-', "_"));
-        
+
         Self {
             events_produced: CounterBuilder::new(format!("{}_events_produced_total", prefix))
                 .help("Total events produced by this collector")

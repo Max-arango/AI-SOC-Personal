@@ -3,10 +3,10 @@
 //! Wraps the AlertRepository with business logic: persists alerts,
 //! manages state transitions, and exposes query operations.
 
-use std::sync::Arc;
-use sentinel_core::traits::{Alert, AlertRepository, AlertState, AlertQuery};
-use sentinel_core::{AlertId, Result as CoreResult, Ulid};
 use chrono::Utc;
+use sentinel_core::traits::{Alert, AlertQuery, AlertRepository, AlertState};
+use sentinel_core::{AlertId, Result as CoreResult, Ulid};
+use std::sync::Arc;
 
 pub struct AlertManager {
     repo: Arc<dyn AlertRepository>,
@@ -36,7 +36,10 @@ impl AlertManager {
             updated_at: Utc::now(),
             acknowledged_by: None,
             acknowledged_at: None,
-            events: event_ids.into_iter().filter_map(|e| Ulid::from_string(&e).ok()).collect(),
+            events: event_ids
+                .into_iter()
+                .filter_map(|e| Ulid::from_string(&e).ok())
+                .collect(),
             context,
             ai_summary: None,
         };
@@ -44,22 +47,14 @@ impl AlertManager {
         Ok(alert)
     }
 
-    pub async fn acknowledge(
-        &self,
-        alert_id: &AlertId,
-        username: &str,
-    ) -> CoreResult<()> {
+    pub async fn acknowledge(&self, alert_id: &AlertId, username: &str) -> CoreResult<()> {
         let comment = Some(username.to_string());
         self.repo
             .update_state(alert_id, AlertState::Acknowledged, comment)
             .await
     }
 
-    pub async fn resolve(
-        &self,
-        alert_id: &AlertId,
-        is_true_positive: bool,
-    ) -> CoreResult<()> {
+    pub async fn resolve(&self, alert_id: &AlertId, is_true_positive: bool) -> CoreResult<()> {
         let state = if is_true_positive {
             AlertState::ResolvedTruePositive
         } else {

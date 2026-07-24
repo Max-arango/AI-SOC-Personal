@@ -20,9 +20,7 @@ pub struct PluginManager {
 impl PluginManager {
     /// Create a new, empty plugin manager.
     pub fn new() -> Self {
-        Self {
-            plugins: RwLock::new(HashMap::new()),
-        }
+        Self { plugins: RwLock::new(HashMap::new()) }
     }
 }
 

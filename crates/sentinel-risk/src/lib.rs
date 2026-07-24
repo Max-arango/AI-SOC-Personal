@@ -4,7 +4,6 @@
 //! alert generation, deduplication, and anti-flapping.
 
 use std::collections::HashMap;
-use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use chrono::{DateTime, Utc};
@@ -53,12 +52,7 @@ impl Default for RiskConfig {
                 m.insert("Emergency".into(), 60);
                 m
             },
-            thresholds: RiskThresholds {
-                low: 100,
-                medium: 300,
-                high: 600,
-                critical: 900,
-            },
+            thresholds: RiskThresholds { low: 100, medium: 300, high: 600, critical: 900 },
             dedup_window_secs: 300,
             flapping_max_per_hour: 10,
             default_asset_multiplier: 1.0,
@@ -218,7 +212,9 @@ impl RiskEngine {
         {
             let dedup = self.dedup_state.read();
             if let Some(entry) = dedup.get(&dedup_key) {
-                if entry.last_alert_at.elapsed() < Duration::from_secs(self.config.dedup_window_secs) {
+                if entry.last_alert_at.elapsed()
+                    < Duration::from_secs(self.config.dedup_window_secs)
+                {
                     debug!("Deduplicated alert for {}", rule_id);
                     return None;
                 }
@@ -228,9 +224,9 @@ impl RiskEngine {
         // Flapping check
         {
             let mut flap = self.flapping_state.write();
-            let entry = flap.entry(rule_id.to_string()).or_insert(FlappingEntry {
-                alert_timestamps: Vec::new(),
-            });
+            let entry = flap
+                .entry(rule_id.to_string())
+                .or_insert(FlappingEntry { alert_timestamps: Vec::new() });
             let cutoff = Instant::now() - Duration::from_secs(3600);
             entry.alert_timestamps.retain(|t| *t >= cutoff);
             if entry.alert_timestamps.len() >= self.config.flapping_max_per_hour {
@@ -245,15 +241,9 @@ impl RiskEngine {
             .write()
             .insert(dedup_key, DedupEntry { last_alert_at: Instant::now() });
 
-        let summary = format!(
-            "{} detected (score={}, severity={:?})",
-            rule_name, score, severity
-        );
+        let summary = format!("{} detected (score={}, severity={:?})", rule_name, score, severity);
 
-        info!(
-            "Alert generated: {} (score={}, {:?})",
-            rule_id, score, severity
-        );
+        info!("Alert generated: {} (score={}, {:?})", rule_id, score, severity);
 
         Some(RiskAlert {
             rule_id: rule_id.into(),
@@ -273,7 +263,8 @@ impl RiskEngine {
         let mut scores = self.scores.write();
         scores.retain(|_, (_, at)| at.elapsed().as_secs() < 86400);
         let mut dedup = self.dedup_state.write();
-        dedup.retain(|_, e| e.last_alert_at.elapsed().as_secs() < self.config.dedup_window_secs * 2);
+        dedup
+            .retain(|_, e| e.last_alert_at.elapsed().as_secs() < self.config.dedup_window_secs * 2);
     }
 }
 
@@ -297,13 +288,19 @@ mod tests {
     #[test]
     fn test_threshold_low() {
         let score = 50;
-        let sev = AlertSeverity::from_score(score, &RiskThresholds { low: 100, medium: 300, high: 600, critical: 900 });
+        let sev = AlertSeverity::from_score(
+            score,
+            &RiskThresholds { low: 100, medium: 300, high: 600, critical: 900 },
+        );
         assert_eq!(sev, AlertSeverity::Low);
     }
 
     #[test]
     fn test_threshold_critical() {
-        let sev = AlertSeverity::from_score(950, &RiskThresholds { low: 100, medium: 300, high: 600, critical: 900 });
+        let sev = AlertSeverity::from_score(
+            950,
+            &RiskThresholds { low: 100, medium: 300, high: 600, critical: 900 },
+        );
         assert_eq!(sev, AlertSeverity::Critical);
     }
 
@@ -319,7 +316,9 @@ mod tests {
     #[test]
     fn test_should_alert_below_threshold() {
         let engine = RiskEngine::new(RiskConfig::default());
-        assert!(engine.should_alert("r1", "test", 50, "src", vec![], None).is_none());
+        assert!(engine
+            .should_alert("r1", "test", 50, "src", vec![], None)
+            .is_none());
     }
 
     #[test]

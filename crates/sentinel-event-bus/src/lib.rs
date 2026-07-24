@@ -24,11 +24,7 @@ use sentinel_events::Event;
 
 /// Default backpressure configuration used by the monitor when none is supplied.
 fn default_backpressure() -> BackpressureConfig {
-    BackpressureConfig {
-        elevated: 50,
-        high: 75,
-        critical: 90,
-    }
+    BackpressureConfig { elevated: 50, high: 75, critical: 90 }
 }
 
 /// Internal statistics backed by atomics for lock-free updates.
@@ -86,10 +82,7 @@ impl TopicRouter {
 
     fn matches_filter(filter: &EventFilter, event: &Event) -> bool {
         if let Some(types) = &filter.event_types {
-            if !types
-                .iter()
-                .any(|t| t == &event.r#type || t == "*")
-            {
+            if !types.iter().any(|t| t == &event.r#type || t == "*") {
                 return false;
             }
         }
@@ -105,23 +98,19 @@ impl TopicRouter {
         }
         if let Some(process_names) = &filter.process_names {
             match &event.process {
-                Some(proc)
-                    if process_names.iter().any(|n| n == &proc.name || n == "*") =>
-                {
-                    {}
-                }
+                Some(proc) if process_names.iter().any(|n| n == &proc.name || n == "*") => {},
                 _ => return false,
             }
         }
         if let Some(cid) = &filter.correlation_id {
             match &event.correlation {
-                Some(c) if &c.correlation_id == cid => {}
+                Some(c) if &c.correlation_id == cid => {},
                 _ => return false,
             }
         }
         if let Some(fid) = &filter.flow_id {
             match &event.correlation {
-                Some(c) if &c.flow_id == fid => {}
+                Some(c) if &c.flow_id == fid => {},
                 _ => return false,
             }
         }
@@ -138,10 +127,7 @@ impl TopicRouter {
         filter: &EventFilter,
         sender: mpsc::Sender<Arc<Event>>,
     ) -> Result<()> {
-        let subscriber = Subscriber {
-            filter: filter.clone(),
-            sender,
-        };
+        let subscriber = Subscriber { filter: filter.clone(), sender };
         match &filter.event_types {
             Some(event_types) => {
                 for et in event_types {
@@ -155,12 +141,14 @@ impl TopicRouter {
                             .push(subscriber.clone());
                     }
                 }
-            }
+            },
             None => {
                 self.wildcard_subscribers.write().push(subscriber);
-            }
+            },
         }
-        self.stats.active_subscriptions.fetch_add(1, Ordering::Relaxed);
+        self.stats
+            .active_subscriptions
+            .fetch_add(1, Ordering::Relaxed);
         Ok(())
     }
 }
@@ -258,11 +246,8 @@ impl EventBusImpl {
                 ticker.tick().await;
                 let d = depth.load(Ordering::Relaxed);
                 stats.ingest_queue_depth.store(d, Ordering::Relaxed);
-                let usage = if capacity > 0 {
-                    ((d as u64 * 100) / capacity as u64) as u8
-                } else {
-                    0
-                };
+                let usage =
+                    if capacity > 0 { ((d as u64 * 100) / capacity as u64) as u8 } else { 0 };
                 let signal = if usage >= bp.critical {
                     BackpressureSignal::Critical
                 } else if usage >= bp.high {
@@ -288,30 +273,25 @@ impl EventBusImpl {
 impl EventBus for EventBusImpl {
     async fn publish(&self, event: Arc<Event>) -> CoreResult<()> {
         self.ingest_depth.fetch_add(1, Ordering::Relaxed);
-        self.ingest_tx
-            .send(event)
-            .await
-            .map_err(|_| SentinelError::EventBus(sentinel_core::EventBusError::ChannelFull("ingest closed".into())))?;
+        self.ingest_tx.send(event).await.map_err(|_| {
+            SentinelError::EventBus(sentinel_core::EventBusError::ChannelFull(
+                "ingest closed".into(),
+            ))
+        })?;
         Ok(())
     }
 
     async fn subscribe(&self, filter: EventFilter) -> CoreResult<EventSubscription> {
         let (tx, rx) = mpsc::channel(1000);
-        self.router
-            .subscribe(&filter, tx)
-            .await
-            .map_err(|e| SentinelError::EventBus(sentinel_core::EventBusError::Subscription(e.to_string())))?;
-        Ok(EventSubscription {
-            receiver: rx,
-            filter,
-        })
+        self.router.subscribe(&filter, tx).await.map_err(|e| {
+            SentinelError::EventBus(sentinel_core::EventBusError::Subscription(e.to_string()))
+        })?;
+        Ok(EventSubscription { receiver: rx, filter })
     }
 
     async fn subscribe_type(&self, event_type: &str) -> CoreResult<EventSubscription> {
-        let filter = EventFilter {
-            event_types: Some(vec![event_type.to_string()]),
-            ..Default::default()
-        };
+        let filter =
+            EventFilter { event_types: Some(vec![event_type.to_string()]), ..Default::default() };
         self.subscribe(filter).await
     }
 

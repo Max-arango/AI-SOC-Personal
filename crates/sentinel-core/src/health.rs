@@ -1,8 +1,8 @@
 //! Health monitoring for Sentinel AI components
 
-use std::collections::HashMap;
-use serde::{Serialize, Deserialize};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// Overall system health status
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -36,7 +36,7 @@ impl ComponentHealth {
             metrics: None,
         }
     }
-    
+
     pub fn degraded(name: impl Into<String>, message: impl Into<String>) -> Self {
         Self {
             name: name.into(),
@@ -47,7 +47,7 @@ impl ComponentHealth {
             metrics: None,
         }
     }
-    
+
     pub fn unhealthy(name: impl Into<String>, message: impl Into<String>) -> Self {
         Self {
             name: name.into(),
@@ -58,12 +58,12 @@ impl ComponentHealth {
             metrics: None,
         }
     }
-    
+
     pub fn with_detail(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
         self.details.insert(key.into(), value.into());
         self
     }
-    
+
     pub fn with_metrics(mut self, metrics: ComponentMetrics) -> Self {
         self.metrics = Some(metrics);
         self
@@ -92,32 +92,35 @@ pub struct SystemHealth {
 
 impl SystemHealth {
     pub fn new(components: Vec<ComponentHealth>, uptime_seconds: u64) -> Self {
-        let status = if components.iter().any(|c| c.status == HealthStatus::Unhealthy) {
+        let status = if components
+            .iter()
+            .any(|c| c.status == HealthStatus::Unhealthy)
+        {
             HealthStatus::Unhealthy
-        } else if components.iter().any(|c| c.status == HealthStatus::Degraded) {
+        } else if components
+            .iter()
+            .any(|c| c.status == HealthStatus::Degraded)
+        {
             HealthStatus::Degraded
         } else if components.iter().all(|c| c.status == HealthStatus::Healthy) {
             HealthStatus::Healthy
         } else {
             HealthStatus::Unknown
         };
-        
-        Self {
-            status,
-            components,
-            timestamp: Utc::now(),
-            uptime_seconds,
-        }
+
+        Self { status, components, timestamp: Utc::now(), uptime_seconds }
     }
-    
+
     pub fn unhealthy_components(&self) -> Vec<&ComponentHealth> {
-        self.components.iter()
+        self.components
+            .iter()
             .filter(|c| c.status == HealthStatus::Unhealthy)
             .collect()
     }
-    
+
     pub fn degraded_components(&self) -> Vec<&ComponentHealth> {
-        self.components.iter()
+        self.components
+            .iter()
             .filter(|c| c.status == HealthStatus::Degraded)
             .collect()
     }
@@ -127,7 +130,7 @@ impl SystemHealth {
 #[async_trait::async_trait]
 pub trait HealthCheck: Send + Sync {
     async fn check(&self) -> ComponentHealth;
-    
+
     fn name(&self) -> &'static str;
 }
 
@@ -146,11 +149,11 @@ impl CompositeHealthCheck {
 impl HealthCheck for CompositeHealthCheck {
     async fn check(&self) -> ComponentHealth {
         let mut results = Vec::new();
-        
+
         for check in &self.checks {
             results.push(check.check().await);
         }
-        
+
         let overall = if results.iter().any(|r| r.status == HealthStatus::Unhealthy) {
             HealthStatus::Unhealthy
         } else if results.iter().any(|r| r.status == HealthStatus::Degraded) {
@@ -158,19 +161,20 @@ impl HealthCheck for CompositeHealthCheck {
         } else {
             HealthStatus::Healthy
         };
-        
+
         ComponentHealth {
             name: "composite".to_string(),
             status: overall,
             message: None,
-            details: results.into_iter()
+            details: results
+                .into_iter()
                 .map(|r| (r.name, format!("{:?}", r.status)))
                 .collect(),
             last_check: Utc::now(),
             metrics: None,
         }
     }
-    
+
     fn name(&self) -> &'static str {
         "composite"
     }
@@ -191,11 +195,11 @@ impl ResourceTracker {
             pid: std::process::id(),
         }
     }
-    
+
     pub fn uptime_seconds(&self) -> u64 {
         (Utc::now() - self.process_start).num_seconds() as u64
     }
-    
+
     pub fn memory_bytes(&self) -> Option<u64> {
         #[cfg(target_os = "linux")]
         {
@@ -213,7 +217,7 @@ impl ResourceTracker {
             }
             None
         }
-        
+
         #[cfg(target_os = "macos")]
         {
             use std::process::Command;
@@ -221,17 +225,21 @@ impl ResourceTracker {
                 .args(["-o", "rss=", "-p", &std::process::id().to_string()])
                 .output()
                 .ok()?;
-            let rss = String::from_utf8(output.stdout).ok()?.trim().parse::<u64>().ok()?;
+            let rss = String::from_utf8(output.stdout)
+                .ok()?
+                .trim()
+                .parse::<u64>()
+                .ok()?;
             Some(rss * 1024)
         }
-        
+
         #[cfg(target_os = "windows")]
         {
-            use windows::Win32::System::Threading::GetCurrentProcess;
+            use std::mem;
             use windows::Win32::System::Memory::GetProcessMemoryInfo;
             use windows::Win32::System::Memory::PROCESS_MEMORY_COUNTERS;
-            use std::mem;
-            
+            use windows::Win32::System::Threading::GetCurrentProcess;
+
             unsafe {
                 let mut counters: PROCESS_MEMORY_COUNTERS = mem::zeroed();
                 counters.cb = mem::size_of::<PROCESS_MEMORY_COUNTERS>() as u32;
@@ -242,13 +250,21 @@ impl ResourceTracker {
                 }
             }
         }
-        
-        #[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
+
+        #[cfg(
+            not(
+                any(
+                    target_os = "linux",
+                    target_os = "macos",
+                    target_os = "windows"
+                )
+            )
+        )]
         {
             None
         }
     }
-    
+
     pub fn cpu_percent(&self) -> Option<f64> {
         // Simplified - would need more sophisticated tracking for real CPU%
         #[cfg(target_os = "linux")]
@@ -268,7 +284,7 @@ impl ResourceTracker {
             }
             None
         }
-        
+
         #[cfg(not(target_os = "linux"))]
         {
             None

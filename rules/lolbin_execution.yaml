@@ -1,0 +1,35 @@
+rule:
+  id: "rule-003-lolbin-execution"
+  version: 1
+  name: "Living-off-the-Land Binary Execution"
+  description: "System binaries commonly abused for malicious purposes"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "defense-evasion"
+  subcategory: "system-binary-proxy"
+  mitre:
+    - technique: "T1218"
+      name: "System Binary Proxy Execution"
+      tactic: "Defense Evasion"
+  severity: "Warning"
+  risk:
+    base_score: 65
+    confidence: 0.85
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.name.lowerAscii().contains("mshta")
+        || event.process.name.lowerAscii().contains("certutil")
+        || event.process.name.lowerAscii().contains("regsvr32")
+        || event.process.name.lowerAscii().contains("rundll32")
+        || event.process.name.lowerAscii().contains("wscript")
+        || event.process.name.lowerAscii().contains("cscript")
+        || event.process.name.lowerAscii().contains("msiexec"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

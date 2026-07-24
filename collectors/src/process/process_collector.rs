@@ -1,17 +1,17 @@
 //! Process Collector Implementation
 
-use std::sync::Arc;
 use async_trait::async_trait;
+use std::sync::Arc;
 use tokio::sync::mpsc;
 use tracing::{error, info};
 
 use crate::framework::*;
 use sentinel_config::ProcessCollectorConfig;
-use sentinel_core::{
-    CollectorError, CollectorHealth, CollectorMetrics, CollectorState, EventId,
-};
 use sentinel_core::traits::{Collector, CollectorContext, ConfigSchema, ProcessInfo};
-use sentinel_events::{Event, Severity, ProcessContext, ProcessEvent, UserContext, CodeSigningInfo};
+use sentinel_core::{CollectorError, CollectorHealth, CollectorMetrics, CollectorState, EventId};
+use sentinel_events::{
+    CodeSigningInfo, Event, ProcessContext, ProcessEvent, Severity, UserContext,
+};
 
 /// Process collector implementation
 #[allow(dead_code)]
@@ -32,11 +32,12 @@ impl ProcessCollector {
     /// Create new process collector
     pub async fn new(config: ProcessCollectorConfig) -> Result<Self, CollectorError> {
         let platform = create_platform_collector(&config).await?;
-        
+
         Ok(Self {
             id: "process".to_string(),
             name: "Process Monitor".to_string(),
-            description: "Monitors process creation, termination, and suspicious behavior".to_string(),
+            description: "Monitors process creation, termination, and suspicious behavior"
+                .to_string(),
             state: parking_lot::RwLock::new(CollectorState::Stopped),
             health: parking_lot::RwLock::new(CollectorHealth::default()),
             config,
@@ -46,32 +47,40 @@ impl ProcessCollector {
             metrics: CollectorMetrics::default(),
         })
     }
-    
+
     async fn do_start_inner(&mut self) -> Result<(), CollectorError> {
         info!("Starting process collector");
-        self.platform.lock().await.start().await
+        self.platform
+            .lock()
+            .await
+            .start()
+            .await
             .map_err(|e| CollectorError::StartFailed(e.to_string()))?;
-        
+
         // Spawn event processing loop
         let event_tx = self.event_tx.clone().unwrap();
         let platform = self.platform.clone();
         let backpressure_rx = self.backpressure_rx.clone();
         let _config = self.config.clone();
-        
+
         tokio::spawn(async move {
             let mut interval = tokio::time::interval(tokio::time::Duration::from_millis(100));
-            
+
             loop {
                 interval.tick().await;
-                
+
                 // Check backpressure
                 if let Some(ref bp) = backpressure_rx {
-                    if matches!(*bp.borrow(), sentinel_core::BackpressureSignal::Critical | sentinel_core::BackpressureSignal::Overflow) {
+                    if matches!(
+                        *bp.borrow(),
+                        sentinel_core::BackpressureSignal::Critical
+                            | sentinel_core::BackpressureSignal::Overflow
+                    ) {
                         tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
                         continue;
                     }
                 }
-                
+
                 // Poll for events
                 if let Ok(events) = platform.lock().await.poll().await {
                     for event in events {
@@ -83,18 +92,25 @@ impl ProcessCollector {
                 }
             }
         });
-        
+
         Ok(())
     }
-    
+
     async fn do_stop_inner(&mut self, graceful: bool) -> Result<(), CollectorError> {
         info!("Stopping process collector (graceful={})", graceful);
-        self.platform.lock().await.stop().await
+        self.platform
+            .lock()
+            .await
+            .stop()
+            .await
             .map_err(|e| CollectorError::StopFailed(e.to_string()))?;
         Ok(())
     }
-    
-    async fn do_reconfigure_inner(&mut self, config: serde_json::Value) -> Result<(), CollectorError> {
+
+    async fn do_reconfigure_inner(
+        &mut self,
+        config: serde_json::Value,
+    ) -> Result<(), CollectorError> {
         let new_config: ProcessCollectorConfig = serde_json::from_value(config)
             .map_err(|e| CollectorError::Configuration(e.to_string()))?;
         self.config = new_config;
@@ -107,15 +123,15 @@ impl Collector for ProcessCollector {
     fn id(&self) -> &str {
         &self.id
     }
-    
+
     fn name(&self) -> &str {
         &self.name
     }
-    
+
     fn description(&self) -> &str {
         &self.description
     }
-    
+
     fn event_types(&self) -> Vec<&str> {
         vec![
             "sentinel.process.create",
@@ -127,11 +143,11 @@ impl Collector for ProcessCollector {
             "sentinel.process.dump",
         ]
     }
-    
+
     fn required_capabilities(&self) -> Vec<String> {
         vec!["process:read".to_string(), "process:enumerate".to_string()]
     }
-    
+
     fn config_schema(&self) -> ConfigSchema {
         ConfigSchema {
             module: "process_collector".to_string(),
@@ -154,23 +170,23 @@ impl Collector for ProcessCollector {
             }),
         }
     }
-    
+
     async fn start(&mut self, ctx: CollectorContext) -> sentinel_core::Result<()> {
         self.event_tx = Some(ctx.event_tx);
         self.backpressure_rx = Some(ctx.backpressure_rx);
         self.do_start_inner().await?;
         Ok(())
     }
-    
+
     async fn stop(&mut self, graceful: bool) -> sentinel_core::Result<()> {
         self.do_stop_inner(graceful).await?;
         Ok(())
     }
-    
+
     async fn health(&self) -> CollectorHealth {
         self.health.read().clone()
     }
-    
+
     async fn reconfigure(&mut self, config: serde_json::Value) -> sentinel_core::Result<()> {
         self.do_reconfigure_inner(config).await?;
         Ok(())
@@ -183,12 +199,12 @@ impl CollectorImpl for ProcessCollector {
         self.do_start_inner().await?;
         Ok(())
     }
-    
+
     async fn do_stop(&mut self, graceful: bool) -> sentinel_core::Result<()> {
         self.do_stop_inner(graceful).await?;
         Ok(())
     }
-    
+
     async fn do_reconfigure(&mut self, config: serde_json::Value) -> sentinel_core::Result<()> {
         self.do_reconfigure_inner(config).await?;
         Ok(())
@@ -204,23 +220,33 @@ pub trait OsProcessCollector: Send + Sync {
 }
 
 /// Create platform-specific collector
-async fn create_platform_collector(config: &ProcessCollectorConfig) -> Result<Arc<tokio::sync::Mutex<dyn OsProcessCollector>>, CollectorError> {
+async fn create_platform_collector(
+    config: &ProcessCollectorConfig,
+) -> Result<Arc<tokio::sync::Mutex<dyn OsProcessCollector>>, CollectorError> {
     #[cfg(target_os = "windows")]
     {
         Ok(Arc::new(tokio::sync::Mutex::new(windows::WindowsProcessCollector::new(config).await?)))
     }
-    
+
     #[cfg(target_os = "linux")]
     {
         Ok(Arc::new(tokio::sync::Mutex::new(linux::LinuxProcessCollector::new(config).await?)))
     }
-    
+
     #[cfg(target_os = "macos")]
     {
         Ok(Arc::new(tokio::sync::Mutex::new(macos::MacosProcessCollector::new(config).await?)))
     }
-    
-    #[cfg(not(any(target_os = "windows", target_os = "linux", target_os = "macos")))]
+
+    #[cfg(
+        not(
+            any(
+                target_os = "windows",
+                target_os = "linux",
+                target_os = "macos"
+            )
+        )
+    )]
     {
         Err(CollectorError::UnsupportedPlatform)
     }
@@ -244,7 +270,11 @@ pub fn process_info_to_event(
             ppid: process.ppid,
             name: process.name.clone(),
             path: process.path.clone(),
-            command_line: if config.include_command_line { process.command_line } else { String::new() },
+            command_line: if config.include_command_line {
+                process.command_line
+            } else {
+                String::new()
+            },
             cwd: process.cwd,
             user: Some(UserContext {
                 sid: process.user.sid,
@@ -270,7 +300,9 @@ pub fn process_info_to_event(
         payload: Some(sentinel_events::event::Payload::ProcessEvent(ProcessEvent {
             action: match action {
                 ProcessEventAction::Create => sentinel_events::process_event::Action::Create as i32,
-                ProcessEventAction::Terminate => sentinel_events::process_event::Action::Terminate as i32,
+                ProcessEventAction::Terminate => {
+                    sentinel_events::process_event::Action::Terminate as i32
+                },
                 ProcessEventAction::Open => sentinel_events::process_event::Action::Open as i32,
                 ProcessEventAction::Access => sentinel_events::process_event::Action::Access as i32,
                 ProcessEventAction::Inject => sentinel_events::process_event::Action::Inject as i32,
@@ -287,16 +319,16 @@ pub fn process_info_to_event(
         host_id: String::new(),
         schema_version: 1,
     };
-    
+
     // Add MITRE tags based on action
     match action {
         ProcessEventAction::Create => event.tags.push("mitre:T1059".to_string()),
         ProcessEventAction::Inject => event.tags.push("mitre:T1055".to_string()),
         ProcessEventAction::Hollow => event.tags.push("mitre:T1055.012".to_string()),
         ProcessEventAction::Dump => event.tags.push("mitre:T1003".to_string()),
-        _ => {}
+        _ => {},
     }
-    
+
     event
 }
 
@@ -315,14 +347,14 @@ pub enum ProcessEventAction {
 pub mod platform {
     use super::*;
     use async_trait::async_trait;
-    
+
     #[async_trait]
     pub trait OsProcessCollector: Send + Sync {
         async fn start(&mut self) -> Result<(), CollectorError>;
         async fn stop(&mut self) -> Result<(), CollectorError>;
         async fn poll(&mut self) -> Result<Vec<Arc<Event>>, CollectorError>;
     }
-    
+
     #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
     pub struct ProcessInfo {
         pub pid: u32,
@@ -338,7 +370,7 @@ pub mod platform {
         pub tree_depth: u32,
         pub sha256: Option<String>,
     }
-    
+
     #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
     pub struct UserInfo {
         pub sid: String,
@@ -347,7 +379,7 @@ pub mod platform {
         pub is_elevated: bool,
         pub is_system: bool,
     }
-    
+
     #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
     pub struct SigningInfo {
         pub is_signed: bool,
@@ -362,30 +394,30 @@ pub mod platform {
 #[cfg(target_os = "windows")]
 mod windows {
     use super::*;
-    
+
     pub struct WindowsProcessCollector {
         config: ProcessCollectorConfig,
         // ETW session handle, etc.
     }
-    
+
     impl WindowsProcessCollector {
         pub async fn new(config: &ProcessCollectorConfig) -> Result<Self, CollectorError> {
             // Initialize ETW, WMI, etc.
             Ok(Self { config: config.clone() })
         }
     }
-    
+
     #[async_trait]
     impl OsProcessCollector for WindowsProcessCollector {
         async fn start(&mut self) -> Result<(), CollectorError> {
             // Start ETW session for process events
             Ok(())
         }
-        
+
         async fn stop(&mut self) -> Result<(), CollectorError> {
             Ok(())
         }
-        
+
         async fn poll(&mut self) -> Result<Vec<Arc<Event>>, CollectorError> {
             // Poll ETW events
             Ok(vec![])
@@ -400,6 +432,7 @@ mod linux {
     use sysinfo::{Pid, RefreshKind, System};
 
     pub struct LinuxProcessCollector {
+        #[allow(dead_code)]
         config: ProcessCollectorConfig,
         system: System,
         known_pids: HashSet<Pid>,
@@ -410,11 +443,7 @@ mod linux {
             let mut system = System::new_with_specifics(RefreshKind::new());
             system.refresh_all();
             let known_pids: HashSet<Pid> = system.processes().keys().copied().collect();
-            Ok(Self {
-                config: config.clone(),
-                system,
-                known_pids,
-            })
+            Ok(Self { config: config.clone(), system, known_pids })
         }
     }
 
@@ -437,11 +466,7 @@ mod linux {
             // Detect new processes (created)
             for pid in current_pids.difference(&self.known_pids) {
                 if let Some(proc) = self.system.process(*pid) {
-                    if let Some(event) = build_process_event(
-                        proc,
-                        "sentinel.process.create",
-                        2,
-                    ) {
+                    if let Some(event) = build_process_event(proc, "sentinel.process.create", 2) {
                         events.push(Arc::new(event));
                     }
                 }
@@ -477,10 +502,7 @@ mod linux {
         event_type: &str,
         severity: i32,
     ) -> Option<Event> {
-        let uid = proc
-            .user_id()
-            .map(|u| u.to_string())
-            .unwrap_or_default();
+        let uid = proc.user_id().map(|u| u.to_string()).unwrap_or_default();
 
         Some(Event {
             id: sentinel_core::Ulid::new().to_string(),
@@ -509,9 +531,7 @@ mod linux {
                     sid: uid.clone(),
                     username: uid,
                     domain: String::new(),
-                    is_elevated: proc
-                        .user_id()
-                        .is_some_and(|u| u.to_string() == "0"),
+                    is_elevated: proc.user_id().is_some_and(|u| u.to_string() == "0"),
                     is_system: false,
                 }),
                 ..Default::default()
@@ -524,28 +544,28 @@ mod linux {
 #[cfg(target_os = "macos")]
 mod macos {
     use super::*;
-    
+
     pub struct MacosProcessCollector {
         config: ProcessCollectorConfig,
     }
-    
+
     impl MacosProcessCollector {
         pub async fn new(config: &ProcessCollectorConfig) -> Result<Self, CollectorError> {
             Ok(Self { config: config.clone() })
         }
     }
-    
+
     #[async_trait]
     impl OsProcessCollector for MacosProcessCollector {
         async fn start(&mut self) -> Result<(), CollectorError> {
             // Start Endpoint Security
             Ok(())
         }
-        
+
         async fn stop(&mut self) -> Result<(), CollectorError> {
             Ok(())
         }
-        
+
         async fn poll(&mut self) -> Result<Vec<Arc<Event>>, CollectorError> {
             Ok(vec![])
         }

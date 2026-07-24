@@ -13,8 +13,8 @@ use tracing::{error, info, warn};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use sentinel_ai::{AiConfig, AiEngine, OllamaProvider};
-use sentinel_core::{ChannelConfig, EventBus};
 use sentinel_config::ConfigManager;
+use sentinel_core::{ChannelConfig, EventBus};
 use sentinel_correlation::{CorrelationConfig, CorrelationEngine};
 use sentinel_event_bus::EventBusImpl;
 use sentinel_events::{Event, ProcessContext, UserContext};
@@ -30,16 +30,26 @@ use tokio::sync::mpsc;
 #[command(name = "sentinel-core-service")]
 #[command(about = "Sentinel AI Core Service", long_about = None)]
 struct Args {
-    #[arg(short, long, value_delimiter = ',')]
+    #[arg(
+        short,
+        long,
+        value_delimiter = ','
+    )]
     config: Vec<PathBuf>,
 
-    #[arg(short, long)]
+    #[arg(
+        short, long
+    )]
     foreground: bool,
 
     #[arg(long)]
     validate_config: bool,
 
-    #[arg(short, long, default_value = "info")]
+    #[arg(
+        short,
+        long,
+        default_value = "info"
+    )]
     log_level: String,
 }
 
@@ -51,11 +61,7 @@ async fn main() -> Result<()> {
 
     info!("Starting Sentinel AI Core Service");
 
-    let config_paths = if args.config.is_empty() {
-        default_config_paths()
-    } else {
-        args.config
-    };
+    let config_paths = if args.config.is_empty() { default_config_paths() } else { args.config };
 
     let config_manager = ConfigManager::new(config_paths.clone())
         .await
@@ -76,10 +82,10 @@ async fn main() -> Result<()> {
             Ok(()) => {
                 info!("Received Ctrl+C, initiating shutdown");
                 let _ = shutdown_tx2.send(true);
-            }
+            },
             Err(e) => {
                 error!("Failed to listen for Ctrl+C: {}", e);
-            }
+            },
         }
 
         #[cfg(unix)]
@@ -125,7 +131,7 @@ async fn main() -> Result<()> {
     // Spawn the event-bus routing loop (requires the concrete type)
     let bus_runner = bus_impl.clone();
     let bus_handle = tokio::spawn(async move {
-        bus_runner.run().await;
+        let _ = bus_runner.run().await;
     });
 
     // ── Rule Engine ─────────────────────────────────────────────
@@ -142,10 +148,7 @@ async fn main() -> Result<()> {
 
     // ── M3: AI Engine ──────────────────────────────────────────
     let ai_config = AiConfig::default();
-    let ai = Arc::new(AiEngine::new(
-        ai_config.clone(),
-        Box::new(OllamaProvider::new(&ai_config)),
-    ));
+    let ai = Arc::new(AiEngine::new(ai_config.clone(), Box::new(OllamaProvider::new(&ai_config))));
     info!("AI engine initialised (model: {}, enabled: {})", ai_config.model, ai_config.enabled);
 
     // Subscribe rule engine to ALL events ("*")
@@ -185,15 +188,13 @@ async fn main() -> Result<()> {
             use std::collections::HashSet;
             let mut sys = sysinfo::System::new();
             sys.refresh_all();
-            let mut known: HashSet<sysinfo::Pid> =
-                sys.processes().keys().copied().collect();
+            let mut known: HashSet<sysinfo::Pid> = sys.processes().keys().copied().collect();
             let mut tick = tokio::time::interval(std::time::Duration::from_secs(5));
             tick.tick().await; // skip first immediate tick
             loop {
                 tick.tick().await;
                 sys.refresh_all();
-                let current: HashSet<sysinfo::Pid> =
-                    sys.processes().keys().copied().collect();
+                let current: HashSet<sysinfo::Pid> = sys.processes().keys().copied().collect();
 
                 for pid in current.difference(&known) {
                     if let Some(proc) = sys.process(*pid) {
@@ -209,11 +210,22 @@ async fn main() -> Result<()> {
                                 pid: pid.as_u32(),
                                 ppid: proc.parent().map(|p| p.as_u32()).unwrap_or(0),
                                 name: proc.name().to_string_lossy().into_owned(),
-                                path: proc.exe().map(|p| p.to_string_lossy().into_owned()).unwrap_or_default(),
-                                command_line: proc.cmd().iter().map(|s| s.to_string_lossy()).collect::<Vec<_>>().join(" "),
+                                path: proc
+                                    .exe()
+                                    .map(|p| p.to_string_lossy().into_owned())
+                                    .unwrap_or_default(),
+                                command_line: proc
+                                    .cmd()
+                                    .iter()
+                                    .map(|s| s.to_string_lossy())
+                                    .collect::<Vec<_>>()
+                                    .join(" "),
                                 user: Some(UserContext {
                                     sid: proc.user_id().map(|u| u.to_string()).unwrap_or_default(),
-                                    username: proc.user_id().map(|u| u.to_string()).unwrap_or_default(),
+                                    username: proc
+                                        .user_id()
+                                        .map(|u| u.to_string())
+                                        .unwrap_or_default(),
                                     domain: String::new(),
                                     is_elevated: false,
                                     is_system: false,
@@ -233,12 +245,101 @@ async fn main() -> Result<()> {
         info!("Linux process watcher started (5s interval)");
     }
 
+    #[cfg(not(target_os = "linux"))]
+    {
+        let bus_clone = bus.clone();
+        tokio::spawn(async move {
+            use std::collections::HashSet;
+            let mut sys = sysinfo::System::new();
+            sys.refresh_all();
+            let mut known: HashSet<sysinfo::Pid> = sys.processes().keys().copied().collect();
+            let mut tick = tokio::time::interval(std::time::Duration::from_secs(5));
+            tick.tick().await;
+            loop {
+                tick.tick().await;
+                sys.refresh_all();
+                let current: HashSet<sysinfo::Pid> = sys.processes().keys().copied().collect();
+                for pid in current.difference(&known) {
+                    if let Some(proc) = sys.process(*pid) {
+                        let event = Arc::new(Event {
+                            id: sentinel_core::Ulid::new().to_string(),
+                            r#type: "sentinel.process.create".into(),
+                            source: "process".into(),
+                            severity: 2,
+                            risk_score: 10,
+                            host_id: String::new(),
+                            schema_version: 1,
+                            process: Some(ProcessContext {
+                                pid: pid.as_u32(),
+                                ppid: proc.parent().map(|p| p.as_u32()).unwrap_or(0),
+                                name: proc.name().to_string_lossy().into_owned(),
+                                path: proc
+                                    .exe()
+                                    .map(|p| p.to_string_lossy().into_owned())
+                                    .unwrap_or_default(),
+                                command_line: proc
+                                    .cmd()
+                                    .iter()
+                                    .map(|s| s.to_string_lossy())
+                                    .collect::<Vec<_>>()
+                                    .join(" "),
+                                ..Default::default()
+                            }),
+                            ..Default::default()
+                        });
+                        let _ = bus_clone.publish(event).await;
+                    }
+                }
+                known = current;
+            }
+        });
+        info!("Process watcher started (5s interval, sysinfo)");
+    }
+
+    sentinel_collectors::network::start_network_monitor(bus.clone()).await;
+    info!("Network collector started");
+
+    sentinel_collectors::file::start_file_monitor(bus.clone()).await;
+    info!("File collector started");
+
+    sentinel_collectors::startup::start_startup_monitor(bus.clone()).await;
+    info!("Startup collector started");
+
     info!("All core components started");
 
     // ── Main event loop: route events + wait for shutdown ─────────
     loop {
         tokio::select! {
             Some(event) = rule_sub.receiver.recv() => {
+                if sentinel_plugin_abuseipdb::enabled() {
+                    if event.source == "network" {
+                        if let Some(ref payload) = event.payload {
+                            if let sentinel_events::event::Payload::NetworkEvent(ref ne) = payload {
+                                if !ne.remote_addr.is_empty() {
+                                    let ip = ne.remote_addr.clone();
+                                    tokio::spawn(async move {
+                                        sentinel_plugin_abuseipdb::check_ip(&ip).await;
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if sentinel_plugin_shodan::enabled() {
+                    if event.source == "network" {
+                        if let Some(ref payload) = event.payload {
+                            if let sentinel_events::event::Payload::NetworkEvent(ref ne) = payload {
+                                if !ne.remote_addr.is_empty() {
+                                    let ip = ne.remote_addr.clone();
+                                    tokio::spawn(async move {
+                                        sentinel_plugin_shodan::lookup_host(&ip).await;
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
                 // Feed into correlation engine
                 let chain = correlation.ingest(&event);
 
@@ -306,6 +407,96 @@ async fn main() -> Result<()> {
                                 ).await;
                                 info!("AI explanation: {}", explanation);
                             });
+
+                            let severity_name = format!("{:?}", alert.severity);
+                            let alert_name = alert.rule_name.clone();
+                            let alert_risk = alert.risk_score;
+                            let alert_eid = alert.rule_id.clone();
+                            let event_source = event.source.clone();
+                            let event_count = alert.event_ids.len();
+
+                            if sentinel_plugin_discord::enabled() {
+                                if let Some(url) = sentinel_plugin_discord::webhook_url() {
+                                    let eid = alert_eid.clone();
+                                    let name = alert_name.clone();
+                                    let src = event_source.clone();
+                                    let sev = severity_name.clone();
+                                    tokio::spawn(async move {
+                                        sentinel_plugin_discord::send_alert(
+                                            &url,
+                                            &eid,
+                                            &name,
+                                            alert_risk,
+                                            &sev,
+                                            &src,
+                                            Some(&format!("{} events in chain", event_count)),
+                                        ).await;
+                                    });
+                                }
+                            }
+
+                            if sentinel_plugin_telegram::enabled() {
+                                if let (Some(token), Some(chat_id)) = (
+                                    sentinel_plugin_telegram::bot_token(),
+                                    sentinel_plugin_telegram::chat_id(),
+                                ) {
+                                    let eid = alert_eid.clone();
+                                    let name = alert_name.clone();
+                                    let src = event_source.clone();
+                                    let sev = severity_name.clone();
+                                    tokio::spawn(async move {
+                                        sentinel_plugin_telegram::send_alert(
+                                            &token,
+                                            &chat_id,
+                                            &eid,
+                                            &name,
+                                            alert_risk,
+                                            &sev,
+                                            &src,
+                                            Some(&format!("{} events in chain", event_count)),
+                                        ).await;
+                                    });
+                                }
+                            }
+
+                            if sentinel_plugin_home_assistant::enabled() {
+                                let eid = alert_eid.clone();
+                                let name = alert_name.clone();
+                                let src = event_source.clone();
+                                let sev = severity_name.clone();
+                                tokio::spawn(async move {
+                                    sentinel_plugin_home_assistant::send_alert(
+                                        &eid, &name, alert_risk, &sev, &src,
+                                        Some(&format!("{} events in chain", event_count)),
+                                    ).await;
+                                });
+                            }
+
+                            if sentinel_plugin_slack::enabled() {
+                                let eid = alert_eid.clone();
+                                let name = alert_name.clone();
+                                let src = event_source.clone();
+                                let sev = severity_name.clone();
+                                tokio::spawn(async move {
+                                    sentinel_plugin_slack::send_alert(
+                                        &eid, &name, alert_risk, &sev, &src,
+                                        Some(&format!("{} events in chain", event_count)),
+                                    ).await;
+                                });
+                            }
+
+                            if sentinel_plugin_email::enabled() {
+                                let eid = alert_eid.clone();
+                                let name = alert_name.clone();
+                                let src = event_source.clone();
+                                let sev = severity_name.clone();
+                                tokio::spawn(async move {
+                                    sentinel_plugin_email::send_alert(
+                                        &eid, &name, alert_risk, &sev, &src,
+                                        Some(&format!("{} events in chain", event_count)),
+                                    ).await;
+                                });
+                            }
                         } else {
                             info!("  → MATCH {} [risk={} below alert threshold]", m.rule_name, m.risk_score);
                         }

@@ -1,0 +1,38 @@
+rule:
+  id: "rule-001-suspicious-powershell"
+  version: 1
+  name: "Suspicious PowerShell Execution"
+  description: "PowerShell executing encoded or download commands"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "execution"
+  subcategory: "scripting"
+  mitre:
+    - technique: "T1059.001"
+      name: "PowerShell"
+      tactic: "Execution"
+  severity: "Warning"
+  risk:
+    base_score: 75
+    confidence: 0.9
+    multipliers:
+      - condition: "event.process.user.is_elevated == true"
+        factor: 1.5
+  condition: >
+    event.type == "sentinel.process.create"
+    && event.process.name.lowerAscii().contains("powershell")
+    && (event.process.command_line.lowerAscii().contains("-enc")
+        || event.process.command_line.lowerAscii().contains("downloadstring")
+        || event.process.command_line.lowerAscii().contains("invoke-expression")
+        || event.process.command_line.lowerAscii().contains("iex")
+        || event.process.command_line.lowerAscii().contains("bypass")
+        || event.process.command_line.lowerAscii().contains("hidden")
+        || event.process.command_line.lowerAscii().contains("windowstyle"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -23,4 +23,3 @@ pub mod sentinel {
 /// Re-export the generated `events.v1` types at the crate root for ergonomic
 /// imports such as `sentinel_events::Event`.
 pub use sentinel::events::v1::*;
-

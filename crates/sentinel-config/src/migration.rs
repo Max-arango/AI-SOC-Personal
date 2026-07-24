@@ -11,21 +11,21 @@ pub const CURRENT_CONFIG_VERSION: u32 = 1;
 /// Migrate configuration to current version
 pub fn migrate(config: &mut super::AppConfig) -> Result<()> {
     let version = get_version(config);
-    
+
     if version >= CURRENT_CONFIG_VERSION {
         return Ok(());
     }
-    
+
     info!("Migrating configuration from version {} to {}", version, CURRENT_CONFIG_VERSION);
-    
+
     for v in (version + 1)..=CURRENT_CONFIG_VERSION {
         migrate_to_version(config, v)
             .with_context(|| format!("Failed to migrate to version {}", v))?;
     }
-    
+
     set_version(config, CURRENT_CONFIG_VERSION);
     info!("Configuration migration complete");
-    
+
     Ok(())
 }
 
@@ -54,19 +54,19 @@ fn migrate_to_v1(config: &mut super::AppConfig) -> Result<()> {
     if config.core.instance_name.is_empty() {
         config.core.instance_name = "Sentinel AI".to_string();
     }
-    
+
     if config.grpc.address.is_empty() {
         config.grpc.address = "127.0.0.1:7777".to_string();
     }
-    
+
     if config.storage.sqlite_path.is_empty() {
         config.storage.sqlite_path = "data/sentinel.db".to_string();
     }
-    
+
     if config.storage.duckdb_path.is_empty() {
         config.storage.duckdb_path = "data/events.duckdb".to_string();
     }
-    
+
     // Migrate old rule engine config if present
     if config.rule_engine.rules_directories.is_empty() {
         config.rule_engine.rules_directories = vec![
@@ -75,7 +75,7 @@ fn migrate_to_v1(config: &mut super::AppConfig) -> Result<()> {
             "~/.config/sentinel/rules/custom".to_string(),
         ];
     }
-    
+
     // Migrate old collector configs
     if config.collectors.process.exclude_paths.is_empty() {
         config.collectors.process.exclude_paths = vec![
@@ -87,30 +87,28 @@ fn migrate_to_v1(config: &mut super::AppConfig) -> Result<()> {
             "/lib*".to_string(),
         ];
     }
-    
+
     if config.collectors.network.exclude_ports.is_empty() {
         config.collectors.network.exclude_ports = vec![53, 67, 68, 123, 1900, 5353, 5355];
     }
-    
+
     // Migrate AI engine config
     if config.ai_engine.model.is_empty() {
         config.ai_engine.model = "llama-3.2-3b-instruct".to_string();
     }
-    
+
     if config.ai_engine.fallback_models.is_empty() {
-        config.ai_engine.fallback_models = vec![
-            "llama-3.1-8b-instruct".to_string(),
-            "qwen2.5-7b-instruct".to_string(),
-        ];
+        config.ai_engine.fallback_models =
+            vec!["llama-3.1-8b-instruct".to_string(), "qwen2.5-7b-instruct".to_string()];
     }
-    
+
     Ok(())
 }
 
 /// Trait for versioned configuration sections
 pub trait VersionedConfig: Serialize + for<'de> Deserialize<'de> {
     const VERSION: u32;
-    
+
     fn migrate(_value: &mut Value) -> Result<()> {
         Ok(())
     }
@@ -141,13 +139,9 @@ pub struct MigrationStep {
 
 impl MigrationPlan {
     pub fn new(from: u32, to: u32) -> Self {
-        Self {
-            from_version: from,
-            to_version: to,
-            steps: Vec::new(),
-        }
+        Self { from_version: from, to_version: to, steps: Vec::new() }
     }
-    
+
     pub fn add_step(mut self, name: &str, description: &str, automatic: bool) -> Self {
         self.steps.push(MigrationStep {
             name: name.to_string(),

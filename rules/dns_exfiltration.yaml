@@ -1,0 +1,32 @@
+rule:
+  id: "rule-012-dns-exfiltration"
+  version: 1
+  name: "Suspicious DNS Activity"
+  description: "Process making excessive or unusual DNS queries"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "exfiltration"
+  subcategory: "exfiltration-over-dns"
+  mitre:
+    - technique: "T1048.001"
+      name: "Exfiltration Over DNS"
+      tactic: "Exfiltration"
+  severity: "Notice"
+  risk:
+    base_score: 45
+    confidence: 0.7
+    multipliers: []
+  condition: >
+    event.type == "sentinel.network.connect"
+    && (event.process.name.lowerAscii().contains("nslookup")
+        || event.process.name.lowerAscii().contains("dig")
+        || event.process.name.lowerAscii().contains("host")
+        || event.process.command_line.lowerAscii().contains("dns"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

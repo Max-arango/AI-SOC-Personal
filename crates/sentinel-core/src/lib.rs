@@ -3,9 +3,9 @@
 //! Shared types, traits, and utilities for the Sentinel AI security platform.
 
 pub mod errors;
-pub mod traits;
-pub mod metrics;
 pub mod health;
+pub mod metrics;
+pub mod traits;
 
 // Re-export commonly used types at the crate root so downstream crates can
 // import them as `sentinel_core::ConfigProvider`, etc.
@@ -13,22 +13,22 @@ pub use errors::{CollectorError, ConfigError, EventBusError, SentinelError, Stor
 pub use health::{ComponentHealth, ComponentMetrics, HealthCheck, HealthStatus, SystemHealth};
 pub use metrics::{MetricsRegistry, MetricsSnapshot};
 pub use traits::{
-    Alert, AlertQuery, AlertRepository, AlertState, BrowserData, BrowserDownload,
-    BrowserExtension, BrowserHistoryEntry, BrowserType, Collector, CollectorContext,
-    CollectorHealth, CollectorMetrics, CollectorState, ConfigProvider, ConfigRepository,
-    ConfigSchema, ConfigWatcher, ConnectionInfo, EventBus, EventBusStats, EventCursor,
-    EventFilter, EventQuery, EventRepository, EventSubscription, FileAction, FileEvent,
-    FileWatcher, MitreMapping, Module, OsAbstraction, PluginInfo, PluginManager, PluginState,
-    ProcessInfo, RegistryAction, RegistryEvent, RegistryWatcher, RetentionPolicy,
-    RiskConfig, RiskMultiplier, Rule, RuleAction, RuleActionType, RuleRepository, RuleTest, StartupItem, StartupLocation,
-    SuppressionRule, UsbAction, UsbDeviceInfo, UsbEvent, UsbWatcher, UserInfo,
+    Alert, AlertQuery, AlertRepository, AlertState, BrowserData, BrowserDownload, BrowserExtension,
+    BrowserHistoryEntry, BrowserType, Collector, CollectorContext, CollectorHealth,
+    CollectorMetrics, CollectorState, ConfigProvider, ConfigRepository, ConfigSchema,
+    ConfigWatcher, ConnectionInfo, EventBus, EventBusStats, EventCursor, EventFilter, EventQuery,
+    EventRepository, EventSubscription, FileAction, FileEvent, FileWatcher, MitreMapping, Module,
+    OsAbstraction, PluginInfo, PluginManager, PluginState, ProcessInfo, RegistryAction,
+    RegistryEvent, RegistryWatcher, RetentionPolicy, RiskConfig, RiskMultiplier, Rule, RuleAction,
+    RuleActionType, RuleRepository, RuleTest, StartupItem, StartupLocation, SuppressionRule,
+    UsbAction, UsbDeviceInfo, UsbEvent, UsbWatcher, UserInfo,
 };
 
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt;
 use std::str::FromStr;
 use std::sync::Arc;
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use uuid::Uuid;
 
 /// Unique identifier for events (ULID - timestamp + entropy)
@@ -145,12 +145,7 @@ pub struct HostIdentity {
 
 impl HostIdentity {
     pub fn new(platform: String, hostname: String) -> Self {
-        Self {
-            id: Uuid::new_v4().to_string(),
-            created_at: Utc::now(),
-            platform,
-            hostname,
-        }
+        Self { id: Uuid::new_v4().to_string(), created_at: Utc::now(), platform, hostname }
     }
 }
 
@@ -193,8 +188,17 @@ impl<'de> serde::Deserialize<'de> for Severity {
             other => Err(serde::de::Error::unknown_variant(
                 other,
                 &[
-                    "DEBUG", "INFO", "NOTICE", "WARNING", "ERROR", "CRITICAL", "ALERT", "EMERGENCY",
-                    "LOW", "MEDIUM", "HIGH",
+                    "DEBUG",
+                    "INFO",
+                    "NOTICE",
+                    "WARNING",
+                    "ERROR",
+                    "CRITICAL",
+                    "ALERT",
+                    "EMERGENCY",
+                    "LOW",
+                    "MEDIUM",
+                    "HIGH",
                 ],
             )),
         }
@@ -256,13 +260,7 @@ pub struct ChannelConfig {
 
 impl Default for ChannelConfig {
     fn default() -> Self {
-        Self {
-            ingest: 10_000,
-            broadcast: 1_000,
-            storage: 5_000,
-            plugin: 2_000,
-            ipc: 500,
-        }
+        Self { ingest: 10_000, broadcast: 1_000, storage: 5_000, plugin: 2_000, ipc: 500 }
     }
 }
 
@@ -276,11 +274,7 @@ pub struct BackpressureConfig {
 
 impl Default for BackpressureConfig {
     fn default() -> Self {
-        Self {
-            elevated: 50,
-            high: 75,
-            critical: 90,
-        }
+        Self { elevated: 50, high: 75, critical: 90 }
     }
 }
 
@@ -290,7 +284,9 @@ pub type Result<T> = std::result::Result<T, errors::SentinelError>;
 /// Trait for types that can be serialized to bytes for storage/transport
 pub trait Serializable: Send + Sync {
     fn to_bytes(&self) -> Result<Vec<u8>>;
-    fn from_bytes(bytes: &[u8]) -> Result<Self> where Self: Sized;
+    fn from_bytes(bytes: &[u8]) -> Result<Self>
+    where
+        Self: Sized;
 }
 
 /// Trait for components that can report health
@@ -349,14 +345,7 @@ impl ModuleContext {
         plugin_manager: Arc<dyn traits::PluginManager>,
         shutdown: ShutdownSignal,
     ) -> Self {
-        Self {
-            event_bus,
-            storage,
-            config,
-            metrics,
-            plugin_manager,
-            shutdown,
-        }
+        Self { event_bus, storage, config, metrics, plugin_manager, shutdown }
     }
 }
 

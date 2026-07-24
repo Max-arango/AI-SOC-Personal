@@ -3,7 +3,9 @@
 //! JSON (not Rust Debug format) for all nested structures.
 
 use prost_types::{value::Kind, Struct, Timestamp, Value as PbValue};
-use sentinel_events::{event, CodeSigningInfo, CorrelationContext, Event, ProcessContext, UserContext};
+use sentinel_events::{
+    event, CodeSigningInfo, CorrelationContext, Event, ProcessContext, UserContext,
+};
 
 // ── core type converters ──────────────────────────────────────────
 
@@ -24,7 +26,7 @@ fn value_to_json(v: &PbValue) -> serde_json::Value {
         Some(Kind::StructValue(st)) => struct_to_json(st),
         Some(Kind::ListValue(lv)) => {
             serde_json::Value::Array(lv.values.iter().map(value_to_json).collect())
-        }
+        },
         None => serde_json::Value::Null,
     }
 }

@@ -1,0 +1,32 @@
+rule:
+  id: "rule-004-persistence-new-startup"
+  version: 1
+  name: "New Persistence Mechanism Detected"
+  description: "New startup entry added via systemd, cron, or shell profiles"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "persistence"
+  subcategory: "boot-logon-autostart"
+  mitre:
+    - technique: "T1547.001"
+      name: "Boot or Logon Autostart Execution"
+      tactic: "Persistence"
+    - technique: "T1053.003"
+      name: "Cron"
+      tactic: "Scheduled Task"
+  severity: "Warning"
+  risk:
+    base_score: 70
+    confidence: 0.8
+    multipliers: []
+  condition: >
+    event.type == "sentinel.startup.add"
+    && event.tags.exists(t, t == "persistence")
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -12,7 +12,10 @@ use tokio::sync::{mpsc, watch};
 use tracing::info;
 
 use sentinel_core::{
-    traits::{Collector, CollectorContext, CollectorHealth, CollectorMetrics, CollectorState, EventBus, OsAbstraction},
+    traits::{
+        Collector, CollectorContext, CollectorHealth, CollectorMetrics, CollectorState, EventBus,
+        OsAbstraction,
+    },
     BackpressureSignal, ConfigProvider as ConfigProviderTrait, Result as CoreResult, SentinelError,
 };
 use sentinel_events::Event;
@@ -50,11 +53,11 @@ impl CollectorManager {
             backpressure_rx,
         }
     }
-    
+
     /// Register a collector
     pub async fn register(&self, mut collector: Box<dyn Collector>) -> Result<()> {
         let id = collector.id().to_string();
-        
+
         // Create context with a forwarding task that bridges the collector
         // output channel into the shared event bus.
         let (event_tx, mut event_rx) = mpsc::channel(1000);
@@ -73,18 +76,20 @@ impl CollectorManager {
             os: self.os.clone(),
             metrics: self.metrics.for_collector(&id),
         };
-        
+
         // Initialize collector
-        collector.start(context.clone()).await
+        collector
+            .start(context.clone())
+            .await
             .map_err(|e| anyhow::anyhow!("Failed to start collector {}: {}", id, e))?;
-        
+
         self.collectors.write().insert(id.clone(), collector);
         self.contexts.write().insert(id.clone(), context);
-        
+
         info!("Registered collector: {}", id);
         Ok(())
     }
-    
+
     /// Unregister a collector
     pub async fn unregister(&self, id: &str) -> Result<()> {
         if let Some(mut collector) = self.collectors.write().remove(id) {
@@ -94,13 +99,13 @@ impl CollectorManager {
         }
         Ok(())
     }
-    
+
     /// Restart a collector
     pub async fn restart(&self, id: &str) -> Result<()> {
         let mut collectors = self.collectors.write();
         if let Some(mut collector) = collectors.remove(id) {
             collector.stop(true).await?;
-            
+
             let (event_tx, mut event_rx) = mpsc::channel(1000);
             {
                 let bus = self.event_bus.clone();
@@ -117,17 +122,19 @@ impl CollectorManager {
                 os: self.os.clone(),
                 metrics: self.metrics.for_collector(id),
             };
-            
-            collector.start(context.clone()).await
+
+            collector
+                .start(context.clone())
+                .await
                 .map_err(|e| anyhow::anyhow!("Failed to restart collector {}: {}", id, e))?;
-            
+
             collectors.insert(id.to_string(), collector);
             self.contexts.write().insert(id.to_string(), context);
             info!("Restarted collector: {}", id);
         }
         Ok(())
     }
-    
+
     /// Get collector health
     pub async fn health(&self, id: &str) -> Option<CollectorHealth> {
         match self.collectors.read().get(id) {
@@ -135,7 +142,7 @@ impl CollectorManager {
             None => None,
         }
     }
-    
+
     /// Get all collector health
     pub async fn all_health(&self) -> HashMap<String, CollectorHealth> {
         let mut health = HashMap::new();
@@ -144,16 +151,19 @@ impl CollectorManager {
         }
         health
     }
-    
+
     /// Reconfigure a collector
     pub async fn reconfigure(&self, id: &str, config: serde_json::Value) -> Result<()> {
         if let Some(collector) = self.collectors.write().get_mut(id) {
-            collector.reconfigure(config).await.map_err(|e| anyhow::anyhow!(e.to_string()))
+            collector
+                .reconfigure(config)
+                .await
+                .map_err(|e| anyhow::anyhow!(e.to_string()))
         } else {
             Err(anyhow::anyhow!("Collector not found: {}", id))
         }
     }
-    
+
     /// Get collector list
     pub fn list(&self) -> Vec<String> {
         self.collectors.read().keys().cloned().collect()
@@ -169,11 +179,11 @@ impl CollectorMetricsRegistry {
     pub fn new() -> Self {
         Self { metrics: RwLock::new(HashMap::new()) }
     }
-    
+
     pub fn for_collector(&self, id: &str) -> CollectorMetrics {
         self.metrics.read().get(id).cloned().unwrap_or_default()
     }
-    
+
     pub fn register(&self, id: String, metrics: CollectorMetrics) {
         self.metrics.write().insert(id, metrics);
     }
@@ -229,24 +239,28 @@ impl BaseCollector {
             backpressure_rx: None,
         }
     }
-    
+
     /// Publish an event
     pub async fn publish(&self, event: Arc<Event>) -> CoreResult<()> {
         if let Some(tx) = &self.event_tx {
-            tx.send(event).await
-                .map_err(|_| SentinelError::EventBus(sentinel_core::EventBusError::ChannelFull("Channel closed".to_string())))?;
+            tx.send(event).await.map_err(|_| {
+                SentinelError::EventBus(sentinel_core::EventBusError::ChannelFull(
+                    "Channel closed".to_string(),
+                ))
+            })?;
             self.metrics.write().events_produced += 1;
         }
         Ok(())
     }
-    
+
     /// Check backpressure and adjust rate
     pub fn check_backpressure(&self) -> BackpressureSignal {
-        self.backpressure_rx.as_ref()
+        self.backpressure_rx
+            .as_ref()
             .map(|rx| *rx.borrow())
             .unwrap_or(BackpressureSignal::Normal)
     }
-    
+
     /// Update health status
     pub fn update_health(&self, state: CollectorState, message: Option<String>) {
         let metrics = self.metrics.read();
@@ -269,27 +283,27 @@ impl Collector for BaseCollector {
     fn id(&self) -> &str {
         &self.id
     }
-    
+
     fn name(&self) -> &str {
         &self.name
     }
-    
+
     fn description(&self) -> &str {
         &self.description
     }
-    
+
     fn event_types(&self) -> Vec<&str> {
         self.event_types.iter().map(|s| s.as_str()).collect()
     }
-    
+
     fn required_capabilities(&self) -> Vec<String> {
         self.required_capabilities.clone()
     }
-    
+
     fn config_schema(&self) -> sentinel_core::traits::ConfigSchema {
         self.config_schema.clone()
     }
-    
+
     async fn start(&mut self, ctx: CollectorContext) -> CoreResult<()> {
         self.event_tx = Some(ctx.event_tx);
         self.backpressure_rx = Some(ctx.backpressure_rx);
@@ -309,11 +323,11 @@ impl Collector for BaseCollector {
         self.update_health(CollectorState::Stopped, Some("Stopped".into()));
         self.do_stop(graceful).await
     }
-    
+
     async fn health(&self) -> CollectorHealth {
         self.health.read().clone()
     }
-    
+
     async fn reconfigure(&mut self, config: serde_json::Value) -> CoreResult<()> {
         self.do_reconfigure(config).await
     }

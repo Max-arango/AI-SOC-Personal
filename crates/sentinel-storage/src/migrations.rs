@@ -110,8 +110,10 @@ async fn migrate_v1(pool: &SqlitePool) -> Result<()> {
     exec(pool, "CREATE INDEX idx_events_severity ON events(severity)").await?;
     exec(pool, "CREATE INDEX idx_events_risk_score ON events(risk_score)").await?;
     exec(pool, "CREATE INDEX idx_events_correlation_id ON events(JSON_EXTRACT(correlation, '$.correlation_id'))").await?;
-    exec(pool, "CREATE INDEX idx_events_flow_id ON events(JSON_EXTRACT(correlation, '$.flow_id'))").await?;
-    exec(pool, "CREATE INDEX idx_events_process_name ON events(JSON_EXTRACT(process, '$.name'))").await?;
+    exec(pool, "CREATE INDEX idx_events_flow_id ON events(JSON_EXTRACT(correlation, '$.flow_id'))")
+        .await?;
+    exec(pool, "CREATE INDEX idx_events_process_name ON events(JSON_EXTRACT(process, '$.name'))")
+        .await?;
 
     // Record migration
     record(pool, 1, "initial_schema").await?;
@@ -358,10 +360,11 @@ mod tests {
         run_all(&pool).await.unwrap();
 
         // Verify tables exist
-        let tables: Vec<String> = sqlx::query_scalar("SELECT name FROM sqlite_master WHERE type='table'")
-            .fetch_all(&pool)
-            .await
-            .unwrap();
+        let tables: Vec<String> =
+            sqlx::query_scalar("SELECT name FROM sqlite_master WHERE type='table'")
+                .fetch_all(&pool)
+                .await
+                .unwrap();
 
         assert!(tables.contains(&"events".to_string()));
         assert!(tables.contains(&"alerts".to_string()));

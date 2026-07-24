@@ -14,8 +14,8 @@ use parking_lot::RwLock;
 use tokio::sync::{mpsc, watch};
 use tracing::{debug, error, info, warn};
 
-use sentinel_core::traits::Rule;
 use sentinel_config::RuleEngineConfig;
+use sentinel_core::traits::Rule;
 use sentinel_events::Event;
 
 /// Rule engine for evaluating CEL expressions against events
@@ -38,10 +38,10 @@ impl RuleEngine {
         let suppression_engine = SuppressionEngine::new();
         let action_executor = ActionExecutor::new();
         let metrics = Arc::new(RuleEngineMetrics::new());
-        
+
         let (reload_tx, _reload_rx) = watch::channel(());
         let (shutdown_tx, _shutdown_rx) = watch::channel(());
-        
+
         let engine = Self {
             config: ArcSwap::new(Arc::new(config.clone())),
             rules: ArcSwap::new(Arc::new(HashMap::new())),
@@ -52,69 +52,78 @@ impl RuleEngine {
             reload_tx,
             shutdown_tx,
         };
-        
+
         // Load initial rules
         engine.load_rules(&config.rules_directories).await?;
-        
+
         // Start hot-reload watcher
         if config.hot_reload {
             engine.start_watcher(&config.rules_directories).await?;
         }
-        
+
         Ok(engine)
     }
-    
+
     /// Load rules from directories
     pub async fn load_rules(&self, directories: &[String]) -> Result<()> {
         let mut compiled_rules = HashMap::new();
         let mut errors = Vec::new();
-        
+
         for dir in directories {
             let path = Path::new(dir);
             if !path.exists() {
                 warn!("Rules directory does not exist: {}", path.display());
                 continue;
             }
-            
-            let mut entries = tokio::fs::read_dir(path).await
+
+            let mut entries = tokio::fs::read_dir(path)
+                .await
                 .context("Failed to read rules directory")?;
-            
+
             while let Some(entry) = entries.next_entry().await? {
                 let path = entry.path();
-                if path.extension().and_then(|s| s.to_str()) == Some("yaml") ||
-                   path.extension().and_then(|s| s.to_str()) == Some("yml") {
+                if path.extension().and_then(|s| s.to_str()) == Some("yaml")
+                    || path.extension().and_then(|s| s.to_str()) == Some("yml")
+                {
                     match self.load_rule_file(&path).await {
                         Ok(rule) => {
                             compiled_rules.insert(rule.rule.id.clone(), rule);
-                        }
+                        },
                         Err(e) => {
                             error!("Failed to load rule {}: {}", path.display(), e);
                             errors.push(e.to_string());
-                        }
+                        },
                     }
                 }
             }
         }
-        
+
         if !errors.is_empty() && compiled_rules.is_empty() {
             return Err(anyhow::anyhow!("Failed to load any rules: {}", errors.join(", ")));
         }
-        
+
         info!("Loaded {} rules", compiled_rules.len());
         let loaded = compiled_rules.len() as u64;
         self.rules.store(Arc::new(compiled_rules));
-        self.metrics.rules_loaded.store(loaded, std::sync::atomic::Ordering::Relaxed);
+        self.metrics
+            .rules_loaded
+            .store(loaded, std::sync::atomic::Ordering::Relaxed);
         self.metrics.rules_enabled.store(
-            self.rules.load().values().filter(|r| r.rule.enabled).count() as u64,
+            self.rules
+                .load()
+                .values()
+                .filter(|r| r.rule.enabled)
+                .count() as u64,
             std::sync::atomic::Ordering::Relaxed,
         );
-        
+
         Ok(())
     }
-    
+
     /// Load a single rule file
     async fn load_rule_file(&self, path: &Path) -> Result<CompiledRule> {
-        let content = tokio::fs::read_to_string(path).await
+        let content = tokio::fs::read_to_string(path)
+            .await
             .context("Failed to read rule file")?;
 
         // Documented rule files wrap the rule under a top-level `rule:` key;
@@ -127,7 +136,7 @@ impl RuleEngine {
         let rule: Rule = serde_yaml::from_str::<RuleFile>(&content)
             .map(|f| f.rule)
             .context("Failed to parse rule YAML (expected `rule:` wrapper)")?;
-        
+
         // Validate rule
         if rule.id.is_empty() {
             return Err(anyhow::anyhow!("Rule ID is required"));
@@ -135,53 +144,65 @@ impl RuleEngine {
         if rule.condition.is_empty() {
             return Err(anyhow::anyhow!("Rule condition is required"));
         }
-        
+
         // Compile CEL expression
         let start = Instant::now();
-        let program = Arc::new(cel::Program::compile(&rule.condition)
-            .map_err(|e| anyhow::anyhow!("Failed to compile CEL expression: {:?}", e))?);
-        
+        let program = Arc::new(
+            cel::Program::compile(&rule.condition)
+                .map_err(|e| anyhow::anyhow!("Failed to compile CEL expression: {:?}", e))?,
+        );
+
         let compile_time = start.elapsed();
         debug!("Compiled rule {} in {:?}", rule.id, compile_time);
-        
+
         // Compile additional conditions
         let mut and_programs = Vec::new();
         for cond in &rule.and_conditions {
-            let program = Arc::new(cel::Program::compile(cond)
-                .map_err(|e| anyhow::anyhow!("Failed to compile AND condition: {:?}", e))?);
+            let program = Arc::new(
+                cel::Program::compile(cond)
+                    .map_err(|e| anyhow::anyhow!("Failed to compile AND condition: {:?}", e))?,
+            );
             and_programs.push(program);
         }
-        
+
         let mut or_programs = Vec::new();
         for cond in &rule.or_conditions {
-            let program = Arc::new(cel::Program::compile(cond)
-                .map_err(|e| anyhow::anyhow!("Failed to compile OR condition: {:?}", e))?);
+            let program = Arc::new(
+                cel::Program::compile(cond)
+                    .map_err(|e| anyhow::anyhow!("Failed to compile OR condition: {:?}", e))?,
+            );
             or_programs.push(program);
         }
-        
+
         let mut not_programs = Vec::new();
         for cond in &rule.not_conditions {
-            let program = Arc::new(cel::Program::compile(cond)
-                .map_err(|e| anyhow::anyhow!("Failed to compile NOT condition: {:?}", e))?);
+            let program = Arc::new(
+                cel::Program::compile(cond)
+                    .map_err(|e| anyhow::anyhow!("Failed to compile NOT condition: {:?}", e))?,
+            );
             not_programs.push(program);
         }
-        
+
         // Compile risk multipliers
         let mut multiplier_programs = Vec::new();
         for mult in &rule.risk.multipliers {
-            let program = Arc::new(cel::Program::compile(&mult.condition)
-                .map_err(|e| anyhow::anyhow!("Failed to compile risk multiplier: {:?}", e))?);
+            let program = Arc::new(
+                cel::Program::compile(&mult.condition)
+                    .map_err(|e| anyhow::anyhow!("Failed to compile risk multiplier: {:?}", e))?,
+            );
             multiplier_programs.push((program, mult.factor));
         }
-        
+
         // Compile suppressions
         let mut suppression_programs = Vec::new();
         for supp in &rule.suppressions {
-            let program = Arc::new(cel::Program::compile(&supp.condition)
-                .map_err(|e| anyhow::anyhow!("Failed to compile suppression: {:?}", e))?);
+            let program = Arc::new(
+                cel::Program::compile(&supp.condition)
+                    .map_err(|e| anyhow::anyhow!("Failed to compile suppression: {:?}", e))?,
+            );
             suppression_programs.push((program, supp.id.clone(), supp.reason.clone()));
         }
-        
+
         Ok(CompiledRule {
             rule,
             main_program: program,
@@ -193,39 +214,45 @@ impl RuleEngine {
             compile_time_ms: compile_time.as_millis() as u64,
         })
     }
-    
+
     /// Evaluate an event against all rules
     pub async fn evaluate(&self, event: &Event) -> EvaluationResult {
         let start = Instant::now();
         let rules = self.rules.load();
-        
-        self.metrics.evaluations_total.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-        
+
+        self.metrics
+            .evaluations_total
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+
         let mut matches = Vec::new();
-        
+
         for compiled_rule in rules.values() {
             if !compiled_rule.rule.enabled {
                 continue;
             }
-            
+
             // Check suppression first
             let mut suppressed = false;
             for (prog, supp_id, reason) in &compiled_rule.suppression_programs {
                 if self.evaluate_program(prog, event).await.unwrap_or(false) {
                     suppressed = true;
-                    self.metrics.suppressions_total.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                    self.metrics
+                        .suppressions_total
+                        .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                     debug!("Rule {} suppressed by {}: {}", compiled_rule.rule.id, supp_id, reason);
                     break;
                 }
             }
-            
+
             if suppressed {
                 continue;
             }
-            
+
             // Evaluate main condition
-            let main_match = self.evaluate_program(&compiled_rule.main_program, event).await;
-            
+            let main_match = self
+                .evaluate_program(&compiled_rule.main_program, event)
+                .await;
+
             // Evaluate AND conditions
             let and_match = if !compiled_rule.and_programs.is_empty() {
                 let mut all_match = true;
@@ -239,7 +266,7 @@ impl RuleEngine {
             } else {
                 true
             };
-            
+
             // Evaluate OR conditions
             let or_match = if !compiled_rule.or_programs.is_empty() {
                 let mut any_match = false;
@@ -253,7 +280,7 @@ impl RuleEngine {
             } else {
                 true
             };
-            
+
             // Evaluate NOT conditions
             let not_match = if !compiled_rule.not_programs.is_empty() {
                 let mut none_match = true;
@@ -267,11 +294,11 @@ impl RuleEngine {
             } else {
                 true
             };
-            
+
             if main_match.unwrap_or(false) && and_match && or_match && not_match {
                 // Calculate risk score with multipliers
                 let risk_score = self.calculate_risk_score(compiled_rule, event).await;
-                
+
                 matches.push(RuleMatch {
                     rule_id: compiled_rule.rule.id.clone(),
                     rule_name: compiled_rule.rule.name.clone(),
@@ -281,36 +308,39 @@ impl RuleEngine {
                     actions: compiled_rule.rule.actions.clone(),
                     matched_at: chrono::Utc::now(),
                 });
-                
-                self.metrics.matches_total.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+
+                self.metrics
+                    .matches_total
+                    .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
             }
         }
-        
+
         // Execute actions for matches
         for match_result in &matches {
             self.action_executor.execute(match_result, event).await;
         }
-        
+
         let eval_time = start.elapsed();
-        self.metrics.avg_eval_time_ms.store(eval_time.as_millis() as u64, std::sync::atomic::Ordering::Relaxed);
-        self.metrics.rules_evaluated.store(rules.len() as u64, std::sync::atomic::Ordering::Relaxed);
-        
-        EvaluationResult {
-            matches,
-            evaluation_time: eval_time,
-            rules_evaluated: rules.len(),
-        }
+        self.metrics
+            .avg_eval_time_ms
+            .store(eval_time.as_millis() as u64, std::sync::atomic::Ordering::Relaxed);
+        self.metrics
+            .rules_evaluated
+            .store(rules.len() as u64, std::sync::atomic::Ordering::Relaxed);
+
+        EvaluationResult { matches, evaluation_time: eval_time, rules_evaluated: rules.len() }
     }
-    
+
     /// Evaluate a CEL program against an event
     async fn evaluate_program(&self, program: &cel::Program, event: &Event) -> Result<bool> {
         let activation = self.create_activation(event);
-        let result = program.execute(&activation)
+        let result = program
+            .execute(&activation)
             .map_err(|e| anyhow::anyhow!("CEL evaluation error: {}", e))?;
-        
+
         Ok(matches!(result, cel::Value::Bool(true)))
     }
-    
+
     /// Create CEL activation from event
     fn create_activation(&self, event: &Event) -> cel::Context<'_> {
         let mut ctx = cel::Context::default();
@@ -330,30 +360,30 @@ impl RuleEngine {
 
         ctx
     }
-    
+
     /// Calculate risk score with multipliers
     async fn calculate_risk_score(&self, compiled_rule: &CompiledRule, event: &Event) -> u32 {
         let base_score = compiled_rule.rule.risk.base_score;
         let confidence = compiled_rule.rule.risk.confidence;
-// ── end of CEL helpers ─────────────────────────────────────────────
-        
+        // ── end of CEL helpers ─────────────────────────────────────────────
+
         let mut score = (base_score as f64 * confidence) as u32;
-        
+
         for (prog, factor) in &compiled_rule.multiplier_programs {
             if self.evaluate_program(prog, event).await.unwrap_or(false) {
                 score = ((score as f64) * factor).min(1000.0) as u32;
             }
         }
-        
+
         score.min(1000)
     }
-    
+
     /// Start file watcher for hot-reload
     async fn start_watcher(&self, directories: &[String]) -> Result<()> {
         let reload_tx = self.reload_tx.clone();
-        
+
         let (tx, mut rx) = mpsc::channel(100);
-        
+
         let mut watcher: RecommendedWatcher = Watcher::new(
             move |res: Result<NotifyEvent, notify::Error>| {
                 if let Ok(event) = res {
@@ -364,35 +394,34 @@ impl RuleEngine {
             },
             notify::Config::default(),
         )?;
-        
+
         for dir in directories {
             let path = Path::new(dir);
             if path.exists() {
                 watcher.watch(path, RecursiveMode::NonRecursive)?;
             }
         }
-        
+
         tokio::spawn(async move {
             while rx.recv().await.is_some() {
                 tokio::time::sleep(Duration::from_millis(500)).await;
                 // Debounce - drain any additional events
                 while rx.try_recv().is_ok() {}
-                
+
                 info!("Rule file changed, reloading...");
                 // Reload would happen here
                 let _ = reload_tx.send(());
             }
         });
-        
+
         Ok(())
     }
-    
+
     /// Get current metrics
     pub fn metrics(&self) -> RuleEngineMetricsSnapshot {
         self.metrics.snapshot()
     }
 }
-
 
 // ── CEL context construction ────────────────────────────────────────
 // These helpers convert protobuf Event and its nested structures into
@@ -421,7 +450,11 @@ fn event_to_cel_value(event: &Event) -> cel::Value {
     }
 
     // Tags as a list
-    let tags: Vec<cel::Value> = event.tags.iter().map(|t| cel::Value::from(t.clone())).collect();
+    let tags: Vec<cel::Value> = event
+        .tags
+        .iter()
+        .map(|t| cel::Value::from(t.clone()))
+        .collect();
     map.insert("tags".into(), tags.into());
 
     // Timestamps as epoch seconds
@@ -457,7 +490,11 @@ fn process_to_cel_value(proc: &sentinel_events::ProcessContext, depth: u32) -> c
     map.insert("tree_depth".into(), cel::Value::UInt(u64::from(proc.tree_depth)));
     map.insert("sha256".into(), cel::Value::from(proc.sha256.clone()));
 
-    let mitre: Vec<cel::Value> = proc.mitre_techniques.iter().map(|t| cel::Value::from(t.clone())).collect();
+    let mitre: Vec<cel::Value> = proc
+        .mitre_techniques
+        .iter()
+        .map(|t| cel::Value::from(t.clone()))
+        .collect();
     map.insert("mitre_techniques".into(), mitre.into());
 
     if let Some(ref user) = proc.user {
@@ -606,7 +643,6 @@ fn generic_payload_to_cel(e: &sentinel_events::GenericEvent) -> cel::Value {
     map.into()
 }
 
-
 /// Compiled rule with CEL programs
 #[derive(Clone)]
 #[allow(dead_code)]
@@ -661,11 +697,9 @@ struct SuppressionEngine {
 
 impl SuppressionEngine {
     fn new() -> Self {
-        Self {
-            suppressions: RwLock::new(HashMap::new()),
-        }
+        Self { suppressions: RwLock::new(HashMap::new()) }
     }
-    
+
     #[allow(dead_code)]
     fn check(&self, _rule_id: &str, _event: &Event) -> bool {
         false // Simplified
@@ -688,11 +722,9 @@ struct ActionExecutor {
 
 impl ActionExecutor {
     fn new() -> Self {
-        Self {
-            handlers: RwLock::new(HashMap::new()),
-        }
+        Self { handlers: RwLock::new(HashMap::new()) }
     }
-    
+
     #[allow(clippy::await_holding_lock)]
     async fn execute(&self, match_result: &RuleMatch, event: &Event) {
         for action in &match_result.actions {
@@ -707,7 +739,12 @@ impl ActionExecutor {
 
 #[async_trait::async_trait]
 trait ActionHandler: Send + Sync {
-    async fn handle(&self, match_result: &RuleMatch, event: &Event, config: &serde_json::Value) -> Result<()>;
+    async fn handle(
+        &self,
+        match_result: &RuleMatch,
+        event: &Event,
+        config: &serde_json::Value,
+    ) -> Result<()>;
 }
 
 /// Rule engine metrics
@@ -733,16 +770,28 @@ impl RuleEngineMetrics {
             rules_evaluated: std::sync::atomic::AtomicU64::new(0),
         }
     }
-    
+
     fn snapshot(&self) -> RuleEngineMetricsSnapshot {
         RuleEngineMetricsSnapshot {
             rules_loaded: self.rules_loaded.load(std::sync::atomic::Ordering::Relaxed),
-            rules_enabled: self.rules_enabled.load(std::sync::atomic::Ordering::Relaxed),
-            evaluations_total: self.evaluations_total.load(std::sync::atomic::Ordering::Relaxed),
-            matches_total: self.matches_total.load(std::sync::atomic::Ordering::Relaxed),
-            suppressions_total: self.suppressions_total.load(std::sync::atomic::Ordering::Relaxed),
-            avg_eval_time_ms: self.avg_eval_time_ms.load(std::sync::atomic::Ordering::Relaxed),
-            rules_evaluated: self.rules_evaluated.load(std::sync::atomic::Ordering::Relaxed),
+            rules_enabled: self
+                .rules_enabled
+                .load(std::sync::atomic::Ordering::Relaxed),
+            evaluations_total: self
+                .evaluations_total
+                .load(std::sync::atomic::Ordering::Relaxed),
+            matches_total: self
+                .matches_total
+                .load(std::sync::atomic::Ordering::Relaxed),
+            suppressions_total: self
+                .suppressions_total
+                .load(std::sync::atomic::Ordering::Relaxed),
+            avg_eval_time_ms: self
+                .avg_eval_time_ms
+                .load(std::sync::atomic::Ordering::Relaxed),
+            rules_evaluated: self
+                .rules_evaluated
+                .load(std::sync::atomic::Ordering::Relaxed),
         }
     }
 }
@@ -762,12 +811,12 @@ pub struct RuleEngineMetricsSnapshot {
 mod tests {
     use super::*;
     use tempfile::tempdir;
-    
+
     #[tokio::test]
     async fn test_rule_loading() {
         let dir = tempdir().unwrap();
         let rule_file = dir.path().join("test_rule.yaml");
-        
+
         let rule_content = r#"
 rule:
   id: "test-001"
@@ -788,9 +837,9 @@ rule:
     - type: "alert"
       config: {}
 "#;
-        
+
         tokio::fs::write(&rule_file, rule_content).await.unwrap();
-        
+
         let config = RuleEngineConfig {
             rules_directories: vec![dir.path().to_string_lossy().to_string()],
             hot_reload: false,
@@ -800,10 +849,10 @@ rule:
             worker_threads: 2,
             default_multipliers: vec![],
         };
-        
+
         let engine = RuleEngine::new(&config).await.unwrap();
         let metrics = engine.metrics();
-        
+
         assert_eq!(metrics.rules_loaded, 1);
         assert_eq!(metrics.rules_enabled, 1);
     }
