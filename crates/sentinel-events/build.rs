@@ -18,6 +18,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "sentinel/events/v1/event.proto",
                 "sentinel/api/v1/sentinel.proto",
                 "sentinel/plugin/v1/plugin.proto",
+                "sentinel/mgmt/v1/agent.proto",
             ],
             &[proto_root.as_path()],
         )?;
@@ -26,6 +27,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "sentinel/events/v1/event.proto",
         "sentinel/api/v1/sentinel.proto",
         "sentinel/plugin/v1/plugin.proto",
+        "sentinel/mgmt/v1/agent.proto",
     ] {
         println!("cargo:rerun-if-changed={}", proto_root.join(p).display());
     }

@@ -12,6 +12,7 @@ path = "src/main.rs"
 [dependencies]
 anyhow = { workspace = true }
 tokio = { workspace = true }
+tokio-stream = "0.1"
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 tonic = { workspace = true }
@@ -22,9 +23,7 @@ chrono = { workspace = true }
 uuid = { workspace = true }
 clap = { workspace = true }
 parking_lot = { workspace = true }
-dashmap = { workspace = true }
 
 sentinel-core = { path = "../../crates/sentinel-core" }
 sentinel-events = { path = "../../crates/sentinel-events" }
-sentinel-storage = { path = "../../crates/sentinel-storage" }
 sentinel-privacy = { path = "../../crates/sentinel-privacy" }

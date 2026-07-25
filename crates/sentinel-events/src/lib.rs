@@ -18,6 +18,11 @@ pub mod sentinel {
             include!(concat!(env!("OUT_DIR"), "/sentinel.plugin.v1.rs"));
         }
     }
+    pub mod mgmt {
+        pub mod v1 {
+            include!(concat!(env!("OUT_DIR"), "/sentinel.mgmt.v1.rs"));
+        }
+    }
 }
 
 /// Re-export the generated `events.v1` types at the crate root for ergonomic

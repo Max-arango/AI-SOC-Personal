@@ -1,4 +1,5 @@
 pub mod fleet;
+pub mod service;
 
 use std::sync::Arc;
 use clap::Parser;
@@ -6,6 +7,7 @@ use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use fleet::FleetManager;
+use service::serve;
 
 #[derive(Parser, Debug)]
 #[command(name = "sentinel-mgmt")]
@@ -27,19 +29,16 @@ async fn main() -> anyhow::Result<()> {
         .with(tracing_subscriber::fmt::layer().with_writer(std::io::stdout))
         .init();
 
-    info!("Sentinel AI Management Server v0.2.0 starting");
-
-    let fleet = FleetManager::new();
     info!(
-        "Fleet manager initialized (listen: {}, agents: {})",
-        args.listen,
-        fleet.online_count()
+        "Sentinel AI Management Server v{} starting",
+        env!("CARGO_PKG_VERSION")
     );
 
-    info!("Management Server ready — gRPC endpoint: {}", args.listen);
+    let fleet = FleetManager::new();
 
-    tokio::signal::ctrl_c().await?;
-    info!("Management Server stopped");
+    info!("Fleet manager ready — serving gRPC on {}", args.listen);
+
+    serve(&args.listen, fleet).await?;
 
     Ok(())
 }

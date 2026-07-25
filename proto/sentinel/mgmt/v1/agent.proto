@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package sentinel.mgmt.v1;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+import "sentinel/events/v1/event.proto";
+
+option go_package = "github.com/sentinel-ai/sentinel-ai/proto/sentinel/mgmt/v1;mgmtv1";
+
+message RegisterRequest {
+  string host_id = 1;
+  string hostname = 2;
+  string os = 3;
+  string version = 4;
+  repeated string tags = 5;
+}
+
+message RegisterResponse {
+  string agent_id = 1;
+  string server_version = 2;
+  int64 heartbeat_interval_secs = 3;
+}
+
+message HeartbeatRequest {
+  string agent_id = 1;
+  AgentStats stats = 2;
+}
+
+message AgentStats {
+  uint64 events_processed = 1;
+  uint64 alerts_generated = 2;
+  uint64 rules_evaluated = 3;
+  double cpu_percent = 4;
+  uint64 memory_bytes = 5;
+  uint64 event_queue_depth = 6;
+}
+
+message HeartbeatResponse {
+  bool acknowledged = 1;
+  int64 server_time_unix = 2;
+}
+
+message AgentEvent {
+  string agent_id = 1;
+  sentinel.events.v1.Event event = 2;
+}
+
+message CommandRequest {
+  string command_id = 1;
+  string agent_id = 2;
+  oneof command {
+    KillProcessCmd kill_process = 10;
+    QuarantineFileCmd quarantine_file = 11;
+    BlockNetworkCmd block_network = 12;
+    IsolateHostCmd isolate_host = 13;
+    CollectSnapshotCmd collect_snapshot = 14;
+    UpdateConfigCmd update_config = 15;
+  }
+}
+
+message KillProcessCmd { uint32 pid = 1; }
+message QuarantineFileCmd { string path = 1; }
+message BlockNetworkCmd { string ip = 1; uint32 port = 2; }
+message IsolateHostCmd { uint64 auto_revert_seconds = 1; }
+message CollectSnapshotCmd {}
+message UpdateConfigCmd { string config_toml = 1; }
+
+message CommandResponse {
+  string command_id = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+service AgentService {
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+  rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
+  rpc Stream(stream AgentEvent) returns (stream CommandRequest);
+  rpc SendCommand(CommandRequest) returns (CommandResponse);
+}

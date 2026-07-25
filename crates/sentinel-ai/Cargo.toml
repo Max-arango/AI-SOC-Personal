@@ -7,12 +7,14 @@ publish = false
 
 [dependencies]
 ollama-rs = { workspace = true }
+reqwest = { version = "0.12", features = ["json"] }
 tokio = { workspace = true }
-serde = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
 chrono = { workspace = true }
+async-trait = "0.1"
+
 sentinel-core = { path = "../sentinel-core" }
 sentinel-events = { path = "../sentinel-events" }
-async-trait = "0.1"

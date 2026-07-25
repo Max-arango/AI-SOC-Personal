@@ -12,7 +12,7 @@ use tokio::sync::watch;
 use tracing::{error, info, warn};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use sentinel_ai::{AiConfig, AiEngine, OllamaProvider};
+use sentinel_ai::{AiConfig, AiEngine};
 use sentinel_config::ConfigManager;
 use sentinel_core::{ChannelConfig, EventBus};
 use sentinel_correlation::{CorrelationConfig, CorrelationEngine};
@@ -148,7 +148,7 @@ async fn main() -> Result<()> {
 
     // ── M3: AI Engine ──────────────────────────────────────────
     let ai_config = AiConfig::default();
-    let ai = Arc::new(AiEngine::new(ai_config.clone(), Box::new(OllamaProvider::new(&ai_config))));
+    let ai = Arc::new(AiEngine::new(ai_config.clone(), ai_config.create_provider()));
     info!("AI engine initialised (model: {}, enabled: {})", ai_config.model, ai_config.enabled);
 
     // Subscribe rule engine to ALL events ("*")
