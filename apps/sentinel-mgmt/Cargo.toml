@@ -1,0 +1,30 @@
+[package]
+name = "sentinel-mgmt"
+version = { workspace = true }
+edition = "2021"
+license = { workspace = true }
+publish = false
+
+[[bin]]
+name = "sentinel-mgmt"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+tonic = { workspace = true }
+prost = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }
+clap = { workspace = true }
+parking_lot = { workspace = true }
+dashmap = { workspace = true }
+
+sentinel-core = { path = "../../crates/sentinel-core" }
+sentinel-events = { path = "../../crates/sentinel-events" }
+sentinel-storage = { path = "../../crates/sentinel-storage" }
+sentinel-privacy = { path = "../../crates/sentinel-privacy" }

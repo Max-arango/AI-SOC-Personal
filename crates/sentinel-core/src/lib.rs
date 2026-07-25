@@ -5,6 +5,7 @@
 pub mod errors;
 pub mod health;
 pub mod metrics;
+pub mod response;
 pub mod traits;
 
 // Re-export commonly used types at the crate root so downstream crates can

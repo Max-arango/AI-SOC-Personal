@@ -1,0 +1,21 @@
+[package]
+name = "sentinel-privacy"
+version = { workspace = true }
+edition = "2021"
+license = { workspace = true }
+publish = false
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+toml = { workspace = true }
+tracing = { workspace = true }
+anyhow = { workspace = true }
+sha2 = { workspace = true }
+blake3 = { workspace = true }
+hex = "0.4"
+dirs = "5"
+
+sentinel-core = { path = "../sentinel-core" }
+sentinel-events = { path = "../sentinel-events" }
+sentinel-config = { path = "../sentinel-config" }
