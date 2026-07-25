@@ -75,6 +75,35 @@ pub async fn update_config(
     state.update_config(config).await
 }
 
+#[command]
+pub async fn get_process_tree(
+    state: tauri::State<'_, std::sync::Arc<crate::state::AppState>>,
+) -> CmdResult<ProcessTreeResponse> {
+    state.get_process_tree().await
+}
+
+#[command]
+pub async fn get_risk_timeline(
+    state: tauri::State<'_, std::sync::Arc<crate::state::AppState>>,
+    hours: Option<u32>,
+) -> CmdResult<RiskTimelineResponse> {
+    state.get_risk_timeline(hours).await
+}
+
+#[command]
+pub async fn get_mitre_heatmap(
+    state: tauri::State<'_, std::sync::Arc<crate::state::AppState>>,
+) -> CmdResult<MitreHeatmapResponse> {
+    state.get_mitre_heatmap().await
+}
+
+#[command]
+pub async fn get_network_graph(
+    state: tauri::State<'_, std::sync::Arc<crate::state::AppState>>,
+) -> CmdResult<NetworkGraphResponse> {
+    state.get_network_graph().await
+}
+
 // ── Request / Response types ────────────────────────────────────
 
 #[derive(Debug, Deserialize)]
@@ -163,4 +192,25 @@ pub struct ChatResponse {
 pub struct ConfigResponse {
     pub config_toml: String,
     pub version: u64,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ProcessTreeResponse {
+    pub tree: serde_json::Value,
+}
+
+#[derive(Debug, Serialize)]
+pub struct RiskTimelineResponse {
+    pub points: Vec<serde_json::Value>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct MitreHeatmapResponse {
+    pub tactics: Vec<serde_json::Value>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct NetworkGraphResponse {
+    pub nodes: Vec<serde_json::Value>,
+    pub edges: Vec<serde_json::Value>,
 }

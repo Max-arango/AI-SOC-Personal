@@ -8,8 +8,9 @@ use sentinel_storage::sqlite::{SqliteConfig, SqliteStorage};
 
 use crate::commands::{
     AlertQuery, AlertsResponse, ChatResponse, ConfigResponse, EventQuery as CmdEventQuery,
-    EventsResponse, ExplanationResponse, HealthResponse, NetworkQuery, NetworkResponse,
-    ProcessQuery, ProcessesResponse, StatusResponse,
+    EventsResponse, ExplanationResponse, HealthResponse, MitreHeatmapResponse,
+    NetworkGraphResponse, NetworkQuery, NetworkResponse, ProcessQuery,
+    ProcessesResponse, ProcessTreeResponse, RiskTimelineResponse, StatusResponse,
 };
 
 pub struct AppState {
@@ -332,6 +333,213 @@ fn event_to_json(event: &sentinel_events::Event) -> serde_json::Value {
         "process": process,
         "correlation": correlation,
     })
+    pub async fn get_process_tree(&self) -> Result<ProcessTreeResponse, String> {
+        let mut sys = sysinfo::System::new();
+        sys.refresh_all();
+
+        let mut nodes: Vec<serde_json::Value> = sys
+            .processes()
+            .iter()
+            .take(200)
+            .map(|(pid, proc)| {
+                serde_json::json!({
+                    "id": pid.as_u32(),
+                    "pid": pid.as_u32(),
+                    "ppid": proc.parent().map(|p| p.as_u32()).unwrap_or(0),
+                    "name": proc.name().to_string_lossy(),
+                    "cpu": proc.cpu_usage(),
+                    "memory_mb": proc.memory() as f64 / 1_048_576.0,
+                    "risk": 0,
+                    "exe": proc.exe().map(|p| p.to_string_lossy().into_owned()),
+                    "cmd": proc.cmd().iter().map(|s| s.to_string_lossy()).collect::<Vec<_>>().join(" "),
+                })
+            })
+            .collect();
+
+        Ok(ProcessTreeResponse {
+            tree: serde_json::json!({ "nodes": nodes }),
+        })
+    }
+
+    pub async fn get_risk_timeline(
+        &self,
+        hours: Option<u32>,
+    ) -> Result<RiskTimelineResponse, String> {
+        let repo = self.storage.events().await;
+        let now = chrono::Utc::now();
+        let h = hours.unwrap_or(24) as i64;
+
+        let query = EventQuery {
+            start_time: Some(now - chrono::Duration::hours(h)),
+            end_time: Some(now),
+            limit: 1440,
+            offset: 0,
+            sort_by: Some("timestamp".into()),
+            sort_desc: false,
+            ..Default::default()
+        };
+
+        let mut cursor = repo.query(query).await.map_err(|e| format!("{e}"))?;
+        let total = cursor.total_count();
+
+        let events = if let Some(c) = Arc::get_mut(&mut cursor) {
+            c.collect(1440).await.map_err(|e| format!("{e}"))?
+        } else {
+            vec![]
+        };
+
+        let mut points = Vec::new();
+        for e in &events {
+            if let Some(ref ts) = e.timestamp {
+                points.push(serde_json::json!({
+                    "timestamp": ts.seconds,
+                    "risk_score": e.risk_score,
+                    "event_type": e.r#type,
+                }));
+            }
+        }
+
+        Ok(RiskTimelineResponse { points })
+    }
+
+    pub async fn get_mitre_heatmap(&self) -> Result<MitreHeatmapResponse, String> {
+        use std::collections::HashMap;
+
+        let tactics = [
+            ("Initial Access", "TA0001"),
+            ("Execution", "TA0002"),
+            ("Persistence", "TA0003"),
+            ("Privilege Escalation", "TA0004"),
+            ("Defense Evasion", "TA0005"),
+            ("Credential Access", "TA0006"),
+            ("Discovery", "TA0007"),
+            ("Lateral Movement", "TA0008"),
+            ("Collection", "TA0009"),
+            ("Command and Control", "TA0011"),
+            ("Exfiltration", "TA0010"),
+            ("Impact", "TA0040"),
+        ];
+
+        let repo = self.storage.events().await;
+        let query = EventQuery {
+            limit: 5000,
+            ..Default::default()
+        };
+
+        let mut cursor = repo.query(query).await.map_err(|e| format!("{e}"))?;
+        let events = if let Some(c) = Arc::get_mut(&mut cursor) {
+            c.collect(5000).await.map_err(|e| format!("{e}"))?
+        } else {
+            vec![]
+        };
+
+        let mut counts: HashMap<&str, (u32, u32)> = HashMap::new();
+        for t in &tactics {
+            counts.insert(t.0, (0, 0));
+        }
+
+        for e in &events {
+            for tag in &e.tags {
+                if tag.starts_with("mitre:") {
+                    let technique = tag.strip_prefix("mitre:").unwrap_or("");
+                    for (tactic_name, _tactic_id) in &tactics {
+                        if let Some((count, max_risk)) = counts.get_mut(tactic_name) {
+                            *count += 1;
+                            *max_risk = (*max_risk).max(e.risk_score);
+                        }
+                    }
+                }
+            }
+        }
+
+        let tactics_json: Vec<serde_json::Value> = tactics
+            .iter()
+            .map(|(name, id)| {
+                let (count, max_risk) = counts.get(name).copied().unwrap_or((0, 0));
+                serde_json::json!({
+                    "tactic": name,
+                    "id": id,
+                    "techniques_count": count,
+                    "max_risk": max_risk,
+                })
+            })
+            .collect();
+
+        Ok(MitreHeatmapResponse {
+            tactics: tactics_json,
+        })
+    }
+
+    pub async fn get_network_graph(&self) -> Result<NetworkGraphResponse, String> {
+        let repo = self.storage.events().await;
+        let query = EventQuery {
+            event_types: vec!["sentinel.network.connect".into()],
+            limit: 500,
+            ..Default::default()
+        };
+
+        let mut cursor = repo.query(query).await.map_err(|e| format!("{e}"))?;
+        let events = if let Some(c) = Arc::get_mut(&mut cursor) {
+            c.collect(500).await.map_err(|e| format!("{e}"))?
+        } else {
+            vec![]
+        };
+
+        let mut nodes = std::collections::HashMap::new();
+        let mut edges = Vec::new();
+        let mut node_id = 0u32;
+
+        for e in &events {
+            if let Some(ref payload) = e.payload {
+                if let sentinel_events::event::Payload::NetworkEvent(ref ne) = payload {
+                    if !ne.remote_addr.is_empty() && !ne.local_addr.is_empty() {
+                        let local_key = format!("local:{}", ne.local_addr);
+                        let remote_key = format!("remote:{}", ne.remote_addr);
+
+                        let lid = *nodes.entry(local_key.clone()).or_insert_with(|| {
+                            let id = node_id;
+                            node_id += 1;
+                            id
+                        });
+                        let rid = *nodes.entry(remote_key.clone()).or_insert_with(|| {
+                            let id = node_id;
+                            node_id += 1;
+                            id
+                        });
+
+                        edges.push(serde_json::json!({
+                            "from": lid,
+                            "to": rid,
+                            "protocol": if ne.protocol == 1 { "tcp" } else { "udp" },
+                            "local_port": ne.local_port,
+                            "remote_port": ne.remote_port,
+                        }));
+                    }
+                }
+            }
+        }
+
+        let nodes_json: Vec<serde_json::Value> = nodes
+            .iter()
+            .map(|(key, id)| {
+                let (label, risk) = if key.starts_with("local:") {
+                    (key.strip_prefix("local:").unwrap_or("?"), 0u32)
+                } else {
+                    (key.strip_prefix("remote:").unwrap_or("?"), 10u32)
+                };
+                serde_json::json!({
+                    "id": id,
+                    "label": label,
+                    "risk": risk,
+                })
+            })
+            .collect();
+
+        Ok(NetworkGraphResponse {
+            nodes: nodes_json,
+            edges,
+        })
+    }
 }
 
 fn default_db_path() -> String {

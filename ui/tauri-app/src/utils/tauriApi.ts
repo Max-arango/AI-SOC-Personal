@@ -145,3 +145,45 @@ export async function getConfig(): Promise<ConfigResponse> {
 export async function updateConfig(config: unknown): Promise<ConfigResponse> {
   return invoke<ConfigResponse>('update_config', { config });
 }
+
+export interface ProcessTreeResponse {
+  tree: { nodes: ProcessTreeItem[] };
+}
+export interface ProcessTreeItem {
+  id: string;
+  pid: number;
+  ppid: number;
+  name: string;
+  cpu: number;
+  memory_mb: number;
+  risk: number;
+}
+
+export async function getProcessTree(): Promise<ProcessTreeResponse> {
+  return invoke<ProcessTreeResponse>('get_process_tree');
+}
+
+export interface RiskTimelineResponse {
+  points: { timestamp: number; risk_score: number; event_type: string }[];
+}
+
+export async function getRiskTimeline(hours?: number): Promise<RiskTimelineResponse> {
+  return invoke<RiskTimelineResponse>('get_risk_timeline', { hours: hours ?? null });
+}
+
+export interface MitreHeatmapResponse {
+  tactics: { tactic: string; id: string; techniques_count: number; max_risk: number }[];
+}
+
+export async function getMitreHeatmap(): Promise<MitreHeatmapResponse> {
+  return invoke<MitreHeatmapResponse>('get_mitre_heatmap');
+}
+
+export interface NetworkGraphResponse {
+  nodes: { id: number; label: string; risk: number }[];
+  edges: { from: number; to: number; protocol: string; local_port: number; remote_port: number }[];
+}
+
+export async function getNetworkGraph(): Promise<NetworkGraphResponse> {
+  return invoke<NetworkGraphResponse>('get_network_graph');
+}

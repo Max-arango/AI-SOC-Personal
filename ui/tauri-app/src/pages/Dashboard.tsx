@@ -5,6 +5,10 @@ import {
 } from 'lucide-react';
 import { cn, formatRelativeTime, getSeverityColor, getRiskLevel } from '../utils/cn';
 import * as api from '../utils/tauriApi';
+import ProcessTree from '../components/ProcessTree';
+import RiskTimeline from '../components/RiskTimeline';
+import MitreHeatmap from '../components/MitreHeatmap';
+import NetworkMap from '../components/NetworkMap';
 
 export default function Dashboard() {
   const health = useQuery({ queryKey: ['health'], queryFn: api.getHealth, refetchInterval: 30000 });
@@ -23,6 +27,26 @@ export default function Dashboard() {
     queryKey: ['processes'],
     queryFn: () => api.getProcesses({ limit: 200 }),
     refetchInterval: 10000,
+  });
+  const processTree = useQuery({
+    queryKey: ['process-tree'],
+    queryFn: api.getProcessTree,
+    refetchInterval: 15000,
+  });
+  const riskTimeline = useQuery({
+    queryKey: ['risk-timeline'],
+    queryFn: () => api.getRiskTimeline(6),
+    refetchInterval: 30000,
+  });
+  const mitreHeatmap = useQuery({
+    queryKey: ['mitre-heatmap'],
+    queryFn: api.getMitreHeatmap,
+    refetchInterval: 60000,
+  });
+  const networkGraph = useQuery({
+    queryKey: ['network-graph'],
+    queryFn: api.getNetworkGraph,
+    refetchInterval: 30000,
   });
 
   const eventCount = events.data?.total_count ?? 0;
@@ -287,6 +311,36 @@ export default function Dashboard() {
               )}
             </div>
           </div>
+        </div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="card overflow-hidden">
+          <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Process Tree</h2>
+          </div>
+          <ProcessTree data={{ nodes: (processTree.data?.tree?.nodes ?? []) as any }} />
+        </div>
+        <div className="card p-4">
+          <div className="border-b border-gray-200 px-2 pb-4 dark:border-gray-700">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Risk Timeline (6h)</h2>
+          </div>
+          <RiskTimeline data={riskTimeline.data?.points ?? []} />
+        </div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="card p-4">
+          <div className="border-b border-gray-200 px-2 pb-4 dark:border-gray-700">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">MITRE ATT&CK Coverage</h2>
+          </div>
+          <MitreHeatmap data={mitreHeatmap.data?.tactics ?? []} />
+        </div>
+        <div className="card overflow-hidden">
+          <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Network Map</h2>
+          </div>
+          <NetworkMap data={networkGraph.data ?? { nodes: [], edges: [] }} />
         </div>
       </div>
     </div>

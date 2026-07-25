@@ -29,6 +29,10 @@ fn main() {
             commands::chat_ai,
             commands::get_config,
             commands::update_config,
+            commands::get_process_tree,
+            commands::get_risk_timeline,
+            commands::get_mitre_heatmap,
+            commands::get_network_graph,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
