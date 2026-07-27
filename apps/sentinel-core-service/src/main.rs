@@ -18,6 +18,8 @@ use sentinel_core::{ChannelConfig, EventBus};
 use sentinel_correlation::{CorrelationConfig, CorrelationEngine};
 use sentinel_event_bus::EventBusImpl;
 use sentinel_events::{Event, ProcessContext, UserContext};
+use sentinel_privacy::PrivacyEngine;
+use sentinel_privacy::config::PrivacyConfig;
 use sentinel_risk::{RiskConfig, RiskEngine};
 use sentinel_rule_engine::RuleEngine;
 use sentinel_storage::sqlite::SqliteStorage;
@@ -150,6 +152,12 @@ async fn main() -> Result<()> {
     let ai_config = AiConfig::default();
     let ai = Arc::new(AiEngine::new(ai_config.clone(), ai_config.create_provider()));
     info!("AI engine initialised (model: {}, enabled: {})", ai_config.model, ai_config.enabled);
+
+    let privacy = Arc::new(PrivacyEngine::new(PrivacyConfig::default()));
+    info!(
+        "Privacy engine initialised (mode: {}, command_lines: {:?})",
+        privacy.config().mode, privacy.config().sharing.command_lines
+    );
 
     // Subscribe rule engine to ALL events ("*")
     let mut rule_sub = bus
@@ -340,33 +348,32 @@ async fn main() -> Result<()> {
                         }
                     }
                 }
-                // Feed into correlation engine
-                let chain = correlation.ingest(&event);
 
-                // Evaluate rules
-                let result = rule_engine.evaluate(&event).await;
+                let sanitized_event = Arc::new(privacy.sanitize_event(&event));
+
+                let chain = correlation.ingest(&sanitized_event);
+
+                let result = rule_engine.evaluate(&sanitized_event).await;
                 if !result.matches.is_empty() {
                     info!(
                         "Rule engine: {} matches for event {} (type={}, {} rules in {:?})",
-                        result.matches.len(), event.id, event.r#type,
+                        result.matches.len(), sanitized_event.id, sanitized_event.r#type,
                         result.rules_evaluated, result.evaluation_time,
                     );
                     for m in &result.matches {
-                        // Calculate cumulative risk along the chain
                         let score = risk.calculate(
                             m.risk_score,
-                            "Warning", // use rule severity label
-                            1.0,       // default asset multiplier
+                            "Warning",
+                            1.0,
                             Some(&chain.id),
                         );
 
-                        // Generate alert if above threshold
                         if let Some(alert) = risk.should_alert(
                             &m.rule_id,
                             &m.rule_name,
                             score,
-                            &event.source,
-                            vec![event.id.clone()],
+                            &sanitized_event.source,
+                            vec![sanitized_event.id.clone()],
                             Some(chain.id.clone()),
                         ) {
                             info!("  → ALERT [{}] {} (risk={})", alert.severity as i32, alert.rule_name, alert.risk_score);
@@ -377,7 +384,7 @@ async fn main() -> Result<()> {
                                 alert.risk_score,
                                 m.severity,
                                 alert.event_ids.clone(),
-                                serde_json::json!({"chain_id": chain.id, "source": event.source}),
+                                serde_json::json!({"chain_id": chain.id, "source": sanitized_event.source}),
                             ).await {
                                 error!("Failed to persist alert: {e}");
                             }
@@ -385,7 +392,7 @@ async fn main() -> Result<()> {
                             // AI explanation (async, non-blocking)
                             let ai_clone = ai.clone();
                             let alert_clone = alert.clone();
-                            let event_clone = event.clone();
+                            let event_clone = sanitized_event.clone();
                             tokio::spawn(async move {
                                 let explanation = ai_clone.explain_alert(
                                     &sentinel_core::traits::Alert {
@@ -412,7 +419,7 @@ async fn main() -> Result<()> {
                             let alert_name = alert.rule_name.clone();
                             let alert_risk = alert.risk_score;
                             let alert_eid = alert.rule_id.clone();
-                            let event_source = event.source.clone();
+                            let event_source = sanitized_event.source.clone();
                             let event_count = alert.event_ids.len();
 
                             if sentinel_plugin_discord::enabled() {
