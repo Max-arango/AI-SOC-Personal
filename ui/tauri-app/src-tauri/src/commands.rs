@@ -1,5 +1,6 @@
 use tauri::command;
 use serde::{Deserialize, Serialize};
+use tauri_plugin_notification::NotificationExt;
 
 type CmdResult<T> = Result<T, String>;
 
@@ -104,7 +105,20 @@ pub async fn get_network_graph(
     state.get_network_graph().await
 }
 
-// ── Request / Response types ────────────────────────────────────
+#[command]
+pub async fn show_notification(
+    app: tauri::AppHandle,
+    title: String,
+    body: String,
+) -> CmdResult<()> {
+    app.notification()
+        .builder()
+        .title(title)
+        .body(body)
+        .show()
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
 
 #[derive(Debug, Deserialize)]
 pub struct EventQuery {

@@ -9,8 +9,10 @@ import ProcessTree from '../components/ProcessTree';
 import RiskTimeline from '../components/RiskTimeline';
 import MitreHeatmap from '../components/MitreHeatmap';
 import NetworkMap from '../components/NetworkMap';
+import { useAlertNotifications } from '../hooks/useAlertNotifications';
 
 export default function Dashboard() {
+  useAlertNotifications({ pollIntervalMs: 10000 });
   const health = useQuery({ queryKey: ['health'], queryFn: api.getHealth, refetchInterval: 30000 });
   const status = useQuery({ queryKey: ['status'], queryFn: api.getStatus, refetchInterval: 10000 });
   const events = useQuery({

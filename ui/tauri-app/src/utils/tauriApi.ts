@@ -187,3 +187,7 @@ export interface NetworkGraphResponse {
 export async function getNetworkGraph(): Promise<NetworkGraphResponse> {
   return invoke<NetworkGraphResponse>('get_network_graph');
 }
+
+export async function showNotification(title: string, body: string): Promise<void> {
+  return invoke<void>('show_notification', { title, body });
+}
