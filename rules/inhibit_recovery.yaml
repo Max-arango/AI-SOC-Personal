@@ -1,0 +1,33 @@
+rule:
+  id: "rule-021-shadow-copy-delete"
+  version: 1
+  name: "Inhibit System Recovery"
+  description: "Deleting shadow copies or backup catalogs"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "impact"
+  subcategory: "inhibit-system-recovery"
+  mitre:
+    - technique: "T1490"
+      name: "Inhibit System Recovery"
+      tactic: "Impact"
+  severity: "Critical"
+  risk:
+    base_score: 90
+    confidence: 0.85
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("vssadmin")
+        || event.process.command_line.lowerAscii().contains("wbadmin")
+        || event.process.command_line.lowerAscii().contains("bcdedit")
+        || event.process.command_line.lowerAscii().contains("rm -rf /var/backups")
+        || event.process.command_line.lowerAscii().contains("dd if=/dev/zero"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

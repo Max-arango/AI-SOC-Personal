@@ -1,0 +1,33 @@
+rule:
+  id: "rule-030-c2-beaconing"
+  version: 1
+  name: "Command and Control Beaconing"
+  description: "Regular outbound connections indicative of C2 beaconing"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "command-and-control"
+  subcategory: "application-layer-protocol"
+  mitre:
+    - technique: "T1071.001"
+      name: "Web Protocols"
+      tactic: "Command and Control"
+  severity: "Warning"
+  risk:
+    base_score: 65
+    confidence: 0.7
+    multipliers: []
+  condition: >
+    event.type == "sentinel.network.connect"
+    && (event.process.command_line.lowerAscii().contains("curl -s")
+        || event.process.command_line.lowerAscii().contains("wget -q"))
+    && (event.process.command_line.lowerAscii().contains(".php")
+        || event.process.command_line.lowerAscii().contains(".aspx")
+        || event.process.command_line.lowerAscii().contains("shell"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,33 @@
+rule:
+  id: "rule-032-keylogging"
+  version: 1
+  name: "Input Capture — Keylogging"
+  description: "Process capable of capturing keyboard input"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "collection"
+  subcategory: "input-capture"
+  mitre:
+    - technique: "T1056.001"
+      name: "Keylogging"
+      tactic: "Collection"
+  severity: "Error"
+  risk:
+    base_score: 80
+    confidence: 0.8
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("xinput test")
+        || event.process.command_line.lowerAscii().contains("evtest")
+        || event.process.command_line.lowerAscii().contains("logkeys")
+        || event.process.command_line.lowerAscii().contains("keylogger")
+        || event.process.command_line.lowerAscii().contains("inputhook"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

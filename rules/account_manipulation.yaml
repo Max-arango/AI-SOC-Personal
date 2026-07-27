@@ -1,0 +1,32 @@
+rule:
+  id: "rule-026-account-manipulation"
+  version: 1
+  name: "Account Manipulation"
+  description: "Creating, modifying, or adding users to privileged groups"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "persistence"
+  subcategory: "account-manipulation"
+  mitre:
+    - technique: "T1098"
+      name: "Account Manipulation"
+      tactic: "Persistence"
+  severity: "Warning"
+  risk:
+    base_score: 70
+    confidence: 0.85
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("useradd")
+        || event.process.command_line.lowerAscii().contains("adduser")
+        || event.process.command_line.lowerAscii().contains("usermod -aG")
+        || event.process.command_line.lowerAscii().contains("passwd"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

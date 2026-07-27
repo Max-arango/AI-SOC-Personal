@@ -1,0 +1,34 @@
+rule:
+  id: "rule-025-scheduled-task"
+  version: 1
+  name: "Suspicious Scheduled Task Creation"
+  description: "Creating a new scheduled task for persistence"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "persistence"
+  subcategory: "scheduled-task"
+  mitre:
+    - technique: "T1053.003"
+      name: "Cron"
+      tactic: "Persistence"
+    - technique: "T1053.005"
+      name: "Scheduled Task"
+      tactic: "Persistence"
+  severity: "Warning"
+  risk:
+    base_score: 65
+    confidence: 0.8
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("crontab -e")
+        || event.process.command_line.lowerAscii().contains("schtasks /create")
+        || event.process.command_line.lowerAscii().contains("at "))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

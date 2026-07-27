@@ -1,0 +1,36 @@
+rule:
+  id: "rule-015-system-discovery"
+  version: 1
+  name: "System Information Discovery"
+  description: "Commands used to gather system and network information"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "discovery"
+  subcategory: "system-information-discovery"
+  mitre:
+    - technique: "T1082"
+      name: "System Information Discovery"
+      tactic: "Discovery"
+  severity: "Notice"
+  risk:
+    base_score: 35
+    confidence: 0.7
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("systeminfo")
+        || event.process.command_line.lowerAscii().contains("uname -a")
+        || event.process.command_line.lowerAscii().contains("hostname")
+        || event.process.command_line.lowerAscii().contains("whoami")
+        || event.process.command_line.lowerAscii().contains("id"))
+    && (event.process.command_line.lowerAscii().contains(" > ")
+        || event.process.command_line.lowerAscii().contains("| nc")
+        || event.process.command_line.lowerAscii().contains("curl"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

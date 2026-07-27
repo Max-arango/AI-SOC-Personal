@@ -1,0 +1,37 @@
+rule:
+  id: "rule-024-disable-security-tools"
+  version: 1
+  name: "Disable Security Tools"
+  description: "Attempt to stop or disable antivirus, firewall, or monitoring"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "defense-evasion"
+  subcategory: "impair-defenses"
+  mitre:
+    - technique: "T1562.001"
+      name: "Disable or Modify Tools"
+      tactic: "Defense Evasion"
+  severity: "Error"
+  risk:
+    base_score: 75
+    confidence: 0.85
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("systemctl stop")
+        || event.process.command_line.lowerAscii().contains("service stop")
+        || event.process.command_line.lowerAscii().contains("killall"))
+    && (event.process.command_line.lowerAscii().contains("firewall")
+        || event.process.command_line.lowerAscii().contains("ufw")
+        || event.process.command_line.lowerAscii().contains("iptables")
+        || event.process.command_line.lowerAscii().contains("sentinel")
+        || event.process.command_line.lowerAscii().contains("clamav")
+        || event.process.command_line.lowerAscii().contains("sophos"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

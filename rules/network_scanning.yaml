@@ -1,0 +1,32 @@
+rule:
+  id: "rule-016-network-scanning"
+  version: 1
+  name: "Network Service Scanning"
+  description: "Process scanning network for open ports or services"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "discovery"
+  subcategory: "network-service-scanning"
+  mitre:
+    - technique: "T1046"
+      name: "Network Service Scanning"
+      tactic: "Discovery"
+  severity: "Notice"
+  risk:
+    base_score: 45
+    confidence: 0.75
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("nmap")
+        || event.process.command_line.lowerAscii().contains("netcat -z")
+        || event.process.command_line.lowerAscii().contains("masscan")
+        || event.process.command_line.lowerAscii().contains("/dev/tcp"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

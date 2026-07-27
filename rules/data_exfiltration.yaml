@@ -1,0 +1,31 @@
+rule:
+  id: "rule-031-data-exfiltration"
+  version: 1
+  name: "Data Exfiltration via Common Protocols"
+  description: "Large data transfer using curl, wget, or netcat to external IP"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "exfiltration"
+  subcategory: "exfiltration-over-c2-channel"
+  mitre:
+    - technique: "T1041"
+      name: "Exfiltration Over C2 Channel"
+      tactic: "Exfiltration"
+  severity: "Error"
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: >
+    event.type == "sentinel.network.connect"
+    && (event.process.command_line.lowerAscii().contains("curl -F")
+        || event.process.command_line.lowerAscii().contains("curl --data")
+        || event.process.command_line.lowerAscii().contains("wget --post-data"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

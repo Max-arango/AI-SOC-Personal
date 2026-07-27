@@ -1,0 +1,29 @@
+rule:
+  id: "rule-033-dll-sideloading"
+  version: 1
+  name: "DLL Side-Loading / Hijacking"
+  description: "Suspicious DLL or shared library loaded from unusual path"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "defense-evasion"
+  subcategory: "hijack-execution-flow"
+  mitre:
+    - technique: "T1574.002"
+      name: "DLL Side-Loading"
+      tactic: "Defense Evasion"
+  severity: "Warning"
+  risk:
+    base_score: 65
+    confidence: 0.75
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && event.process.command_line.lowerAscii().contains("LD_PRELOAD")
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

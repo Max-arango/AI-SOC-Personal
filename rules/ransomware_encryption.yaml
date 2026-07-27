@@ -1,0 +1,29 @@
+rule:
+  id: "rule-020-mass-file-encryption"
+  version: 1
+  name: "Mass File Encryption — Ransomware Indicator"
+  description: "Rapid file modifications across multiple directories"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "impact"
+  subcategory: "data-encrypted-for-impact"
+  mitre:
+    - technique: "T1486"
+      name: "Data Encrypted for Impact"
+      tactic: "Impact"
+  severity: "Critical"
+  risk:
+    base_score: 95
+    confidence: 0.8
+    multipliers: []
+  condition: >
+    event.type == "sentinel.file.modify"
+    && event.tags.exists(t, t == "sensitive_path")
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

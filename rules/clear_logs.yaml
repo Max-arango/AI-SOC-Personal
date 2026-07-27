@@ -1,0 +1,32 @@
+rule:
+  id: "rule-022-clear-logs"
+  version: 1
+  name: "Indicator Removal — Clear Logs"
+  description: "Attempting to delete or clear system and security logs"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "defense-evasion"
+  subcategory: "indicator-removal"
+  mitre:
+    - technique: "T1070.001"
+      name: "Clear Windows Event Logs"
+      tactic: "Defense Evasion"
+  severity: "Error"
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("wevtutil cl")
+        || event.process.command_line.lowerAscii().contains("rm /var/log")
+        || event.process.command_line.lowerAscii().contains("journalctl --vacuum")
+        || event.process.command_line.lowerAscii().contains("truncate -s 0 /var/log"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

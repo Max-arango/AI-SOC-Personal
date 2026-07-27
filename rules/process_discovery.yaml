@@ -1,0 +1,29 @@
+rule:
+  id: "rule-018-process-discovery"
+  version: 1
+  name: "Process Discovery"
+  description: "Enumerating running processes for reconnaissance"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "discovery"
+  subcategory: "process-discovery"
+  mitre:
+    - technique: "T1057"
+      name: "Process Discovery"
+      tactic: "Discovery"
+  severity: "Info"
+  risk:
+    base_score: 20
+    confidence: 0.6
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && event.process.command_line.lowerAscii().contains("ps aux")
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

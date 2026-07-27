@@ -1,0 +1,34 @@
+rule:
+  id: "rule-019-local-data-collection"
+  version: 1
+  name: "Local Data Staging"
+  description: "Collecting and staging local data before exfiltration"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "collection"
+  subcategory: "local-data-staging"
+  mitre:
+    - technique: "T1074.001"
+      name: "Local Data Staging"
+      tactic: "Collection"
+  severity: "Warning"
+  risk:
+    base_score: 55
+    confidence: 0.75
+    multipliers: []
+  condition: >
+    event.type == "sentinel.file.create"
+    && (event.process.command_line.lowerAscii().contains("tar -czf")
+        || event.process.command_line.lowerAscii().contains("zip -r")
+        || event.process.command_line.lowerAscii().contains("7z a")
+        || event.process.command_line.lowerAscii().contains("rar a"))
+    && (event.process.command_line.lowerAscii().contains("/tmp/")
+        || event.process.command_line.lowerAscii().contains("/dev/shm/"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

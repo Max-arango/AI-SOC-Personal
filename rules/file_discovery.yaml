@@ -1,0 +1,33 @@
+rule:
+  id: "rule-017-file-discovery"
+  version: 1
+  name: "File and Directory Discovery"
+  description: "Searching for sensitive files across the filesystem"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "discovery"
+  subcategory: "file-and-directory-discovery"
+  mitre:
+    - technique: "T1083"
+      name: "File and Directory Discovery"
+      tactic: "Discovery"
+  severity: "Notice"
+  risk:
+    base_score: 35
+    confidence: 0.7
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("find /")
+        || event.process.command_line.lowerAscii().contains("locate ")
+        || event.process.command_line.lowerAscii().contains("grep -r /etc")
+        || event.process.command_line.lowerAscii().contains("grep -r /home")
+        || event.process.command_line.lowerAscii().contains("ls -laR"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

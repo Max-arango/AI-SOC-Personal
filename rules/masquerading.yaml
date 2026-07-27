@@ -1,0 +1,32 @@
+rule:
+  id: "rule-023-masquerading"
+  version: 1
+  name: "Masquerading — Fake Binary Name"
+  description: "Process with name matching trusted binary but running from unusual location"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "defense-evasion"
+  subcategory: "masquerading"
+  mitre:
+    - technique: "T1036"
+      name: "Masquerading"
+      tactic: "Defense Evasion"
+  severity: "Warning"
+  risk:
+    base_score: 60
+    confidence: 0.75
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("svchost")
+        || event.process.command_line.lowerAscii().contains("lsass")
+        || event.process.command_line.lowerAscii().contains("csrss"))
+    && event.process.command_line.lowerAscii().contains("/tmp/")
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

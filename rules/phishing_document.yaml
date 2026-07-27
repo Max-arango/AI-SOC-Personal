@@ -1,0 +1,36 @@
+rule:
+  id: "rule-013-phishing-document"
+  version: 1
+  name: "Suspicious Document Execution"
+  description: "Office/PDF document spawning shell or network processes"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "initial-access"
+  subcategory: "spearphishing-attachment"
+  mitre:
+    - technique: "T1566.001"
+      name: "Spearphishing Attachment"
+      tactic: "Initial Access"
+  severity: "Error"
+  risk:
+    base_score: 80
+    confidence: 0.85
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains(".doc")
+        || event.process.command_line.lowerAscii().contains(".xls")
+        || event.process.command_line.lowerAscii().contains(".pdf")
+        || event.process.command_line.lowerAscii().contains(".rtf"))
+    && (event.process.command_line.lowerAscii().contains("powershell")
+        || event.process.command_line.lowerAscii().contains("cmd")
+        || event.process.command_line.lowerAscii().contains("wscript")
+        || event.process.command_line.lowerAscii().contains("mshta"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

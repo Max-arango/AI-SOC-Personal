@@ -1,0 +1,32 @@
+rule:
+  id: "rule-028-rdp-connection"
+  version: 1
+  name: "Remote Desktop Protocol Connection"
+  description: "RDP or remote desktop tool execution for lateral movement"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "lateral-movement"
+  subcategory: "remote-services"
+  mitre:
+    - technique: "T1021.001"
+      name: "Remote Desktop Protocol"
+      tactic: "Lateral Movement"
+  severity: "Notice"
+  risk:
+    base_score: 50
+    confidence: 0.75
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("mstsc")
+        || event.process.command_line.lowerAscii().contains("rdesktop")
+        || event.process.command_line.lowerAscii().contains("xfreerdp")
+        || event.process.command_line.lowerAscii().contains("remmina"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

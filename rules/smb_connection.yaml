@@ -1,0 +1,31 @@
+rule:
+  id: "rule-029-smb-connection"
+  version: 1
+  name: "SMB/Windows Admin Share Access"
+  description: "Accessing administrative shares for lateral movement"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "lateral-movement"
+  subcategory: "remote-services"
+  mitre:
+    - technique: "T1021.002"
+      name: "SMB/Windows Admin Shares"
+      tactic: "Lateral Movement"
+  severity: "Warning"
+  risk:
+    base_score: 65
+    confidence: 0.8
+    multipliers: []
+  condition: >
+    event.type == "sentinel.network.connect"
+    && (event.process.command_line.lowerAscii().contains("C$")
+        || event.process.command_line.lowerAscii().contains("ADMIN$")
+        || event.process.command_line.lowerAscii().contains("\\\\.\\pipe"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

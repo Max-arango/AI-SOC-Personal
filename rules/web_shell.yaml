@@ -1,0 +1,33 @@
+rule:
+  id: "rule-027-web-shell"
+  version: 1
+  name: "Web Shell Detection"
+  description: "Web server writing executable scripts to web directories"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "persistence"
+  subcategory: "server-software-component"
+  mitre:
+    - technique: "T1505.003"
+      name: "Web Shell"
+      tactic: "Persistence"
+  severity: "Error"
+  risk:
+    base_score: 80
+    confidence: 0.8
+    multipliers: []
+  condition: >
+    event.type == "sentinel.file.create"
+    && (event.process.command_line.lowerAscii().contains("/var/www/")
+        || event.process.command_line.lowerAscii().contains("/usr/share/nginx/"))
+    && (event.process.command_line.lowerAscii().contains(".php")
+        || event.process.command_line.lowerAscii().contains(".jsp")
+        || event.process.command_line.lowerAscii().contains(".asp"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []
