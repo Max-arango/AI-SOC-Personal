@@ -327,7 +327,7 @@ async fn main() -> Result<()> {
                             if !ne.remote_addr.is_empty() {
                                 let ip = ne.remote_addr.clone();
 
-                                let (abuse_result, shodan_result) = tokio::join!(
+                                let (abuse_result, shodan_result, otx_result) = tokio::join!(
                                     async {
                                         if sentinel_plugin_abuseipdb::enabled() {
                                             sentinel_plugin_abuseipdb::check_ip(&ip).await
@@ -336,6 +336,11 @@ async fn main() -> Result<()> {
                                     async {
                                         if sentinel_plugin_shodan::enabled() {
                                             sentinel_plugin_shodan::lookup_host(&ip).await
+                                        } else { None }
+                                    },
+                                    async {
+                                        if sentinel_plugin_otx::enabled() {
+                                            sentinel_plugin_otx::check_ip(&ip).await
                                         } else { None }
                                     }
                                 );
@@ -380,11 +385,36 @@ async fn main() -> Result<()> {
                                             "threat_intel:shodan:{}_ports",
                                             report.open_ports.len()
                                         ));
+                                }
+
+                                if let Some(report) = otx_result {
+                                    if report.risk_score > 50 {
+                                        enriched_event.risk_score = enriched_event.risk_score.saturating_add(25);
+                                        enriched_event.tags.push("threat_intel:otx:high".into());
+                                    } else if report.risk_score > 25 {
+                                        enriched_event.risk_score = enriched_event.risk_score.saturating_add(10);
+                                        enriched_event.tags.push("threat_intel:otx:medium".into());
                                     }
+                                    if report.pulse_count > 0 {
+                                        enriched_event.tags.push(format!(
+                                            "threat_intel:otx:{}_pulses",
+                                            report.pulse_count
+                                        ));
+                                    }
+                                    if !report.malware_families.is_empty() {
+                                        enriched_event.tags.push("threat_intel:otx:malware".into());
+                                    }
+                                    info!(
+                                        "OTX enrichment: {} +{} risk (pulses={}, malware={:?})",
+                                        ip, report.risk_score, report.pulse_count, report.malware_families
+                                    );
                                 }
                             }
                         }
                     }
+
+(Showing lines 393-417 of 630. Use offset=418 to continue.)
+
                 }
 
                 if sentinel_plugin_virustotal::enabled() {

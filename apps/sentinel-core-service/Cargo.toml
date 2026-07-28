@@ -52,6 +52,7 @@ sentinel-plugin-email = { path = "../../plugins/email" }
 sentinel-plugin-abuseipdb = { path = "../../plugins/abuseipdb" }
 sentinel-plugin-shodan = { path = "../../plugins/shodan" }
 sentinel-plugin-virustotal = { path = "../../plugins/virustotal" }
+sentinel-plugin-otx = { path = "../../plugins/otx" }
 sentinel-plugin-slack = { path = "../../plugins/slack" }
 sentinel-plugin-home-assistant = { path = "../../plugins/home-assistant" }
 sentinel-privacy = { path = "../../crates/sentinel-privacy" }
