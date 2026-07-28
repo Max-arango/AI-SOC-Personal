@@ -1,0 +1,33 @@
+rule:
+  id: "rule-043-network-config-discovery"
+  version: 1
+  name: "Network Configuration Discovery"
+  description: "Enumerating network interfaces, routes, and firewall rules"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "discovery"
+  subcategory: "system-network-config-discovery"
+  mitre:
+    - technique: "T1016"
+      name: "System Network Configuration Discovery"
+      tactic: "Discovery"
+  severity: "Info"
+  risk:
+    base_score: 25
+    confidence: 0.65
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("ifconfig")
+        || event.process.command_line.lowerAscii().contains("ip addr")
+        || event.process.command_line.lowerAscii().contains("route -n")
+        || event.process.command_line.lowerAscii().contains("iptables -L")
+        || event.process.command_line.lowerAscii().contains("nft list"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

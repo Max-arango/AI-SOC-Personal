@@ -1,0 +1,32 @@
+rule:
+  id: "rule-040-ingress-tool-transfer"
+  version: 1
+  name: "Ingress Tool Transfer"
+  description: "Downloading tools or binaries using living-off-the-land binaries"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "command-and-control"
+  subcategory: "ingress-tool-transfer"
+  mitre:
+    - technique: "T1105"
+      name: "Ingress Tool Transfer"
+      tactic: "Command and Control"
+  severity: "Warning"
+  risk:
+    base_score: 65
+    confidence: 0.8
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("curl -o")
+        || event.process.command_line.lowerAscii().contains("wget -O"))
+    && (event.process.command_line.lowerAscii().contains("/tmp/")
+        || event.process.command_line.lowerAscii().contains("/dev/shm/"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

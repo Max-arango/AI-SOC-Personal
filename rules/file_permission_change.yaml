@@ -1,0 +1,31 @@
+rule:
+  id: "rule-038-file-permission-change"
+  version: 1
+  name: "Suspicious File Permission Change"
+  description: "Mass permission change or making files world-writable"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "defense-evasion"
+  subcategory: "file-permissions-mod"
+  mitre:
+    - technique: "T1222.002"
+      name: "Linux/Mac File Permissions Modification"
+      tactic: "Defense Evasion"
+  severity: "Notice"
+  risk:
+    base_score: 45
+    confidence: 0.75
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("chmod 777")
+        || event.process.command_line.lowerAscii().contains("chmod -R 777")
+        || event.process.command_line.lowerAscii().contains("chattr -i"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

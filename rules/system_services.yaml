@@ -1,0 +1,34 @@
+rule:
+  id: "rule-036-system-services-execution"
+  version: 1
+  name: "System Services — Suspicious Execution"
+  description: "Service execution spawning unusual child processes"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "execution"
+  subcategory: "system-services"
+  mitre:
+    - technique: "T1569.002"
+      name: "Service Execution"
+      tactic: "Execution"
+  severity: "Warning"
+  risk:
+    base_score: 55
+    confidence: 0.7
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("systemctl start")
+        || event.process.command_line.lowerAscii().contains("service start")
+        || event.process.command_line.lowerAscii().contains("sc start"))
+    && (event.process.command_line.lowerAscii().contains("shell")
+        || event.process.command_line.lowerAscii().contains("exec")
+        || event.process.command_line.lowerAscii().contains("download"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

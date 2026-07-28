@@ -1,0 +1,29 @@
+rule:
+  id: "rule-047-hidden-files"
+  version: 1
+  name: "Hidden Files and Directories"
+  description: "Creating or accessing dot-prefix hidden files in unusual locations"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "defense-evasion"
+  subcategory: "hidden-files"
+  mitre:
+    - technique: "T1564.001"
+      name: "Hidden Files and Directories"
+      tactic: "Defense Evasion"
+  severity: "Notice"
+  risk:
+    base_score: 35
+    confidence: 0.65
+    multipliers: []
+  condition: >
+    event.type == "sentinel.file.create"
+    && event.tags.exists(t, t == "sensitive_path")
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

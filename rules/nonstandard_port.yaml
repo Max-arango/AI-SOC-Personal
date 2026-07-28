@@ -1,0 +1,28 @@
+rule:
+  id: "rule-039-nonstandard-port"
+  version: 1
+  name: "Connection to Non-Standard Port"
+  description: "Outbound connection to unusual high port"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "command-and-control"
+  subcategory: "non-standard-port"
+  mitre:
+    - technique: "T1571"
+      name: "Non-Standard Port"
+      tactic: "Command and Control"
+  severity: "Notice"
+  risk:
+    base_score: 40
+    confidence: 0.65
+    multipliers: []
+  condition: >
+    event.type == "sentinel.network.connect"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

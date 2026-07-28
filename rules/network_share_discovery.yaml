@@ -1,0 +1,32 @@
+rule:
+  id: "rule-049-network-share-discovery"
+  version: 1
+  name: "Network Share Discovery"
+  description: "Enumerating network shares and mounted resources"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "discovery"
+  subcategory: "network-share-discovery"
+  mitre:
+    - technique: "T1135"
+      name: "Network Share Discovery"
+      tactic: "Discovery"
+  severity: "Notice"
+  risk:
+    base_score: 35
+    confidence: 0.7
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("mount -t")
+        || event.process.command_line.lowerAscii().contains("smbclient")
+        || event.process.command_line.lowerAscii().contains("net use")
+        || event.process.command_line.lowerAscii().contains("showmount"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

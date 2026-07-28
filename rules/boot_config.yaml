@@ -1,0 +1,34 @@
+rule:
+  id: "rule-048-boot-config-modification"
+  version: 1
+  name: "Boot Configuration Modification"
+  description: "Modifying GRUB, systemd-boot, or kernel parameters"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "persistence"
+  subcategory: "pre-os-boot"
+  mitre:
+    - technique: "T1542.003"
+      name: "Bootkit"
+      tactic: "Defense Evasion"
+  severity: "Critical"
+  risk:
+    base_score: 90
+    confidence: 0.85
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("grub")
+        || event.process.command_line.lowerAscii().contains("bootctl")
+        || event.process.command_line.lowerAscii().contains("efibootmgr"))
+    && (event.process.command_line.lowerAscii().contains("update")
+        || event.process.command_line.lowerAscii().contains("install")
+        || event.process.command_line.lowerAscii().contains("modify"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,32 @@
+rule:
+  id: "rule-035-user-execution-scripts"
+  version: 1
+  name: "User Execution — Suspicious Scripts"
+  description: "Execution of scripts from writable directories"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "execution"
+  subcategory: "user-execution"
+  mitre:
+    - technique: "T1204.002"
+      name: "Malicious File"
+      tactic: "Execution"
+  severity: "Warning"
+  risk:
+    base_score: 60
+    confidence: 0.75
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && event.process.command_line.lowerAscii().contains("chmod +x")
+    && (event.process.command_line.lowerAscii().contains("/tmp/")
+        || event.process.command_line.lowerAscii().contains("/dev/shm/")
+        || event.process.command_line.lowerAscii().contains("/var/tmp/"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,32 @@
+rule:
+  id: "rule-046-screen-capture"
+  version: 1
+  name: "Screen Capture"
+  description: "Using screen capture or recording tools"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "collection"
+  subcategory: "screen-capture"
+  mitre:
+    - technique: "T1113"
+      name: "Screen Capture"
+      tactic: "Collection"
+  severity: "Notice"
+  risk:
+    base_score: 45
+    confidence: 0.7
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("import -window")
+        || event.process.command_line.lowerAscii().contains("screencapture")
+        || event.process.command_line.lowerAscii().contains("xwd -root")
+        || event.process.command_line.lowerAscii().contains("ffmpeg -f"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

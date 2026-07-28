@@ -1,0 +1,31 @@
+rule:
+  id: "rule-042-services-account-access"
+  version: 1
+  name: "Shadow Copy / NTDS Access"
+  description: "Attempting to access shadow copies or password databases"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "credential-access"
+  subcategory: "os-credential-dumping"
+  mitre:
+    - technique: "T1003.003"
+      name: "NTDS"
+      tactic: "Credential Access"
+  severity: "Critical"
+  risk:
+    base_score: 90
+    confidence: 0.9
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("cat /etc/shadow")
+        || event.process.command_line.lowerAscii().contains("ntdsutil")
+        || event.process.command_line.lowerAscii().contains("secretsdump"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

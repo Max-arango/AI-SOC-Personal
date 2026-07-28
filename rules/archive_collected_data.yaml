@@ -1,0 +1,34 @@
+rule:
+  id: "rule-045-archive-collected-data"
+  version: 1
+  name: "Archive Collected Data"
+  description: "Creating archives of sensitive directories before exfiltration"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "collection"
+  subcategory: "archive-collected-data"
+  mitre:
+    - technique: "T1560.001"
+      name: "Archive via Utility"
+      tactic: "Collection"
+  severity: "Warning"
+  risk:
+    base_score: 50
+    confidence: 0.7
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("tar -czf")
+        || event.process.command_line.lowerAscii().contains("zip -r -e")
+        || event.process.command_line.lowerAscii().contains("tar -cjf"))
+    && (event.process.command_line.lowerAscii().contains("/etc/")
+        || event.process.command_line.lowerAscii().contains("/var/")
+        || event.process.command_line.lowerAscii().contains("/home/"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

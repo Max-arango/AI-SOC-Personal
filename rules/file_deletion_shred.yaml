@@ -1,0 +1,31 @@
+rule:
+  id: "rule-037-file-deletion-shred"
+  version: 1
+  name: "Secure File Deletion"
+  description: "Using file shredding or secure deletion tools"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "defense-evasion"
+  subcategory: "file-deletion"
+  mitre:
+    - technique: "T1070.004"
+      name: "File Deletion"
+      tactic: "Defense Evasion"
+  severity: "Notice"
+  risk:
+    base_score: 40
+    confidence: 0.7
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("shred")
+        || event.process.command_line.lowerAscii().contains("wipe")
+        || event.process.command_line.lowerAscii().contains("srm"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

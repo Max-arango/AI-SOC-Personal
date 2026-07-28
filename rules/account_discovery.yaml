@@ -1,0 +1,33 @@
+rule:
+  id: "rule-044-account-discovery"
+  version: 1
+  name: "Account Discovery"
+  description: "Enumerating local users and groups"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "discovery"
+  subcategory: "account-discovery"
+  mitre:
+    - technique: "T1087.001"
+      name: "Local Account"
+      tactic: "Discovery"
+  severity: "Info"
+  risk:
+    base_score: 20
+    confidence: 0.6
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("cat /etc/passwd")
+        || event.process.command_line.lowerAscii().contains("cat /etc/shadow")
+        || event.process.command_line.lowerAscii().contains("cat /etc/group")
+        || event.process.command_line.lowerAscii().contains("net user")
+        || event.process.command_line.lowerAscii().contains("w"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []
