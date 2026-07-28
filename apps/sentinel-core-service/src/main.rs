@@ -387,6 +387,34 @@ async fn main() -> Result<()> {
                     }
                 }
 
+                if sentinel_plugin_virustotal::enabled() {
+                    if let Some(ref proc) = enriched_event.process {
+                        if !proc.sha256.is_empty() {
+                            let hash = proc.sha256.clone();
+                            let vt_result = sentinel_plugin_virustotal::lookup_hash(&hash).await;
+                            if let Some(report) = vt_result {
+                                let base_boost = (report.threat_ratio * 50.0) as u32;
+                                enriched_event.risk_score = enriched_event.risk_score.saturating_add(base_boost);
+
+                                if report.malicious > 0 {
+                                    enriched_event.tags.push(format!(
+                                        "threat_intel:virustotal:malicious_{}",
+                                        report.malicious
+                                    ));
+                                }
+                                if report.threat_ratio > 0.3 {
+                                    enriched_event.tags.push("threat_intel:virustotal:high".into());
+                                }
+                                info!(
+                                    "VirusTotal enrichment: {} +{} risk (malicious={}/{}, ratio={:.0}%)",
+                                    report.name, base_boost, report.malicious, report.total,
+                                    report.threat_ratio * 100.0
+                                );
+                            }
+                        }
+                    }
+                }
+
                 let sanitized_event = Arc::new(privacy.sanitize_event(&enriched_event.clone().into()));
                 let enriched_arc = Arc::new(enriched_event);
 
