@@ -24,7 +24,7 @@ rule:
         || event.process.command_line.lowerAscii().contains("uname -a")
         || event.process.command_line.lowerAscii().contains("hostname")
         || event.process.command_line.lowerAscii().contains("whoami")
-        || event.process.command_line.lowerAscii().contains("id"))
+        || event.process.command_line.lowerAscii().contains("id "))
     && (event.process.command_line.lowerAscii().contains(" > ")
         || event.process.command_line.lowerAscii().contains("| nc")
         || event.process.command_line.lowerAscii().contains("curl"))

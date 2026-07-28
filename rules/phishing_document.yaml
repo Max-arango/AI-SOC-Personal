@@ -25,7 +25,7 @@ rule:
         || event.process.command_line.lowerAscii().contains(".pdf")
         || event.process.command_line.lowerAscii().contains(".rtf"))
     && (event.process.command_line.lowerAscii().contains("powershell")
-        || event.process.command_line.lowerAscii().contains("cmd")
+        || event.process.command_line.lowerAscii().contains("cmd ")
         || event.process.command_line.lowerAscii().contains("wscript")
         || event.process.command_line.lowerAscii().contains("mshta"))
   and_conditions: []

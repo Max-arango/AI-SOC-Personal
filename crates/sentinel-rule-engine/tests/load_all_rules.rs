@@ -129,3 +129,45 @@ async fn test_rule_no_match_normal_process() {
     let result = engine.evaluate(&event).await;
     assert!(result.rules_evaluated > 0, "Should evaluate rules even if no match");
 }
+
+#[tokio::test]
+async fn test_powershell_rule_matches_with_lowerascii_preprocess() {
+    let engine = RuleEngine::new(&RuleEngineConfig {
+        rules_directories: vec![String::from("../../rules")],
+        ..Default::default()
+    })
+    .await
+    .expect("Failed to load rules");
+
+    let event = Arc::new(Event {
+        id: "test-powershell-enc".into(),
+        r#type: "sentinel.process.create".into(),
+        source: "process".into(),
+        severity: 4,
+        risk_score: 10,
+        host_id: "test".into(),
+        schema_version: 1,
+        process: Some(sentinel_events::ProcessContext {
+            pid: 5000,
+            ppid: 1000,
+            name: "powershell".into(),
+            command_line: "powershell -enc SQBFAFgA".into(),
+            path: "/tmp/powershell".into(),
+            ..Default::default()
+        }),
+        ..Default::default()
+    });
+
+    let result = engine.evaluate(&event).await;
+    let matches: Vec<_> = result.matches.iter().map(|m| &m.rule_id).collect();
+    println!(
+        "Rules evaluated: {}, Matches: {:?}",
+        result.rules_evaluated, matches
+    );
+
+    assert!(result.rules_evaluated >= 49, "Should evaluate at least 49 rules");
+    assert!(
+        matches.contains(&&"rule-001-suspicious-powershell".to_string()),
+        "PowerShell encoded command should match rule-001 after lowerAscii() preprocessing"
+    );
+}

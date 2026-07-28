@@ -20,7 +20,8 @@ rule:
     multipliers: []
   condition: >
     event.type == "sentinel.network.connect"
-    && (event.process.name.lowerAscii().contains("tor")
+    && (event.process.name.lowerAscii().contains("tor ")
+        || event.process.name.lowerAscii().contains("/tor")
         || event.process.name.lowerAscii().contains("torsocks")
         || event.process.name.lowerAscii().contains("proxychains"))
   and_conditions: []

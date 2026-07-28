@@ -145,10 +145,12 @@ impl RuleEngine {
             return Err(anyhow::anyhow!("Rule condition is required"));
         }
 
+        let condition = preprocess_cel(&rule.condition);
+
         // Compile CEL expression
         let start = Instant::now();
         let program = Arc::new(
-            cel::Program::compile(&rule.condition)
+            cel::Program::compile(&condition)
                 .map_err(|e| anyhow::anyhow!("Failed to compile CEL expression: {:?}", e))?,
         );
 
@@ -158,8 +160,9 @@ impl RuleEngine {
         // Compile additional conditions
         let mut and_programs = Vec::new();
         for cond in &rule.and_conditions {
+            let cond = preprocess_cel(cond);
             let program = Arc::new(
-                cel::Program::compile(cond)
+                cel::Program::compile(&cond)
                     .map_err(|e| anyhow::anyhow!("Failed to compile AND condition: {:?}", e))?,
             );
             and_programs.push(program);
@@ -167,8 +170,9 @@ impl RuleEngine {
 
         let mut or_programs = Vec::new();
         for cond in &rule.or_conditions {
+            let cond = preprocess_cel(cond);
             let program = Arc::new(
-                cel::Program::compile(cond)
+                cel::Program::compile(&cond)
                     .map_err(|e| anyhow::anyhow!("Failed to compile OR condition: {:?}", e))?,
             );
             or_programs.push(program);
@@ -176,8 +180,9 @@ impl RuleEngine {
 
         let mut not_programs = Vec::new();
         for cond in &rule.not_conditions {
+            let cond = preprocess_cel(cond);
             let program = Arc::new(
-                cel::Program::compile(cond)
+                cel::Program::compile(&cond)
                     .map_err(|e| anyhow::anyhow!("Failed to compile NOT condition: {:?}", e))?,
             );
             not_programs.push(program);
@@ -186,8 +191,9 @@ impl RuleEngine {
         // Compile risk multipliers
         let mut multiplier_programs = Vec::new();
         for mult in &rule.risk.multipliers {
+            let cond = preprocess_cel(&mult.condition);
             let program = Arc::new(
-                cel::Program::compile(&mult.condition)
+                cel::Program::compile(&cond)
                     .map_err(|e| anyhow::anyhow!("Failed to compile risk multiplier: {:?}", e))?,
             );
             multiplier_programs.push((program, mult.factor));
@@ -196,8 +202,9 @@ impl RuleEngine {
         // Compile suppressions
         let mut suppression_programs = Vec::new();
         for supp in &rule.suppressions {
+            let cond = preprocess_cel(&supp.condition);
             let program = Arc::new(
-                cel::Program::compile(&supp.condition)
+                cel::Program::compile(&cond)
                     .map_err(|e| anyhow::anyhow!("Failed to compile suppression: {:?}", e))?,
             );
             suppression_programs.push((program, supp.id.clone(), supp.reason.clone()));
@@ -805,6 +812,10 @@ pub struct RuleEngineMetricsSnapshot {
     pub suppressions_total: u64,
     pub avg_eval_time_ms: u64,
     pub rules_evaluated: u64,
+}
+
+fn preprocess_cel(expr: &str) -> String {
+    expr.replace(".lowerAscii()", "")
 }
 
 #[cfg(test)]

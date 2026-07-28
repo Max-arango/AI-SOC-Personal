@@ -24,7 +24,7 @@ rule:
         || event.process.command_line.lowerAscii().contains("cat /etc/shadow")
         || event.process.command_line.lowerAscii().contains("cat /etc/group")
         || event.process.command_line.lowerAscii().contains("net user")
-        || event.process.command_line.lowerAscii().contains("w"))
+        || event.process.command_line.lowerAscii().contains("w ")
   and_conditions: []
   or_conditions: []
   not_conditions: []

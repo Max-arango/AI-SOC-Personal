@@ -20,10 +20,10 @@ rule:
     multipliers: []
   condition: >
     event.type == "sentinel.process.create"
-    && (event.process.name.lowerAscii().contains("bash")
-        || event.process.name.lowerAscii().contains("sh")
-        || event.process.name.lowerAscii().contains("zsh")
-        || event.process.name.lowerAscii().contains("nc")
+    && (event.process.name.lowerAscii().contains("bash ")
+        || event.process.name.lowerAscii().contains("/sh")
+        || event.process.name.lowerAscii().contains("/zsh")
+        || event.process.name.lowerAscii().contains("/nc")
         || event.process.name.lowerAscii().contains("ncat")
         || event.process.name.lowerAscii().contains("netcat")
         || event.process.name.lowerAscii().contains("python"))

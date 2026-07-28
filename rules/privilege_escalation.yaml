@@ -22,7 +22,8 @@ rule:
     event.type == "sentinel.process.create"
     && event.process.user.is_elevated == true
     && (event.process.name.lowerAscii().contains("sudo")
-        || event.process.name.lowerAscii().contains("su")
+        || event.process.name.lowerAscii().contains(" su ")
+        || event.process.name.lowerAscii().contains("/su")
         || event.process.name.lowerAscii().contains("pkexec")
         || event.process.command_line.lowerAscii().contains("/etc/shadow")
         || event.process.command_line.lowerAscii().contains("chmod u+s"))

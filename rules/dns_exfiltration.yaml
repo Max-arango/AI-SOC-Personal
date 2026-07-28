@@ -21,7 +21,7 @@ rule:
   condition: >
     event.type == "sentinel.network.connect"
     && (event.process.name.lowerAscii().contains("nslookup")
-        || event.process.name.lowerAscii().contains("dig")
+        || event.process.name.lowerAscii().contains("/dig")
         || event.process.name.lowerAscii().contains("host")
         || event.process.command_line.lowerAscii().contains("dns"))
   and_conditions: []
