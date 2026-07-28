@@ -410,12 +410,27 @@ async fn main() -> Result<()> {
                                     );
                                 }
                             }
+
+                            if sentinel_plugin_geoip::enabled() {
+                                let geo = sentinel_plugin_geoip::resolver().lookup(&ip);
+                                if let Some(ref data) = geo {
+                                    if !data.country_code.is_empty() {
+                                        enriched_event.tags.push(format!("geoip:cc:{}", data.country_code.to_lowercase()));
+                                    }
+                                    if !data.city.is_empty() {
+                                        enriched_event.tags.push(format!("geoip:city:{}", data.city.to_lowercase().replace(' ', "_")));
+                                    }
+                                    if !data.asn_org.is_empty() {
+                                        enriched_event.tags.push(format!("geoip:asn:{}", data.asn_org.to_lowercase().replace(' ', "_")));
+                                    }
+                                    if data.is_anonymous {
+                                        enriched_event.risk_score = enriched_event.risk_score.saturating_add(10);
+                                        enriched_event.tags.push("geoip:anonymous".into());
+                                    }
+                                }
+                            }
                         }
                     }
-
-(Showing lines 393-417 of 630. Use offset=418 to continue.)
-
-                }
 
                 if sentinel_plugin_virustotal::enabled() {
                     if let Some(ref proc) = enriched_event.process {

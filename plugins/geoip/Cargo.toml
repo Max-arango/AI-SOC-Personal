@@ -1,0 +1,13 @@
+[package]
+name = "sentinel-plugin-geoip"
+version = { workspace = true }
+edition = "2021"
+license = { workspace = true }
+publish = false
+
+[dependencies]
+maxminddb = "0.24"
+serde = { workspace = true, features = ["derive"] }
+tokio = { workspace = true }
+tracing = { workspace = true }
+dirs = "5"
