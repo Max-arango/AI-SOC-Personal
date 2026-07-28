@@ -319,45 +319,84 @@ async fn main() -> Result<()> {
     loop {
         tokio::select! {
             Some(event) = rule_sub.receiver.recv() => {
-                if sentinel_plugin_abuseipdb::enabled() {
-                    if event.source == "network" {
-                        if let Some(ref payload) = event.payload {
-                            if let sentinel_events::event::Payload::NetworkEvent(ref ne) = payload {
-                                if !ne.remote_addr.is_empty() {
-                                    let ip = ne.remote_addr.clone();
-                                    tokio::spawn(async move {
-                                        sentinel_plugin_abuseipdb::check_ip(&ip).await;
-                                    });
+                let mut enriched_event = (*event).clone();
+
+                if enriched_event.source == "network" {
+                    if let Some(ref payload) = enriched_event.payload {
+                        if let sentinel_events::event::Payload::NetworkEvent(ref ne) = payload {
+                            if !ne.remote_addr.is_empty() {
+                                let ip = ne.remote_addr.clone();
+
+                                let (abuse_result, shodan_result) = tokio::join!(
+                                    async {
+                                        if sentinel_plugin_abuseipdb::enabled() {
+                                            sentinel_plugin_abuseipdb::check_ip(&ip).await
+                                        } else { None }
+                                    },
+                                    async {
+                                        if sentinel_plugin_shodan::enabled() {
+                                            sentinel_plugin_shodan::lookup_host(&ip).await
+                                        } else { None }
+                                    }
+                                );
+
+                                if let Some(report) = abuse_result {
+                                    if report.abuse_score > 50 {
+                                        enriched_event.risk_score = enriched_event.risk_score.saturating_add(30);
+                                        enriched_event.tags.push("threat_intel:abuseipdb:high".into());
+                                        info!(
+                                            "AbuseIPDB enrichment: {} +30 risk (abuse_score={})",
+                                            ip, report.abuse_score
+                                        );
+                                    } else if report.abuse_score > 25 {
+                                        enriched_event.risk_score = enriched_event.risk_score.saturating_add(15);
+                                        enriched_event.tags.push("threat_intel:abuseipdb:medium".into());
+                                    }
+                                    if report.total_reports > 10 {
+                                        enriched_event.tags.push(format!(
+                                            "threat_intel:abuseipdb:{}_reports",
+                                            report.total_reports
+                                        ));
+                                    }
+                                }
+
+                                if let Some(report) = shodan_result {
+                                    if report.risk_score > 50 {
+                                        enriched_event.risk_score = enriched_event.risk_score.saturating_add(25);
+                                        enriched_event.tags.push("threat_intel:shodan:high".into());
+                                        info!(
+                                            "Shodan enrichment: {} +25 risk (ports={}, vulns={})",
+                                            ip, report.open_ports.len(), report.vulnerabilities.len()
+                                        );
+                                    } else if report.risk_score > 25 {
+                                        enriched_event.risk_score = enriched_event.risk_score.saturating_add(10);
+                                        enriched_event.tags.push("threat_intel:shodan:medium".into());
+                                    }
+                                    if !report.vulnerabilities.is_empty() {
+                                        enriched_event.tags.push("threat_intel:shodan:cve".into());
+                                    }
+                                    if !report.open_ports.is_empty() {
+                                        enriched_event.tags.push(format!(
+                                            "threat_intel:shodan:{}_ports",
+                                            report.open_ports.len()
+                                        ));
+                                    }
                                 }
                             }
                         }
                     }
                 }
 
-                if sentinel_plugin_shodan::enabled() {
-                    if event.source == "network" {
-                        if let Some(ref payload) = event.payload {
-                            if let sentinel_events::event::Payload::NetworkEvent(ref ne) = payload {
-                                if !ne.remote_addr.is_empty() {
-                                    let ip = ne.remote_addr.clone();
-                                    tokio::spawn(async move {
-                                        sentinel_plugin_shodan::lookup_host(&ip).await;
-                                    });
-                                }
-                            }
-                        }
-                    }
-                }
+                let sanitized_event = Arc::new(privacy.sanitize_event(&enriched_event.clone().into()));
+                let enriched_arc = Arc::new(enriched_event);
 
-                let sanitized_event = Arc::new(privacy.sanitize_event(&event));
+                let chain = correlation.ingest(&enriched_arc);
 
-                let chain = correlation.ingest(&sanitized_event);
-
-                let result = rule_engine.evaluate(&sanitized_event).await;
+                let result = rule_engine.evaluate(&enriched_arc).await;
                 if !result.matches.is_empty() {
                     info!(
                         "Rule engine: {} matches for event {} (type={}, {} rules in {:?})",
-                        result.matches.len(), sanitized_event.id, sanitized_event.r#type,
+                        result.matches.len(), enriched_arc.id, enriched_arc.r#type,
                         result.rules_evaluated, result.evaluation_time,
                     );
                     for m in &result.matches {
@@ -372,8 +411,8 @@ async fn main() -> Result<()> {
                             &m.rule_id,
                             &m.rule_name,
                             score,
-                            &sanitized_event.source,
-                            vec![sanitized_event.id.clone()],
+                            &enriched_arc.source,
+                            vec![enriched_arc.id.clone()],
                             Some(chain.id.clone()),
                         ) {
                             info!("  → ALERT [{}] {} (risk={})", alert.severity as i32, alert.rule_name, alert.risk_score);
@@ -384,7 +423,7 @@ async fn main() -> Result<()> {
                                 alert.risk_score,
                                 m.severity,
                                 alert.event_ids.clone(),
-                                serde_json::json!({"chain_id": chain.id, "source": sanitized_event.source}),
+                                serde_json::json!({"chain_id": chain.id, "source": enriched_arc.source}),
                             ).await {
                                 error!("Failed to persist alert: {e}");
                             }
@@ -419,7 +458,7 @@ async fn main() -> Result<()> {
                             let alert_name = alert.rule_name.clone();
                             let alert_risk = alert.risk_score;
                             let alert_eid = alert.rule_id.clone();
-                            let event_source = sanitized_event.source.clone();
+                            let event_source = enriched_arc.source.clone();
                             let event_count = alert.event_ids.len();
 
                             if sentinel_plugin_discord::enabled() {
