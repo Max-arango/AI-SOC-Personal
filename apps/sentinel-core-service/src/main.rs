@@ -385,7 +385,6 @@ async fn main() -> Result<()> {
                                             "threat_intel:shodan:{}_ports",
                                             report.open_ports.len()
                                         ));
-                                }
 
                                 if let Some(report) = otx_result {
                                     if report.risk_score > 50 {
@@ -436,9 +435,12 @@ async fn main() -> Result<()> {
                                         enriched_event.tags.push("ioc:ip_match".into());
                                     }
                                 }
+                                    }
+                                }
                             }
                         }
                     }
+                }
 
                 if sentinel_plugin_virustotal::enabled() {
                     if let Some(ref proc) = enriched_event.process {
@@ -631,8 +633,6 @@ async fn main() -> Result<()> {
                 }
             }
             _ = tokio::time::sleep(std::time::Duration::from_millis(500)) => {}
-    }
-    }
             Ok(()) = shutdown_rx.changed() => {
                 info!("Shutting down");
                 break;
