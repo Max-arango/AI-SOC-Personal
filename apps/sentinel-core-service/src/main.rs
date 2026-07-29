@@ -409,23 +409,31 @@ async fn main() -> Result<()> {
                                         ip, report.risk_score, report.pulse_count, report.malware_families
                                     );
                                 }
-                            }
 
-                            if sentinel_plugin_geoip::enabled() {
-                                let geo = sentinel_plugin_geoip::resolver().lookup(&ip);
-                                if let Some(ref data) = geo {
-                                    if !data.country_code.is_empty() {
-                                        enriched_event.tags.push(format!("geoip:cc:{}", data.country_code.to_lowercase()));
+                                if sentinel_plugin_geoip::enabled() {
+                                    let geo = sentinel_plugin_geoip::resolver().lookup(&ip);
+                                    if let Some(ref data) = geo {
+                                        if !data.country_code.is_empty() {
+                                            enriched_event.tags.push(format!("geoip:cc:{}", data.country_code.to_lowercase()));
+                                        }
+                                        if !data.city.is_empty() {
+                                            enriched_event.tags.push(format!("geoip:city:{}", data.city.to_lowercase().replace(' ', "_")));
+                                        }
+                                        if !data.asn_org.is_empty() {
+                                            enriched_event.tags.push(format!("geoip:asn:{}", data.asn_org.to_lowercase().replace(' ', "_")));
+                                        }
+                                        if data.is_anonymous {
+                                            enriched_event.risk_score = enriched_event.risk_score.saturating_add(10);
+                                            enriched_event.tags.push("geoip:anonymous".into());
+                                        }
                                     }
-                                    if !data.city.is_empty() {
-                                        enriched_event.tags.push(format!("geoip:city:{}", data.city.to_lowercase().replace(' ', "_")));
-                                    }
-                                    if !data.asn_org.is_empty() {
-                                        enriched_event.tags.push(format!("geoip:asn:{}", data.asn_org.to_lowercase().replace(' ', "_")));
-                                    }
-                                    if data.is_anonymous {
-                                        enriched_event.risk_score = enriched_event.risk_score.saturating_add(10);
-                                        enriched_event.tags.push("geoip:anonymous".into());
+                                }
+
+                                if sentinel_plugin_ioc::enabled() {
+                                    let engine = sentinel_plugin_ioc::engine();
+                                    if let Some(risk) = engine.lookup_ip(&ip) {
+                                        enriched_event.risk_score = enriched_event.risk_score.saturating_add(risk / 3);
+                                        enriched_event.tags.push("ioc:ip_match".into());
                                     }
                                 }
                             }
@@ -623,6 +631,8 @@ async fn main() -> Result<()> {
                 }
             }
             _ = tokio::time::sleep(std::time::Duration::from_millis(500)) => {}
+    }
+    }
             Ok(()) = shutdown_rx.changed() => {
                 info!("Shutting down");
                 break;
