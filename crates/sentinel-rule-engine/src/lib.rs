@@ -1,6 +1,16 @@
 //! Sentinel AI Rule Engine
 //!
-//! CEL-based rule evaluation with hot-reload support
+//! CEL-based rule evaluation with hot-reload support.
+//!
+//! ## CEL Compatibility Notes
+//!
+//! The cel-rs crate (v0.14) does not support custom function registration.
+//! The `lowerAscii()` CEL function used by some Sigma-style rules is
+//! preprocessed: `expr.replace(".lowerAscii()", "")` before compilation.
+//! This means `.lowerAscii().contains("X")` becomes `.contains("X")`
+//! (case-sensitive). Rules should use lowercase matching substrings.
+//! Full `lowerAscii()` support requires upgrading to a CEL runtime that
+//! supports custom extensions or switching to a different expression engine.
 
 use std::collections::HashMap;
 use std::path::Path;
