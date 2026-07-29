@@ -105,7 +105,7 @@ impl SqliteStorage {
         if repo.is_none() {
             *repo = Some(Arc::new(SqliteEventRepository::new(self.pool.clone())));
         }
-        repo.clone().unwrap()
+        repo.clone().expect("event repo must be initialized")
     }
 
     /// Get or create rule repository
@@ -114,7 +114,7 @@ impl SqliteStorage {
         if repo.is_none() {
             *repo = Some(Arc::new(SqliteRuleRepository::new(self.pool.clone())));
         }
-        repo.clone().unwrap()
+        repo.clone().expect("rule repo must be initialized")
     }
 
     /// Get or create alert repository
@@ -123,7 +123,7 @@ impl SqliteStorage {
         if repo.is_none() {
             *repo = Some(Arc::new(SqliteAlertRepository::new(self.pool.clone())));
         }
-        repo.clone().unwrap()
+        repo.clone().expect("alert repo must be initialized")
     }
 
     /// Get or create config repository
@@ -132,7 +132,7 @@ impl SqliteStorage {
         if repo.is_none() {
             *repo = Some(Arc::new(SqliteConfigRepository::new(self.pool.clone())));
         }
-        repo.clone().unwrap()
+        repo.clone().expect("config repo must be initialized")
     }
 }
 

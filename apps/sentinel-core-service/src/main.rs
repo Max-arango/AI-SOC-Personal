@@ -388,6 +388,8 @@ async fn main() -> Result<()> {
                                             "threat_intel:shodan:{}_ports",
                                             report.open_ports.len()
                                         ));
+                                    }
+                                }
 
                                 if let Some(report) = otx_result {
                                     if report.risk_score > 50 {
@@ -436,8 +438,6 @@ async fn main() -> Result<()> {
                                     if let Some(risk) = engine.lookup_ip(&ip) {
                                         enriched_event.risk_score = enriched_event.risk_score.saturating_add(risk / 3);
                                         enriched_event.tags.push("ioc:ip_match".into());
-                                    }
-                                }
                                     }
                                 }
                             }

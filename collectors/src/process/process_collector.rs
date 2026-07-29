@@ -58,7 +58,9 @@ impl ProcessCollector {
             .map_err(|e| CollectorError::StartFailed(e.to_string()))?;
 
         // Spawn event processing loop
-        let event_tx = self.event_tx.clone().unwrap();
+        let event_tx = self.event_tx.as_ref()
+            .ok_or_else(|| CollectorError::StartFailed("event_tx not set".into()))?
+            .clone();
         let platform = self.platform.clone();
         let backpressure_rx = self.backpressure_rx.clone();
         let _config = self.config.clone();

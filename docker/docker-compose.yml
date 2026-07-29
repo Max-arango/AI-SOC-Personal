@@ -36,13 +36,14 @@ services:
       - "11434:11434"
     networks:
       - sentinel-network
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
+    # Enable GPU acceleration if NVIDIA drivers are available:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
 
   # Prometheus for metrics
   prometheus:

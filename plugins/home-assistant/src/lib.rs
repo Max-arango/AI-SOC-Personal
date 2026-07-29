@@ -34,7 +34,11 @@ fn auth_headers(token: &str) -> reqwest::header::HeaderMap {
     use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_TYPE};
     let mut headers = HeaderMap::new();
     headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
-    headers.insert(AUTHORIZATION, HeaderValue::from_str(&format!("Bearer {}", token)).unwrap());
+    headers.insert(
+        AUTHORIZATION,
+        HeaderValue::from_str(&format!("Bearer {}", token))
+            .unwrap_or_else(|_| HeaderValue::from_static("Bearer invalid")),
+    );
     headers
 }
 

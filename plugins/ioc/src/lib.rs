@@ -195,28 +195,28 @@ impl IocEngine {
     }
 
     pub fn lookup_ip(&self, ip: &str) -> Option<u32> {
-        let db = self.db.read().unwrap();
+        let db = self.db.read().expect("IOC lock poisoned");
         db.ips.get(ip).map(|entries| {
             entries.iter().map(|e| e.risk_score).max().unwrap_or(0)
         })
     }
 
     pub fn lookup_domain(&self, domain: &str) -> Option<u32> {
-        let db = self.db.read().unwrap();
+        let db = self.db.read().expect("IOC lock poisoned");
         db.domains.get(domain).map(|entries| {
             entries.iter().map(|e| e.risk_score).max().unwrap_or(0)
         })
     }
 
     pub fn lookup_hash(&self, hash: &str) -> Option<u32> {
-        let db = self.db.read().unwrap();
+        let db = self.db.read().expect("IOC lock poisoned");
         db.hashes.get(hash).map(|entries| {
             entries.iter().map(|e| e.risk_score).max().unwrap_or(0)
         })
     }
 
     pub fn is_loaded(&self) -> bool {
-        self.db.read().unwrap().count > 0
+        self.db.read().expect("IOC lock poisoned").count > 0
     }
 }
 

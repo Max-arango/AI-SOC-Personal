@@ -11,6 +11,18 @@ exclude = [
     "ui/tauri-app/src-tauri",
     "target",
     "collectors/src",
+    "collectors/process-collector",
+    "collectors/network-collector",
+    "collectors/file-collector",
+    "collectors/registry-collector",
+    "collectors/usb-collector",
+    "collectors/browser-collector",
+    "collectors/startup-collector",
+    "crates/sentinel-os-common",
+    "crates/sentinel-os-linux",
+    "crates/sentinel-os-macos",
+    "crates/sentinel-os-windows",
+    "crates/sentinel-test-utils",
 ]
 
 [workspace.package]
