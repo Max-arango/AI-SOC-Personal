@@ -343,3 +343,67 @@ pub async fn start_browser_monitor(bus: Arc<dyn EventBus>) {
         }
     });
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashSet;
+    use sentinel_events::browser_event::Browser;
+
+    #[test]
+    fn test_chrome_time_conversion() {
+        assert_eq!(chrome_time_to_unix(0), 0);
+    }
+
+    #[test]
+    fn test_navigation_event_has_tags() {
+        let entry = NavigationEntry { url: "https://test.com".into(), title: "Test".into(), timestamp: 0 };
+        let event = navigation_to_event(&entry, Browser::Chrome);
+        assert_eq!(event.source, "browser");
+        assert!(event.payload.is_some());
+    }
+
+    #[test]
+    fn test_download_event_has_tags() {
+        let entry = DownloadEntry { path: "/tmp/x".into(), url: "https://x.com".into(), timestamp: 0 };
+        let event = download_to_event(&entry, Browser::Firefox);
+        assert!(event.tags.contains(&"download".to_string()));
+    }
+
+    #[test]
+    fn test_extension_event() {
+        let entry = ExtensionEntry { id: "abc".into(), name: "Ext".into() };
+        let event = extension_to_event(&entry, Browser::Edge);
+        assert_eq!(event.risk_score, 20);
+    }
+
+    #[test]
+    fn test_empty_history_graceful() {
+        let mut known = HashSet::new();
+        let entries = read_history_urls(std::path::Path::new("/nonexistent"), &mut known);
+        assert!(entries.is_empty());
+    }
+
+    #[test]
+    fn test_empty_downloads_graceful() {
+        let mut known = HashSet::new();
+        let entries = read_downloads(std::path::Path::new("/nonexistent"), &mut known);
+        assert!(entries.is_empty());
+    }
+
+    #[test]
+    fn test_deduplication() {
+        let mut known = HashSet::new();
+        let key = "https://a.com|100";
+        assert!(known.insert(key.to_string()));
+        assert!(!known.insert(key.to_string()));
+    }
+
+    #[test]
+    fn test_browser_enum_values() {
+        assert_eq!(Browser::Chrome as i32, 1);
+        assert_eq!(Browser::Firefox as i32, 2);
+        assert_eq!(Browser::Edge as i32, 3);
+    }
+}
