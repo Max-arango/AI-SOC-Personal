@@ -311,7 +311,9 @@ pub async fn start_browser_monitor(bus: Arc<dyn EventBus>) {
                     let count = navs.len() as u64;
                     for entry in navs {
                         let event = Arc::new(navigation_to_event(&entry, profile.browser));
-                        let _ = bus.publish(event).await;
+                        if let Err(e) = bus.publish(event).await {
+                            warn!("Browser nav publish failed: {e}");
+                        }
                     }
                     total += count;
                 }
@@ -321,7 +323,9 @@ pub async fn start_browser_monitor(bus: Arc<dyn EventBus>) {
                     let count = dls.len() as u64;
                     for entry in dls {
                         let event = Arc::new(download_to_event(&entry, profile.browser));
-                        let _ = bus.publish(event).await;
+                        if let Err(e) = bus.publish(event).await {
+                            warn!("Browser dl publish failed: {e}");
+                        }
                     }
                     total += count;
                 }
@@ -331,7 +335,9 @@ pub async fn start_browser_monitor(bus: Arc<dyn EventBus>) {
                     let count = exts.len() as u64;
                     for entry in exts {
                         let event = Arc::new(extension_to_event(&entry, profile.browser));
-                        let _ = bus.publish(event).await;
+                        if let Err(e) = bus.publish(event).await {
+                            warn!("Browser ext publish failed: {e}");
+                        }
                     }
                     total += count;
                 }

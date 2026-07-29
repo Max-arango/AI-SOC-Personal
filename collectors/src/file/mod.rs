@@ -8,7 +8,7 @@ use std::sync::Arc;
 use sentinel_core::traits::EventBus;
 use sentinel_events::file_event::Action;
 use sentinel_events::{Event, FileAttributes, FileEvent};
-use tracing::{debug, info};
+use tracing::{debug, info, warn};
 
 const SENSITIVE_DIRS: &[&str] = &["/etc", "/tmp", "/var/log"];
 
@@ -126,7 +126,9 @@ pub async fn start_file_monitor(bus: Arc<dyn EventBus>) {
                 let events = scan_dir(path, &mut known);
                 total += events.len() as u64;
                 for event in events {
-                    let _ = bus.publish(Arc::new(event)).await;
+                    if let Err(e) = bus.publish(Arc::new(event)).await {
+                        warn!("File publish failed: {e}");
+                    }
                 }
             }
 

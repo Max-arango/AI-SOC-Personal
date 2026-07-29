@@ -214,12 +214,28 @@ impl ConfigManager {
         config.get_section(path)
     }
 
-    /// Watch for configuration changes
+    /// Watch for configuration changes on a specific path.
+    ///
+    /// Returns a channel that will be notified when the specified config
+    /// section changes. The hot-reload watcher must be active for updates
+    /// to be delivered.
     pub fn watch(&self, path: &str) -> CoreResult<ConfigWatcher> {
-        let (_tx, rx) = watch::channel(self.get_section_value(path)?);
+        let (tx, rx) = watch::channel(self.get_section_value(path)?);
 
-        // In a real implementation, this would be connected to the watcher
-        // For now, return a watcher that never updates
+        let path = path.to_string();
+        tokio::spawn({
+            let config = self.config.clone();
+            let mut reload_rx = self.watch_tx.subscribe();
+            async move {
+                while reload_rx.changed().await.is_ok() {
+                    let new_config = config.load_full();
+                    if let Ok(new_value) = new_config.get_section_value(&path) {
+                        let _ = tx.send(new_value);
+                    }
+                }
+            }
+        });
+
         Ok(ConfigWatcher { receiver: rx })
     }
 

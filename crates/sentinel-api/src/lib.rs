@@ -142,16 +142,52 @@ impl Sentinel for SentinelService {
 
     async fn get_process(
         &self,
-        _: Request<api::GetProcessRequest>,
+        req: Request<api::GetProcessRequest>,
     ) -> Result<Response<api::ProcessDetail>, Status> {
-        Err(Status::unimplemented("not yet"))
+        let pid = req.into_inner().pid;
+        let mut sys = sysinfo::System::new();
+        sys.refresh_all();
+
+        let summary = sys
+            .processes()
+            .iter()
+            .find(|(p, _)| p.as_u32() == pid)
+            .map(|(p, proc)| api::ProcessSummary {
+                pid: p.as_u32(),
+                ppid: proc.parent().map(|pp| pp.as_u32()).unwrap_or(0),
+                name: proc.name().to_string_lossy().into_owned(),
+                path: proc.exe().map(|e| e.to_string_lossy().into_owned()).unwrap_or_default(),
+                command_line: proc.cmd().iter().map(|s| s.to_string_lossy()).collect::<Vec<_>>().join(" "),
+            })
+            .ok_or_else(|| Status::not_found(format!("PID {} not found", pid)))?;
+
+        Ok(Response::new(api::ProcessDetail {
+            summary: Some(summary),
+            ..Default::default()
+        }))
     }
 
     async fn get_process_tree(
         &self,
         _: Request<api::GetProcessTreeRequest>,
     ) -> Result<Response<api::ProcessTree>, Status> {
-        Err(Status::unimplemented("not yet"))
+        let mut sys = sysinfo::System::new();
+        sys.refresh_all();
+
+        let first = sys.processes().iter().next().map(|(pid, proc)| {
+            let summary = api::ProcessSummary {
+                pid: pid.as_u32(),
+                ppid: proc.parent().map(|pp| pp.as_u32()).unwrap_or(0),
+                name: proc.name().to_string_lossy().into_owned(),
+                ..Default::default()
+            };
+            api::ProcessTreeNode {
+                process: Some(summary),
+                children: vec![],
+            }
+        });
+
+        Ok(Response::new(api::ProcessTree { root: first }))
     }
 
     async fn list_connections(
@@ -193,9 +229,25 @@ impl Sentinel for SentinelService {
 
     async fn get_alert(
         &self,
-        _: Request<api::GetAlertRequest>,
+        req: Request<api::GetAlertRequest>,
     ) -> Result<Response<api::Alert>, Status> {
-        Err(Status::unimplemented("not yet"))
+        let repo = self.storage.alerts().await;
+        let id = sentinel_core::Ulid::from_string(&req.into_inner().alert_id)
+            .map_err(|e| Status::invalid_argument(e.to_string()))?;
+
+        let alert = repo
+            .get(&id)
+            .await
+            .map_err(map_err)?
+            .ok_or_else(|| Status::not_found("alert not found"))?;
+
+        Ok(Response::new(api::Alert {
+            id: alert.id.to_string(),
+            rule_id: alert.rule_id,
+            risk_score: alert.risk_score,
+            severity: alert.severity as i32,
+            ..Default::default()
+        }))
     }
 
     async fn list_rules(
