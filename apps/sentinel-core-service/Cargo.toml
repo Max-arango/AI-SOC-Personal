@@ -58,3 +58,10 @@ sentinel-plugin-ioc = { path = "../../plugins/ioc" }
 sentinel-plugin-slack = { path = "../../plugins/slack" }
 sentinel-plugin-home-assistant = { path = "../../plugins/home-assistant" }
 sentinel-privacy = { path = "../../crates/sentinel-privacy" }
+
+[dev-dependencies]
+criterion = { workspace = true }
+
+[[bench]]
+name = "core_benchmarks"
+harness = false

@@ -1,0 +1,56 @@
+version: "3.8"
+
+services:
+  sentinel:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.prod
+    container_name: sentinel-prod
+    restart: unless-stopped
+    volumes:
+      - sentinel-data:/home/sentinel/.local/share/sentinel
+      - sentinel-config:/etc/sentinel
+    ports:
+      - "7777:7777"
+    networks:
+      - sentinel-net
+    healthcheck:
+      test: ["CMD", "sentinel-cli", "health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    environment:
+      - RUST_LOG=info
+      - SENTINEL_AI_ENABLED=false
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: sentinel-ollama
+    restart: unless-stopped
+    volumes:
+      - ollama-data:/root/.ollama
+    ports:
+      - "11434:11434"
+    networks:
+      - sentinel-net
+    environment:
+      - SENTINEL_AI_ENABLED=true
+      - SENTINEL_AI_PROVIDER=ollama
+      - SENTINEL_AI_MODEL=llama3.2:3b
+    # GPU acceleration (uncomment if NVIDIA available):
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+networks:
+  sentinel-net:
+    driver: bridge
+
+volumes:
+  sentinel-data:
+  sentinel-config:
+  ollama-data:

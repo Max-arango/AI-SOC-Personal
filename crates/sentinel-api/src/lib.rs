@@ -158,6 +158,7 @@ impl Sentinel for SentinelService {
                 name: proc.name().to_string_lossy().into_owned(),
                 path: proc.exe().map(|e| e.to_string_lossy().into_owned()).unwrap_or_default(),
                 command_line: proc.cmd().iter().map(|s| s.to_string_lossy()).collect::<Vec<_>>().join(" "),
+                ..Default::default()
             })
             .ok_or_else(|| Status::not_found(format!("PID {} not found", pid)))?;
 

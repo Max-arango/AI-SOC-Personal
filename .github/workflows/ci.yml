@@ -10,37 +10,28 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  # ── Core checks: format, lint, build, test ──────────────────────
   core:
     name: Core (fmt, clippy, build, test)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
-
       - uses: Swatinem/rust-cache@v2
-
       - name: Check formatting
         run: cargo fmt --check --workspace
-
       - name: Build workspace
         run: cargo build --workspace
-
       - name: Run tests
         run: cargo test --workspace
-
-      - name: Run Clippy (warnings = errors)
+      - name: Run Clippy
         run: cargo clippy --workspace -- -D warnings
 
-  # ── Security audit (non-blocking advisory check) ────────────────
   security:
     name: Security Audit
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -48,8 +39,21 @@ jobs:
         run: |
           cargo install cargo-audit --locked
           cargo audit
+      - name: Run cargo-deny
+        run: |
+          cargo install cargo-deny --locked
+          cargo deny check
 
-  # ── Tauri app (Linux only, requires system deps) ────────────────
+  benchmarks:
+    name: Benchmarks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Run benchmarks (check only)
+        run: cargo bench --workspace --no-run
+
   tauri:
     name: Tauri App (Linux)
     runs-on: ubuntu-latest
@@ -63,9 +67,13 @@ jobs:
       - name: Install system deps
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.0-dev libappindicator3-dev \
-             librsvg2-dev patchelf
+          sudo apt-get install -y libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf
       - uses: Swatinem/rust-cache@v2
       - name: Build Tauri app (check only)
         working-directory: ui/tauri-app/src-tauri
         run: cargo check
+      - name: TypeScript check
+        working-directory: ui/tauri-app
+        run: |
+          npm ci
+          npx tsc --noEmit
