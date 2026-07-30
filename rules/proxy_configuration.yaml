@@ -1,0 +1,31 @@
+rule:
+  id: "rule-075-proxy-configuration"
+  version: 1
+  name: "Proxy Configuration Modification"
+  description: "Setting system-wide proxy for traffic redirection"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "command-and-control"
+  subcategory: "proxy"
+  mitre:
+    - technique: "T1090.001"
+      name: "Internal Proxy"
+      tactic: "Command and Control"
+  severity: "Notice"
+  risk:
+    base_score: 40
+    confidence: 0.7
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("export http_proxy")
+        || event.process.command_line.lowerAscii().contains("export https_proxy")
+        || event.process.command_line.lowerAscii().contains("proxychains"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

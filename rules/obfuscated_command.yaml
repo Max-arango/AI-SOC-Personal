@@ -1,0 +1,32 @@
+rule:
+  id: "rule-080-obfuscated-command"
+  version: 1
+  name: "Obfuscated Command Execution"
+  description: "Commands using base64 encoding or obfuscation techniques"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "defense-evasion"
+  subcategory: "obfuscated-files"
+  mitre:
+    - technique: "T1027"
+      name: "Obfuscated Files or Information"
+      tactic: "Defense Evasion"
+  severity: "Warning"
+  risk:
+    base_score: 65
+    confidence: 0.8
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("base64 -d")
+        || event.process.command_line.lowerAscii().contains("base64 --decode")
+        || event.process.command_line.lowerAscii().contains("xxd -r")
+        || event.process.command_line.lowerAscii().contains("eval("))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

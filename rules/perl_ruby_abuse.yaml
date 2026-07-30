@@ -1,0 +1,34 @@
+rule:
+  id: "rule-054-perl-ruby-abuse"
+  version: 1
+  name: "Scripting Language Abuse (Perl/Ruby)"
+  description: "Perl or Ruby executing system commands or reverse shells"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "execution"
+  subcategory: "command-and-scripting"
+  mitre:
+    - technique: "T1059"
+      name: "Command and Scripting Interpreter"
+      tactic: "Execution"
+  severity: "Warning"
+  risk:
+    base_score: 55
+    confidence: 0.75
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("perl -e")
+        || event.process.command_line.lowerAscii().contains("ruby -e")
+        || event.process.command_line.lowerAscii().contains("perl -M"))
+    && (event.process.command_line.lowerAscii().contains("system(")
+        || event.process.command_line.lowerAscii().contains("exec(")
+        || event.process.command_line.lowerAscii().contains("socket"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

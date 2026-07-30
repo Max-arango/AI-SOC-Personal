@@ -1,0 +1,34 @@
+rule:
+  id: "rule-053-python-execution"
+  version: 1
+  name: "Suspicious Python Execution"
+  description: "Python executing shell commands or downloading code"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "execution"
+  subcategory: "command-and-scripting"
+  mitre:
+    - technique: "T1059.006"
+      name: "Python"
+      tactic: "Execution"
+  severity: "Warning"
+  risk:
+    base_score: 60
+    confidence: 0.8
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && event.process.command_line.lowerAscii().contains("python")
+    && (event.process.command_line.lowerAscii().contains("import os")
+        || event.process.command_line.lowerAscii().contains("import subprocess")
+        || event.process.command_line.lowerAscii().contains("eval(")
+        || event.process.command_line.lowerAscii().contains("exec(")
+        || event.process.command_line.lowerAscii().contains("__import__"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

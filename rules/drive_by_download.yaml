@@ -1,0 +1,35 @@
+rule:
+  id: "rule-051-drive-by-download"
+  version: 1
+  name: "Drive-by Download via Browser"
+  description: "Browser process spawning unexpected child processes"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "initial-access"
+  subcategory: "drive-by-compromise"
+  mitre:
+    - technique: "T1189"
+      name: "Drive-by Compromise"
+      tactic: "Initial Access"
+  severity: "Warning"
+  risk:
+    base_score: 65
+    confidence: 0.75
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("chrome")
+        || event.process.command_line.lowerAscii().contains("firefox")
+        || event.process.command_line.lowerAscii().contains("brave")
+        || event.process.command_line.lowerAscii().contains("edge"))
+    && (event.process.command_line.lowerAscii().contains("bash")
+        || event.process.command_line.lowerAscii().contains("sh")
+        || event.process.command_line.lowerAscii().contains("python"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

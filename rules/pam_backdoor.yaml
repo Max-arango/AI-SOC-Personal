@@ -1,0 +1,31 @@
+rule:
+  id: "rule-066-pam-backdoor"
+  version: 1
+  name: "PAM Configuration Tampering"
+  description: "Modifying PAM authentication modules for backdoor access"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "credential-access"
+  subcategory: "modify-authentication"
+  mitre:
+    - technique: "T1556.003"
+      name: "Pluggable Authentication Modules"
+      tactic: "Credential Access"
+  severity: "Critical"
+  risk:
+    base_score: 90
+    confidence: 0.9
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("/etc/pam.d")
+        || event.process.command_line.lowerAscii().contains("pam_unix")
+        || event.process.command_line.lowerAscii().contains("pam_permit"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

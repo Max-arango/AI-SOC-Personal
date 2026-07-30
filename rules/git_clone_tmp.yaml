@@ -1,0 +1,31 @@
+rule:
+  id: "rule-073-git-clone-tmp"
+  version: 1
+  name: "Git Clone to Temporary Directory"
+  description: "Cloning repositories to writable temp directories"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "execution"
+  subcategory: "user-execution"
+  mitre:
+    - technique: "T1204.002"
+      name: "Malicious File"
+      tactic: "Execution"
+  severity: "Notice"
+  risk:
+    base_score: 45
+    confidence: 0.7
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && event.process.command_line.lowerAscii().contains("git clone")
+    && (event.process.command_line.lowerAscii().contains("/tmp/")
+        || event.process.command_line.lowerAscii().contains("/dev/shm/"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

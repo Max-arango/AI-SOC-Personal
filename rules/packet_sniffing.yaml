@@ -1,0 +1,32 @@
+rule:
+  id: "rule-067-packet-sniffing"
+  version: 1
+  name: "Packet Sniffing Activity"
+  description: "Network traffic capture or monitoring tools"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "discovery"
+  subcategory: "network-sniffing"
+  mitre:
+    - technique: "T1040"
+      name: "Network Sniffing"
+      tactic: "Credential Access"
+  severity: "Warning"
+  risk:
+    base_score: 60
+    confidence: 0.8
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("tcpdump")
+        || event.process.command_line.lowerAscii().contains("wireshark")
+        || event.process.command_line.lowerAscii().contains("tshark")
+        || event.process.command_line.lowerAscii().contains("ettercap"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

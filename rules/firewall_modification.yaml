@@ -1,0 +1,33 @@
+rule:
+  id: "rule-069-firewall-modification"
+  version: 1
+  name: "Firewall Rule Modification"
+  description: "Adding or removing firewall rules"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "defense-evasion"
+  subcategory: "impair-defenses"
+  mitre:
+    - technique: "T1562.004"
+      name: "Disable or Modify System Firewall"
+      tactic: "Defense Evasion"
+  severity: "Warning"
+  risk:
+    base_score: 60
+    confidence: 0.8
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("iptables -A")
+        || event.process.command_line.lowerAscii().contains("iptables -D")
+        || event.process.command_line.lowerAscii().contains("iptables -F")
+        || event.process.command_line.lowerAscii().contains("nft add")
+        || event.process.command_line.lowerAscii().contains("ufw allow"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

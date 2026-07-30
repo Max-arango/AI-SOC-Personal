@@ -1,0 +1,31 @@
+rule:
+  id: "rule-068-arp-spoofing"
+  version: 1
+  name: "ARP Spoofing / MITM"
+  description: "Tools capable of ARP cache poisoning"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "credential-access"
+  subcategory: "man-in-the-middle"
+  mitre:
+    - technique: "T1557.002"
+      name: "ARP Cache Poisoning"
+      tactic: "Credential Access"
+  severity: "Error"
+  risk:
+    base_score: 75
+    confidence: 0.85
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("arpspoof")
+        || event.process.command_line.lowerAscii().contains("ettercap")
+        || event.process.command_line.lowerAscii().contains("bettercap"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

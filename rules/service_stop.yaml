@@ -1,0 +1,33 @@
+rule:
+  id: "rule-077-service-stop"
+  version: 1
+  name: "Service Stop or Disable"
+  description: "Stopping or disabling critical system services"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "impact"
+  subcategory: "service-stop"
+  mitre:
+    - technique: "T1489"
+      name: "Service Stop"
+      tactic: "Impact"
+  severity: "Warning"
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("systemctl stop")
+        || event.process.command_line.lowerAscii().contains("systemctl disable")
+        || event.process.command_line.lowerAscii().contains("service stop"))
+    && (event.process.command_line.lowerAscii().contains("sshd")
+        || event.process.command_line.lowerAscii().contains("auditd"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

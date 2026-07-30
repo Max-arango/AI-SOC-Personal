@@ -1,0 +1,29 @@
+rule:
+  id: "rule-065-ld-preload-injection"
+  version: 1
+  name: "LD_PRELOAD Library Injection"
+  description: "Injecting shared libraries via LD_PRELOAD for code execution"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "privilege-escalation"
+  subcategory: "hijack-execution-flow"
+  mitre:
+    - technique: "T1574.006"
+      name: "LD_PRELOAD"
+      tactic: "Privilege Escalation"
+  severity: "Error"
+  risk:
+    base_score: 80
+    confidence: 0.85
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && event.process.command_line.lowerAscii().contains("LD_PRELOAD")
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

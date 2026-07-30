@@ -1,0 +1,32 @@
+rule:
+  id: "rule-057-vnc-connection"
+  version: 1
+  name: "Remote Desktop/VNC Connection"
+  description: "VNC or remote desktop connection for lateral movement"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "lateral-movement"
+  subcategory: "remote-services"
+  mitre:
+    - technique: "T1021.005"
+      name: "VNC"
+      tactic: "Lateral Movement"
+  severity: "Notice"
+  risk:
+    base_score: 45
+    confidence: 0.7
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("vncviewer")
+        || event.process.command_line.lowerAscii().contains("vncserver")
+        || event.process.command_line.lowerAscii().contains("xtightvnc")
+        || event.process.command_line.lowerAscii().contains("x11vnc"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,32 @@
+rule:
+  id: "rule-061-data-destruction"
+  version: 1
+  name: "Data Destruction"
+  description: "Commands that overwrite or destroy data"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "impact"
+  subcategory: "data-destruction"
+  mitre:
+    - technique: "T1485"
+      name: "Data Destruction"
+      tactic: "Impact"
+  severity: "Critical"
+  risk:
+    base_score: 90
+    confidence: 0.9
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("dd if=/dev/zero")
+        || event.process.command_line.lowerAscii().contains("dd if=/dev/urandom")
+        || event.process.command_line.lowerAscii().contains("mkfs.")
+        || event.process.command_line.lowerAscii().contains("mkswap"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

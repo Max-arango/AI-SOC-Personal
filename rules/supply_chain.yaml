@@ -1,0 +1,34 @@
+rule:
+  id: "rule-052-supply-chain-compromise"
+  version: 1
+  name: "Supply Chain Compromise"
+  description: "Suspicious package manager or build tool network access"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "initial-access"
+  subcategory: "supply-chain-compromise"
+  mitre:
+    - technique: "T1195.002"
+      name: "Compromise Software Supply Chain"
+      tactic: "Initial Access"
+  severity: "Notice"
+  risk:
+    base_score: 45
+    confidence: 0.65
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("pip install")
+        || event.process.command_line.lowerAscii().contains("npm install")
+        || event.process.command_line.lowerAscii().contains("gem install")
+        || event.process.command_line.lowerAscii().contains("cargo install"))
+    && (event.process.command_line.lowerAscii().contains("--extra-index-url")
+        || event.process.command_line.lowerAscii().contains("--registry"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

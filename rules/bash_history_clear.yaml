@@ -1,0 +1,32 @@
+rule:
+  id: "rule-064-bash-history-clear"
+  version: 1
+  name: "Bash History Clearing"
+  description: "Clearing or disabling shell history to hide commands"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "defense-evasion"
+  subcategory: "indicator-removal"
+  mitre:
+    - technique: "T1070.003"
+      name: "Clear Command History"
+      tactic: "Defense Evasion"
+  severity: "Notice"
+  risk:
+    base_score: 40
+    confidence: 0.7
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("history -c")
+        || event.process.command_line.lowerAscii().contains("unset HISTFILE")
+        || event.process.command_line.lowerAscii().contains("rm .bash_history")
+        || event.process.command_line.lowerAscii().contains("rm .zsh_history"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

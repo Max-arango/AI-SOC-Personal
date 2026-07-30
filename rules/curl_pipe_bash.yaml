@@ -1,0 +1,34 @@
+rule:
+  id: "rule-078-wget-curl-pipe-bash"
+  version: 1
+  name: "Curl/Wget Pipe to Shell"
+  description: "Downloading and executing remote scripts"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "execution"
+  subcategory: "user-execution"
+  mitre:
+    - technique: "T1059.004"
+      name: "Unix Shell"
+      tactic: "Execution"
+  severity: "Error"
+  risk:
+    base_score: 80
+    confidence: 0.9
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("curl")
+        || event.process.command_line.lowerAscii().contains("wget"))
+    && event.process.command_line.lowerAscii().contains("|")
+    && (event.process.command_line.lowerAscii().contains("sh")
+        || event.process.command_line.lowerAscii().contains("bash")
+        || event.process.command_line.lowerAscii().contains("python"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

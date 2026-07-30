@@ -1,0 +1,30 @@
+rule:
+  id: "rule-062-defense-evasion-timestomp"
+  version: 1
+  name: "Timestomping — File Time Modification"
+  description: "Modifying file timestamps to hide activity"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "defense-evasion"
+  subcategory: "timestomp"
+  mitre:
+    - technique: "T1070.006"
+      name: "Timestomp"
+      tactic: "Defense Evasion"
+  severity: "Warning"
+  risk:
+    base_score: 60
+    confidence: 0.75
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("touch -t")
+        || event.process.command_line.lowerAscii().contains("touch -d"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

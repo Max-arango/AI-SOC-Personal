@@ -1,0 +1,29 @@
+rule:
+  id: "rule-060-dns-tunneling"
+  version: 1
+  name: "DNS Tunneling Detection"
+  description: "Unusual DNS query patterns or long subdomains"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "command-and-control"
+  subcategory: "dns"
+  mitre:
+    - technique: "T1572"
+      name: "Protocol Tunneling"
+      tactic: "Command and Control"
+  severity: "Warning"
+  risk:
+    base_score: 55
+    confidence: 0.65
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && event.process.command_line.lowerAscii().contains("iodine")
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

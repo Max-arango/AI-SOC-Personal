@@ -1,0 +1,32 @@
+rule:
+  id: "rule-055-suid-binary-execution"
+  version: 1
+  name: "SUID/SGID Binary Abuse"
+  description: "Execution of binaries with SUID or SGID bits set from unusual context"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "privilege-escalation"
+  subcategory: "abuse-elevation-control"
+  mitre:
+    - technique: "T1548.001"
+      name: "Setuid and Setgid"
+      tactic: "Privilege Escalation"
+  severity: "Error"
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && event.process.user.is_elevated == true
+    && (event.process.command_line.lowerAscii().contains("chmod u+s")
+        || event.process.command_line.lowerAscii().contains("chmod g+s")
+        || event.process.command_line.lowerAscii().contains("setuid"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

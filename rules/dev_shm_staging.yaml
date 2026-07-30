@@ -1,0 +1,31 @@
+rule:
+  id: "rule-076-dev-shm-staging"
+  version: 1
+  name: "/dev/shm Data Staging"
+  description: "Staging data in shared memory for exfiltration"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "collection"
+  subcategory: "data-staged"
+  mitre:
+    - technique: "T1074.001"
+      name: "Local Data Staging"
+      tactic: "Collection"
+  severity: "Warning"
+  risk:
+    base_score: 50
+    confidence: 0.7
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("/dev/shm/")
+        || event.process.command_line.lowerAscii().contains("cp /etc/ /dev/shm")
+        || event.process.command_line.lowerAscii().contains("mv /etc/ /dev/shm"))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

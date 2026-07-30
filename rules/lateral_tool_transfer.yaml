@@ -1,0 +1,32 @@
+rule:
+  id: "rule-058-winrm-http-lateral"
+  version: 1
+  name: "Lateral Tool Transfer via HTTP"
+  description: "Using curl or wget to transfer tools between hosts"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "lateral-movement"
+  subcategory: "lateral-tool-transfer"
+  mitre:
+    - technique: "T1570"
+      name: "Lateral Tool Transfer"
+      tactic: "Lateral Movement"
+  severity: "Warning"
+  risk:
+    base_score: 55
+    confidence: 0.75
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && (event.process.command_line.lowerAscii().contains("curl")
+        || event.process.command_line.lowerAscii().contains("wget"))
+    && event.process.command_line.lowerAscii().contains("http://")
+    && event.process.command_line.lowerAscii().contains("/tmp/")
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

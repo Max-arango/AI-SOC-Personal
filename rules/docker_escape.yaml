@@ -1,0 +1,29 @@
+rule:
+  id: "rule-071-docker-escape"
+  version: 1
+  name: "Docker Socket Access"
+  description: "Accessing Docker socket from inside a container"
+  author: "Sentinel Team"
+  created: "2026-01-01T00:00:00Z"
+  modified: "2026-01-01T00:00:00Z"
+  enabled: true
+  category: "privilege-escalation"
+  subcategory: "escape-to-host"
+  mitre:
+    - technique: "T1611"
+      name: "Escape to Host"
+      tactic: "Privilege Escalation"
+  severity: "Error"
+  risk:
+    base_score: 85
+    confidence: 0.85
+    multipliers: []
+  condition: >
+    event.type == "sentinel.process.create"
+    && event.process.command_line.lowerAscii().contains("docker.sock")
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []
