@@ -1,5 +1,5 @@
 use serde::Deserialize;
-use tracing::{info, warn};
+use tracing::info;
 
 #[derive(Debug, Deserialize)]
 struct OtxResponse {

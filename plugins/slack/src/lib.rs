@@ -83,7 +83,7 @@ pub async fn send_alert(
         SlackText::markdown(&format!("*Source*\n{}", source)),
     ];
 
-    let mut blocks = vec![
+    let blocks = vec![
         SlackBlock::Header { text: SlackText::plain(&format!("{} Sentinel AI Alert", emoji)) },
         SlackBlock::Section {
             text: SlackText::markdown(&format!(

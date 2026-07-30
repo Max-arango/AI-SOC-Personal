@@ -1,7 +1,6 @@
 pub mod fleet;
 pub mod service;
 
-use std::sync::Arc;
 use clap::Parser;
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};

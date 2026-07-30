@@ -35,7 +35,7 @@ impl MetricsRegistry {
 
     pub fn gather(&self) -> String {
         let mut buffer = String::new();
-        encode(&mut buffer, &self.registry.read()).unwrap();
+        encode(&mut buffer, &self.registry.read()).expect("Prometheus encode failed");
         buffer
     }
 }

@@ -69,7 +69,7 @@ impl IocEngine {
 
         db.count = db.ips.len() + db.domains.len() + db.hashes.len();
 
-        let mut current = self.db.write().unwrap();
+        let mut current = self.db.write().expect("IOC lock poisoned");
         *current = db;
 
         info!(

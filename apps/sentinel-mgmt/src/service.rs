@@ -1,11 +1,11 @@
 use std::sync::Arc;
 use tokio::sync::mpsc;
 use tonic::{Request, Response, Status, Streaming};
-use tracing::{info, warn};
+use tracing::info;
 
 use sentinel_events::sentinel::mgmt::v1::agent_service_server::{AgentService, AgentServiceServer};
 use sentinel_events::sentinel::mgmt::v1::{
-    AgentEvent, AgentStats, CommandRequest, CommandResponse, HeartbeatRequest,
+    AgentEvent, CommandRequest, CommandResponse, HeartbeatRequest,
     HeartbeatResponse, RegisterRequest, RegisterResponse,
 };
 
@@ -73,7 +73,7 @@ impl AgentService for MgmtService {
         let mut inbound = req.into_inner();
         let fleet = self.fleet.clone();
 
-        let (tx, rx) = mpsc::channel(100);
+        let (_tx, rx) = mpsc::channel(100);
 
         tokio::spawn(async move {
             while let Ok(Some(event)) = inbound.message().await {

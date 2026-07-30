@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use sentinel_core::traits::EventBus;
-use sentinel_events::{BrowserEvent, Event, ProcessContext};
+use sentinel_events::{BrowserEvent, Event};
 use sentinel_events::browser_event::{Action, Browser};
 use tracing::{debug, info, warn};
 

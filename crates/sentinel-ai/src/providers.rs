@@ -46,7 +46,10 @@ pub struct OllamaProvider {
 impl OllamaProvider {
     pub fn new(config: &AiConfig) -> Self {
         Self {
-            ollama: ollama_rs::Ollama::new(config.host.clone(), config.port),
+            ollama: ollama_rs::Ollama::builder()
+                .host(config.host.clone())
+                .port(config.port)
+                .build(),
             config: config.clone(),
         }
     }
