@@ -1,33 +1,49 @@
 import { useQuery } from '@tanstack/react-query';
 import { Network as NetworkIcon } from 'lucide-react';
 import * as api from '../utils/tauriApi';
+import NetworkMap from '../components/NetworkMap';
 
 export default function Network() {
-  const connections = useQuery({
-    queryKey: ['network'],
-    queryFn: () => api.getNetworkConnections({ limit: 200 }),
-    refetchInterval: 10000,
+  const graph = useQuery({
+    queryKey: ['network-graph-full'],
+    queryFn: api.getNetworkGraph,
+    refetchInterval: 30000,
   });
 
-  const items = connections.data?.connections ?? [];
+  const totalNodes = graph.data?.nodes?.length ?? 0;
+  const totalEdges = graph.data?.edges?.length ?? 0;
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Network</h1>
-        <p className="text-gray-500 dark:text-gray-400">
-          {connections.isLoading ? 'Loading...' : `${items.length} active connections`}
-        </p>
-      </div>
-      <div className="card">
-        <div className="p-12 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
-            <NetworkIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white">Network Monitoring</h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Network collector coming in a future update. Real-time connection monitoring will appear here.
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Network</h1>
+          <p className="text-gray-500 dark:text-gray-400">
+            {graph.isLoading ? 'Loading...' : `${totalNodes} hosts, ${totalEdges} connections`}
           </p>
+        </div>
+      </div>
+
+      <div className="card overflow-hidden">
+        <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700 flex items-center gap-2">
+          <NetworkIcon className="h-5 w-5 text-blue-500" />
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Connection Graph</h2>
+        </div>
+        <NetworkMap data={graph.data ?? { nodes: [], edges: [] }} />
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
+        <div className="card p-4 text-center">
+          <p className="text-2xl font-bold text-blue-600">{totalNodes}</p>
+          <p className="text-sm text-gray-500">Hosts</p>
+        </div>
+        <div className="card p-4 text-center">
+          <p className="text-2xl font-bold text-green-600">{totalEdges}</p>
+          <p className="text-sm text-gray-500">Connections</p>
+        </div>
+        <div className="card p-4 text-center">
+          <p className="text-2xl font-bold text-purple-600">{totalNodes > 0 ? Math.round((totalEdges / totalNodes) * 10) / 10 : 0}</p>
+          <p className="text-sm text-gray-500">Avg degree</p>
         </div>
       </div>
     </div>
