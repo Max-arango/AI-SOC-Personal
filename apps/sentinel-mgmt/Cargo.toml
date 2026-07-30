@@ -9,6 +9,10 @@ publish = false
 name = "sentinel-mgmt"
 path = "src/main.rs"
 
+[lib]
+name = "sentinel_mgmt"
+path = "src/lib.rs"
+
 [dependencies]
 anyhow = { workspace = true }
 tokio = { workspace = true }
