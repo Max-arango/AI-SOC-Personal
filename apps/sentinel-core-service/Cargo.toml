@@ -55,6 +55,7 @@ sentinel-plugin-virustotal = { path = "../../plugins/virustotal" }
 sentinel-plugin-otx = { path = "../../plugins/otx" }
 sentinel-plugin-geoip = { path = "../../plugins/geoip" }
 sentinel-plugin-ioc = { path = "../../plugins/ioc" }
+sentinel-plugin-urlhaus = { path = "../../plugins/urlhaus" }
 sentinel-plugin-slack = { path = "../../plugins/slack" }
 sentinel-plugin-home-assistant = { path = "../../plugins/home-assistant" }
 sentinel-privacy = { path = "../../crates/sentinel-privacy" }

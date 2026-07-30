@@ -473,6 +473,31 @@ async fn main() -> Result<()> {
                     }
                 }
 
+                if enriched_event.source == "browser" {
+                    if let Some(ref payload) = enriched_event.payload {
+                        if let sentinel_events::event::Payload::BrowserEvent(ref be) = payload {
+                            if !be.url.is_empty() {
+                                let url = be.url.clone();
+                                let result = sentinel_plugin_urlhaus::check_url(&url).await;
+                                if let Some(report) = result {
+                                    if report.is_malicious {
+                                        enriched_event.risk_score = enriched_event.risk_score.saturating_add(report.risk_score);
+                                        enriched_event.tags.push("threat_intel:urlhaus:malicious".into());
+                                        enriched_event.tags.push(format!(
+                                            "threat_intel:urlhaus:{}",
+                                            report.threat.replace(' ', "_")
+                                        ));
+                                        info!(
+                                            "URLhaus enrichment: {} +{} risk (threat={}, tags={:?})",
+                                            url, report.risk_score, report.threat, report.tags
+                                        );
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
                 let sanitized_event = Arc::new(privacy.sanitize_event(&enriched_event.clone().into()));
                 let enriched_arc = Arc::new(enriched_event);
 
