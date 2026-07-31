@@ -1,0 +1,27 @@
+rule:
+  id: sigma-34979410-e4b5-4e5d-8cfb-389fdff05c12
+  version: 1
+  name: Remove Immutable File Attribute
+  description: Detects usage of the 'chattr' utility to remove immutable file attribute.
+  author: Nasreddine Bencherchali (Nextron Systems)
+  created: 2026-07-31T22:20:38.739601288+00:00
+  modified: 2026-07-31T22:20:38.739601288+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1222.002'
+    name: Technique 1222.002
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.name.contains("/chattr") && event.process.command_line.contains(" -i ")))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

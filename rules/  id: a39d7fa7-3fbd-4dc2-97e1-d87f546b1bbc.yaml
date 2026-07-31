@@ -1,0 +1,30 @@
+rule:
+  id: sigma-a39d7fa7-3fbd-4dc2-97e1-d87f546b1bbc
+  version: 1
+  name: Program Executions in Suspicious Folders
+  description: Detects program executions in suspicious non-program folders related to malware or hacking activity
+  author: Florian Roth (Nextron Systems)
+  created: 2026-07-31T22:20:38.722152015+00:00
+  modified: 2026-07-31T22:20:38.722152015+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1587'
+    name: Technique 1587
+    tactic: ''
+  - technique: '1584'
+    name: Technique 1584
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

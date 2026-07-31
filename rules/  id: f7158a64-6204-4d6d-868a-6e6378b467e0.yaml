@@ -1,0 +1,27 @@
+rule:
+  id: sigma-f7158a64-6204-4d6d-868a-6e6378b467e0
+  version: 1
+  name: Suspicious C2 Activities
+  description: |
+    Detects suspicious activities as declared by Florian Roth in its 'Best Practice Auditd Configuration'.
+    This includes the detection of the following commands; wget, curl, base64, nc, netcat, ncat, ssh, socat, wireshark, rawshark, rdesktop, nmap.
+    These commands match a few techniques from the tactics "Command and Control", including not exhaustively the following; Application Layer Protocol (T1071), Non-Application Layer Protocol (T1095), Data Encoding (T1132)
+  author: Marie Euler
+  created: 2026-07-31T22:20:38.716213478+00:00
+  modified: 2026-07-31T22:20:38.716213478+00:00
+  enabled: true
+  category: general
+  subcategory: null
+  mitre: []
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

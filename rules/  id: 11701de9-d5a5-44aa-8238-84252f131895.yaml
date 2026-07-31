@@ -1,0 +1,27 @@
+rule:
+  id: sigma-11701de9-d5a5-44aa-8238-84252f131895
+  version: 1
+  name: Docker Container Discovery Via Dockerenv Listing
+  description: Detects listing or file reading of ".dockerenv" which can be a sing of potential container discovery
+  author: Seth Hanford
+  created: 2026-07-31T22:20:38.772448081+00:00
+  modified: 2026-07-31T22:20:38.772448081+00:00
+  enabled: true
+  category: discovery
+  subcategory: null
+  mitre:
+  - technique: '1082'
+    name: Technique 1082
+    tactic: Discovery
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && (((event.process.name.contains("/cat") || event.process.name.contains("/dir") || event.process.name.contains("/find") || event.process.name.contains("/ls") || event.process.name.contains("/stat") || event.process.name.contains("/test") || event.process.name.contains("grep")) && event.process.command_line.contains(".dockerenv")))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,27 @@
+rule:
+  id: sigma-37222991-11e9-4b6d-8bdf-60fbe48f753e
+  version: 1
+  name: Overwriting the File with Dev Zero or Null
+  description: Detects overwriting (effectively wiping/deleting) of a file.
+  author: Jakob Weinzettl, oscd.community
+  created: 2026-07-31T22:20:38.706209771+00:00
+  modified: 2026-07-31T22:20:38.706209771+00:00
+  enabled: true
+  category: impact
+  subcategory: null
+  mitre:
+  - technique: '1485'
+    name: Technique 1485
+    tactic: Impact
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

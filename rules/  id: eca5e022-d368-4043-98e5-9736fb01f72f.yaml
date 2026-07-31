@@ -1,0 +1,31 @@
+rule:
+  id: sigma-eca5e022-d368-4043-98e5-9736fb01f72f
+  version: 1
+  name: Clear or Disable Kernel Ring Buffer Logs via Syslog Syscall
+  description: |
+    Detects the use of the `syslog` syscall with action code 5 (SYSLOG_ACTION_CLEAR),
+    (4 is SYSLOG_ACTION_READ_CLEAR and 6 is SYSLOG_ACTION_CONSOLE_OFF) which clears the kernel
+    ring buffer (dmesg logs). This can be used by attackers to hide traces after exploitation
+    or privilege escalation. A common technique is running `dmesg -c`, which triggers this syscall internally.
+  author: Milad Cheraghi
+  created: 2026-07-31T22:20:38.720279514+00:00
+  modified: 2026-07-31T22:20:38.720279514+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1685.006'
+    name: Technique 1685.006
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,27 @@
+rule:
+  id: sigma-2953194b-e33c-4859-b9e8-05948c167447
+  version: 1
+  name: DD File Overwrite
+  description: Detects potential overwriting and deletion of a file using DD.
+  author: Roberto Rodriguez (Cyb3rWard0g), OTR (Open Threat Research), MSTIC
+  created: 2026-07-31T22:20:38.746438825+00:00
+  modified: 2026-07-31T22:20:38.746438825+00:00
+  enabled: true
+  category: impact
+  subcategory: null
+  mitre:
+  - technique: '1485'
+    name: Technique 1485
+    tactic: Impact
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

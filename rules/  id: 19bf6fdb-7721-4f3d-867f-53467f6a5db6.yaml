@@ -1,0 +1,39 @@
+rule:
+  id: sigma-19bf6fdb-7721-4f3d-867f-53467f6a5db6
+  version: 1
+  name: Communication To Ngrok Tunneling Service - Linux
+  description: Detects an executable accessing an ngrok tunneling endpoint, which could be a sign of forbidden exfiltration of data exfiltration by malicious actors
+  author: Florian Roth (Nextron Systems)
+  created: 2026-07-31T22:20:38.734573579+00:00
+  modified: 2026-07-31T22:20:38.734573579+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1567'
+    name: Technique 1567
+    tactic: ''
+  - technique: '1568.002'
+    name: Technique 1568.002
+    tactic: ''
+  - technique: '1572'
+    name: Technique 1572
+    tactic: ''
+  - technique: '1090'
+    name: Technique 1090
+    tactic: Command and Control
+  - technique: '1102'
+    name: Technique 1102
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.network.connect"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

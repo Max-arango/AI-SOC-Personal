@@ -1,0 +1,30 @@
+rule:
+  id: sigma-9691f58d-92c1-4416-8bf3-2edd753ec9cf
+  version: 1
+  name: ESXi Admin Permission Assigned To Account Via ESXCLI
+  description: Detects execution of the "esxcli" command with the "system" and "permission" flags in order to assign admin permissions to an account.
+  author: Nasreddine Bencherchali (Nextron Systems)
+  created: 2026-07-31T22:20:38.749377851+00:00
+  modified: 2026-07-31T22:20:38.749377851+00:00
+  enabled: true
+  category: execution
+  subcategory: null
+  mitre:
+  - technique: '1059.012'
+    name: Technique 1059.012
+    tactic: Execution
+  - technique: '1098'
+    name: Technique 1098
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.name.contains("/esxcli") && event.process.command_line.contains("system") && (event.process.command_line.contains(" permission ") || event.process.command_line.contains(" set") || event.process.command_line.contains("Admin"))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

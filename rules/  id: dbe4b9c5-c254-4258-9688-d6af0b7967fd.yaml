@@ -1,0 +1,30 @@
+rule:
+  id: sigma-dbe4b9c5-c254-4258-9688-d6af0b7967fd
+  version: 1
+  name: Screen Capture with Import Tool
+  description: |
+    Detects adversary creating screen capture of a desktop with Import Tool.
+    Highly recommended using rule on servers, due to high usage of screenshot utilities on user workstations.
+    ImageMagick must be installed.
+  author: Pawel Mazur
+  created: 2026-07-31T22:20:38.709936240+00:00
+  modified: 2026-07-31T22:20:38.709936240+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1113'
+    name: Technique 1113
+    tactic: ''
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

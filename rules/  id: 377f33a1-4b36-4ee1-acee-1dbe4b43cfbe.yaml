@@ -1,0 +1,27 @@
+rule:
+  id: sigma-377f33a1-4b36-4ee1-acee-1dbe4b43cfbe
+  version: 1
+  name: Suspicious VSFTPD Error Messages
+  description: Detects suspicious VSFTPD error messages that indicate a fatal or suspicious error that could be caused by exploiting attempts
+  author: Florian Roth (Nextron Systems)
+  created: 2026-07-31T22:20:38.730765334+00:00
+  modified: 2026-07-31T22:20:38.730765334+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1190'
+    name: Technique 1190
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

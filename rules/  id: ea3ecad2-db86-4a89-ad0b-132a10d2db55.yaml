@@ -1,0 +1,30 @@
+rule:
+  id: sigma-ea3ecad2-db86-4a89-ad0b-132a10d2db55
+  version: 1
+  name: Interactive Bash Suspicious Children
+  description: Detects suspicious interactive bash as a parent to rather uncommon child processes
+  author: Florian Roth (Nextron Systems)
+  created: 2026-07-31T22:20:38.776287670+00:00
+  modified: 2026-07-31T22:20:38.776287670+00:00
+  enabled: true
+  category: execution
+  subcategory: null
+  mitre:
+  - technique: '1059.004'
+    name: Technique 1059.004
+    tactic: Execution
+  - technique: '1036'
+    name: Technique 1036
+    tactic: Defense Evasion
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.command_line.contains("bash -i")))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,29 @@
+rule:
+  id: sigma-bb382fd5-b454-47ea-a264-1828e4c766d6
+  version: 1
+  name: Shell Invocation via Apt - Linux
+  description: |
+    Detects the use of the "apt" and "apt-get" commands to execute a shell or proxy commands.
+    Such behavior may be associated with privilege escalation, unauthorized command execution, or to break out from restricted environments.
+  author: Nasreddine Bencherchali (Nextron Systems)
+  created: 2026-07-31T22:20:38.735280853+00:00
+  modified: 2026-07-31T22:20:38.735280853+00:00
+  enabled: true
+  category: discovery
+  subcategory: null
+  mitre:
+  - technique: '1083'
+    name: Technique 1083
+    tactic: Discovery
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && (((event.process.name.contains("/apt") || event.process.name.contains("/apt-get")) && event.process.command_line.contains("APT::Update::Pre-Invoke::=")))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

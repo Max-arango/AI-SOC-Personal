@@ -1,0 +1,27 @@
+rule:
+  id: sigma-45810b50-7edc-42ca-813b-bdac02fb946b
+  version: 1
+  name: Steganography Hide Zip Information in Picture File
+  description: Detects appending of zip file to image
+  author: Pawel Mazur
+  created: 2026-07-31T22:20:38.707650278+00:00
+  modified: 2026-07-31T22:20:38.707650278+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1027.003'
+    name: Technique 1027.003
+    tactic: ''
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

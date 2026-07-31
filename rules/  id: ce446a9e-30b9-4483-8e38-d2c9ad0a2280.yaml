@@ -1,0 +1,27 @@
+rule:
+  id: sigma-ce446a9e-30b9-4483-8e38-d2c9ad0a2280
+  version: 1
+  name: Steganography Hide Files with Steghide
+  description: Detects embedding of files with usage of steghide binary, the adversaries may use this technique to prevent the detection of hidden information.
+  author: Pawel Mazur
+  created: 2026-07-31T22:20:38.710930748+00:00
+  modified: 2026-07-31T22:20:38.710930748+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1027.003'
+    name: Technique 1027.003
+    tactic: ''
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,27 @@
+rule:
+  id: sigma-3761e026-f259-44e6-8826-719ed8079408
+  version: 1
+  name: Linux Network Service Scanning - Auditd
+  description: Detects enumeration of local or remote network services.
+  author: Alejandro Ortuno, oscd.community
+  created: 2026-07-31T22:20:38.721228800+00:00
+  modified: 2026-07-31T22:20:38.721228800+00:00
+  enabled: true
+  category: discovery
+  subcategory: null
+  mitre:
+  - technique: '1046'
+    name: Technique 1046
+    tactic: Discovery
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

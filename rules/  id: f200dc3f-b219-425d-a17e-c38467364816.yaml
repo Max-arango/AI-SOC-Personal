@@ -1,0 +1,30 @@
+rule:
+  id: sigma-f200dc3f-b219-425d-a17e-c38467364816
+  version: 1
+  name: Clipboard Collection of Image Data with Xclip Tool
+  description: |
+    Detects attempts to collect image data stored in the clipboard from users with the usage of xclip tool.
+    Xclip has to be installed.
+    Highly recommended using rule on servers, due to high usage of clipboard utilities on user workstations.
+  author: Pawel Mazur
+  created: 2026-07-31T22:20:38.705028207+00:00
+  modified: 2026-07-31T22:20:38.705028207+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1115'
+    name: Technique 1115
+    tactic: ''
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

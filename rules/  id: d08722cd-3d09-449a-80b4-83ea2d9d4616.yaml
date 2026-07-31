@@ -1,0 +1,27 @@
+rule:
+  id: sigma-d08722cd-3d09-449a-80b4-83ea2d9d4616
+  version: 1
+  name: Hidden Files and Directories
+  description: Detects adversary creating hidden file or directory, by detecting directories or files with . as the first character
+  author: Pawel Mazur
+  created: 2026-07-31T22:20:38.707004075+00:00
+  modified: 2026-07-31T22:20:38.707004075+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1564.001'
+    name: Technique 1564.001
+    tactic: ''
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

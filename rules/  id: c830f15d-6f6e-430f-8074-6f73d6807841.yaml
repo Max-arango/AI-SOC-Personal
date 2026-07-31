@@ -1,0 +1,27 @@
+rule:
+  id: sigma-c830f15d-6f6e-430f-8074-6f73d6807841
+  version: 1
+  name: Logging Configuration Changes on Linux Host
+  description: Detect changes of syslog daemons configuration files
+  author: Mikhail Larin, oscd.community
+  created: 2026-07-31T22:20:38.718185499+00:00
+  modified: 2026-07-31T22:20:38.718185499+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1685'
+    name: Technique 1685
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

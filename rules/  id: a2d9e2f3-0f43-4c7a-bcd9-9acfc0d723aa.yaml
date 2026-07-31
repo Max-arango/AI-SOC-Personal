@@ -1,0 +1,34 @@
+rule:
+  id: sigma-a2d9e2f3-0f43-4c7a-bcd9-9acfc0d723aa
+  version: 1
+  name: Suspicious Download and Execute Pattern via Curl/Wget
+  description: |
+    Detects suspicious use of command-line tools such as curl or wget to download remote
+    content - particularly scripts - into temporary directories (e.g., /dev/shm, /tmp), followed by
+    immediate execution, indicating potential malicious activity. This pattern is commonly used
+    by malicious scripts, stagers, or downloaders in fileless or multi-stage Linux attacks.
+  author: Aayush Gupta
+  created: 2026-07-31T22:20:38.745967260+00:00
+  modified: 2026-07-31T22:20:38.745967260+00:00
+  enabled: true
+  category: execution
+  subcategory: null
+  mitre:
+  - technique: '1059.004'
+    name: Technique 1059.004
+    tactic: Execution
+  - technique: '1203'
+    name: Technique 1203
+    tactic: Execution
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

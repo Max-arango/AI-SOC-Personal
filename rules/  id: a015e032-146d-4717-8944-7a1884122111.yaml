@@ -1,0 +1,27 @@
+rule:
+  id: sigma-a015e032-146d-4717-8944-7a1884122111
+  version: 1
+  name: Linux HackTool Execution
+  description: Detects known hacktool execution based on image name.
+  author: Nasreddine Bencherchali (Nextron Systems), Georg Lauenstein (sure[secure])
+  created: 2026-07-31T22:20:38.775591972+00:00
+  modified: 2026-07-31T22:20:38.775591972+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1587'
+    name: Technique 1587
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,29 @@
+rule:
+  id: sigma-9a0d8ca0-2385-4020-b6c6-cb6153ca56f3
+  version: 1
+  name: System Owner or User Discovery - Linux
+  description: |
+    Detects the execution of host or user discovery utilities such as "whoami", "hostname", "id", etc.
+    Adversaries may use the information from System Owner/User Discovery during automated discovery to shape follow-on behaviors, including whether or not the adversary fully infects the target and/or attempts specific actions.
+  author: Timur Zinniatullin, oscd.community
+  created: 2026-07-31T22:20:38.714326030+00:00
+  modified: 2026-07-31T22:20:38.714326030+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1033'
+    name: Technique 1033
+    tactic: ''
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

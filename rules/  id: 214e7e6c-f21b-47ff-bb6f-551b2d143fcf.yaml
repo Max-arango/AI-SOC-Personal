@@ -1,0 +1,30 @@
+rule:
+  id: sigma-214e7e6c-f21b-47ff-bb6f-551b2d143fcf
+  version: 1
+  name: Clipboard Collection with Xclip Tool - Auditd
+  description: |
+    Detects attempts to collect data stored in the clipboard from users with the usage of xclip tool.
+    Xclip has to be installed.
+    Highly recommended using rule on servers, due to high usage of clipboard utilities on user workstations.
+  author: Pawel Mazur
+  created: 2026-07-31T22:20:38.704668918+00:00
+  modified: 2026-07-31T22:20:38.704668918+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1115'
+    name: Technique 1115
+    tactic: ''
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

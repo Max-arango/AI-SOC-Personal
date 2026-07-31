@@ -1,0 +1,27 @@
+rule:
+  id: sigma-880973f3-9708-491c-a77b-2a35a1921158
+  version: 1
+  name: Linux Shell Pipe to Shell
+  description: Detects suspicious process command line that starts with a shell that executes something and finally gets piped into another shell
+  author: Florian Roth (Nextron Systems)
+  created: 2026-07-31T22:20:38.777272206+00:00
+  modified: 2026-07-31T22:20:38.777272206+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1140'
+    name: Technique 1140
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

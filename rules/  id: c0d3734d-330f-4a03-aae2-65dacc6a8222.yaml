@@ -1,0 +1,27 @@
+rule:
+  id: sigma-c0d3734d-330f-4a03-aae2-65dacc6a8222
+  version: 1
+  name: Webshell Remote Command Execution
+  description: Detects possible command execution by web application/web shell
+  author: Ilyas Ochkov, Beyu Denis, oscd.community
+  created: 2026-07-31T22:20:38.722775702+00:00
+  modified: 2026-07-31T22:20:38.722775702+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1505.003'
+    name: Technique 1505.003
+    tactic: ''
+  severity: Critical
+  risk:
+    base_score: 90
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

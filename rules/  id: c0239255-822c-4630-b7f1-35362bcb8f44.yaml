@@ -1,0 +1,24 @@
+rule:
+  id: sigma-c0239255-822c-4630-b7f1-35362bcb8f44
+  version: 1
+  name: Triple Cross eBPF Rootkit Default LockFile
+  description: Detects the creation of the file "rootlog" which is used by the TripleCross rootkit as a way to check if the backdoor is already running.
+  author: Nasreddine Bencherchali (Nextron Systems)
+  created: 2026-07-31T22:20:38.732718546+00:00
+  modified: 2026-07-31T22:20:38.732718546+00:00
+  enabled: true
+  category: general
+  subcategory: null
+  mitre: []
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.file.modify" && ((event.process.path.contains("/tmp/rootlog")))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

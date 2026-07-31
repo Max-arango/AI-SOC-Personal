@@ -1,0 +1,27 @@
+rule:
+  id: sigma-74c01ace-0152-4094-8ae2-6fd776dd43e5
+  version: 1
+  name: File or Folder Permissions Change
+  description: Detects file and folder permission changes.
+  author: Jakob Weinzettl, oscd.community
+  created: 2026-07-31T22:20:38.706454648+00:00
+  modified: 2026-07-31T22:20:38.706454648+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1222.002'
+    name: Technique 1222.002
+    tactic: ''
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

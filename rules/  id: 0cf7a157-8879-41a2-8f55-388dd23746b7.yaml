@@ -1,0 +1,30 @@
+rule:
+  id: sigma-0cf7a157-8879-41a2-8f55-388dd23746b7
+  version: 1
+  name: Linux Recon Indicators
+  description: Detects events with patterns found in commands used for reconnaissance on linux systems
+  author: Florian Roth (Nextron Systems)
+  created: 2026-07-31T22:20:38.777838440+00:00
+  modified: 2026-07-31T22:20:38.777838440+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1592.004'
+    name: Technique 1592.004
+    tactic: ''
+  - technique: '1552.001'
+    name: Technique 1552.001
+    tactic: Credential Access
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && (((event.process.command_line.contains(" -name .htpasswd") || event.process.command_line.contains(" -perm -4000 "))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

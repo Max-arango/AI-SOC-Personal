@@ -1,0 +1,27 @@
+rule:
+  id: sigma-a3b5e3e9-1b49-4119-8b8e-0344a01f21ee
+  version: 1
+  name: Data Compressed
+  description: An adversary may compress data (e.g., sensitive documents) that is collected prior to exfiltration in order to make it portable and minimize the amount of data sent over the network.
+  author: Timur Zinniatullin, oscd.community
+  created: 2026-07-31T22:20:38.705675047+00:00
+  modified: 2026-07-31T22:20:38.705675047+00:00
+  enabled: true
+  category: collection
+  subcategory: null
+  mitre:
+  - technique: '1560.001'
+    name: Technique 1560.001
+    tactic: Collection
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,27 @@
+rule:
+  id: sigma-1182f3b3-e716-4efa-99ab-d2685d04360f
+  version: 1
+  name: History File Deletion
+  description: Detects events in which a history file gets deleted, e.g. the ~/bash_history to remove traces of malicious activity
+  author: Florian Roth (Nextron Systems)
+  created: 2026-07-31T22:20:38.774610966+00:00
+  modified: 2026-07-31T22:20:38.774610966+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1565.001'
+    name: Technique 1565.001
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

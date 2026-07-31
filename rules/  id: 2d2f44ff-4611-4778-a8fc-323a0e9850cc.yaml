@@ -1,0 +1,28 @@
+rule:
+  id: sigma-2d2f44ff-4611-4778-a8fc-323a0e9850cc
+  version: 1
+  name: Inline Python Execution - Spawn Shell Via OS System Library
+  description: |
+    Detects execution of inline Python code via the "-c" in order to call the "system" function from the "os" library, and spawn a shell.
+  author: Li Ling, Andy Parkidomo, Robert Rakowski, Blake Hartstein (Bloomberg L.P.)
+  created: 2026-07-31T22:20:38.765791564+00:00
+  modified: 2026-07-31T22:20:38.765791564+00:00
+  enabled: true
+  category: execution
+  subcategory: null
+  mitre:
+  - technique: '1059'
+    name: Technique 1059
+    tactic: Execution
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

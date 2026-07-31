@@ -1,0 +1,36 @@
+rule:
+  id: sigma-c4568f5d-131f-4e78-83d4-45b2da0ec4f1
+  version: 1
+  name: Communication To LocaltoNet Tunneling Service Initiated - Linux
+  description: |
+    Detects an executable initiating a network connection to "LocaltoNet" tunneling sub-domains.
+    LocaltoNet is a reverse proxy that enables localhost services to be exposed to the Internet.
+    Attackers have been seen to use this service for command-and-control activities to bypass MFA and perimeter controls.
+  author: Andreas Braathen (mnemonic.io)
+  created: 2026-07-31T22:20:38.734209150+00:00
+  modified: 2026-07-31T22:20:38.734209150+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1572'
+    name: Technique 1572
+    tactic: ''
+  - technique: '1090'
+    name: Technique 1090
+    tactic: Command and Control
+  - technique: '1102'
+    name: Technique 1102
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.network.connect"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

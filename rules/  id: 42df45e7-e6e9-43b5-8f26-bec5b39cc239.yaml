@@ -1,0 +1,27 @@
+rule:
+  id: sigma-42df45e7-e6e9-43b5-8f26-bec5b39cc239
+  version: 1
+  name: System Information Discovery
+  description: Detects system information discovery commands
+  author: Ömer Günal, oscd.community
+  created: 2026-07-31T22:20:38.779637976+00:00
+  modified: 2026-07-31T22:20:38.779637976+00:00
+  enabled: true
+  category: discovery
+  subcategory: null
+  mitre:
+  - technique: '1082'
+    name: Technique 1082
+    tactic: Discovery
+  severity: Info
+  risk:
+    base_score: 20
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && (((event.process.name.contains("/uname") || event.process.name.contains("/hostname") || event.process.name.contains("/uptime") || event.process.name.contains("/lspci") || event.process.name.contains("/dmidecode") || event.process.name.contains("/lscpu") || event.process.name.contains("/lsmod"))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

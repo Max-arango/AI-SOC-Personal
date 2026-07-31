@@ -1,0 +1,27 @@
+rule:
+  id: sigma-f9b3edc5-3322-4fc7-8aa3-245d646cc4b7
+  version: 1
+  name: Potential Linux Amazon SSM Agent Hijacking
+  description: Detects potential Amazon SSM agent hijack attempts as outlined in the Mitiga research report.
+  author: Muhammad Faisal
+  created: 2026-07-31T22:20:38.771047022+00:00
+  modified: 2026-07-31T22:20:38.771047022+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1219.002'
+    name: Technique 1219.002
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.name.contains("/amazon-ssm-agent") && (event.process.command_line.contains("-register ") || event.process.command_line.contains("-code ") || event.process.command_line.contains("-id ") || event.process.command_line.contains("-region "))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

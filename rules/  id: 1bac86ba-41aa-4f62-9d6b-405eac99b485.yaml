@@ -1,0 +1,27 @@
+rule:
+  id: sigma-1bac86ba-41aa-4f62-9d6b-405eac99b485
+  version: 1
+  name: Systemd Service Creation
+  description: Detects a creation of systemd services which could be used by adversaries to execute malicious code.
+  author: Pawel Mazur
+  created: 2026-07-31T22:20:38.719145422+00:00
+  modified: 2026-07-31T22:20:38.719145422+00:00
+  enabled: true
+  category: persistence
+  subcategory: null
+  mitre:
+  - technique: '1543.002'
+    name: Technique 1543.002
+    tactic: Persistence
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

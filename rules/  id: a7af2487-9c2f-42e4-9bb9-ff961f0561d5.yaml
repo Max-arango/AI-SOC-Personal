@@ -1,0 +1,27 @@
+rule:
+  id: sigma-a7af2487-9c2f-42e4-9bb9-ff961f0561d5
+  version: 1
+  name: Audio Capture
+  description: Detects attempts to record audio using the arecord and ecasound utilities.
+  author: Pawel Mazur, Milad Cheraghi
+  created: 2026-07-31T22:20:38.714641083+00:00
+  modified: 2026-07-31T22:20:38.714641083+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1123'
+    name: Technique 1123
+    tactic: ''
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

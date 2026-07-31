@@ -1,0 +1,26 @@
+rule:
+  id: sigma-c2e234de-03a3-41e1-b39a-1e56dc17ba67
+  version: 1
+  name: Remove Scheduled Cron Task/Job
+  description: |
+    Detects usage of the 'crontab' utility to remove the current crontab.
+    This is a common occurrence where cryptocurrency miners compete against each other by removing traces of other miners to hijack the maximum amount of resources possible
+  author: Nasreddine Bencherchali (Nextron Systems)
+  created: 2026-07-31T22:20:38.744411903+00:00
+  modified: 2026-07-31T22:20:38.744411903+00:00
+  enabled: true
+  category: general
+  subcategory: null
+  mitre: []
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.name.contains("crontab") && event.process.command_line.contains(" -r")))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

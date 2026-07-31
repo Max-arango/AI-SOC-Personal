@@ -1,0 +1,27 @@
+rule:
+  id: sigma-1edd77db-0669-4fef-9598-165bda82826d
+  version: 1
+  name: Guacamole Two Users Sharing Session Anomaly
+  description: Detects suspicious session with two users present
+  author: Florian Roth (Nextron Systems)
+  created: 2026-07-31T22:20:38.723427723+00:00
+  modified: 2026-07-31T22:20:38.723427723+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1212'
+    name: Technique 1212
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

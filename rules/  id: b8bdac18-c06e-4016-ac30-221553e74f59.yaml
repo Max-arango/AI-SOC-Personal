@@ -1,0 +1,24 @@
+rule:
+  id: sigma-b8bdac18-c06e-4016-ac30-221553e74f59
+  version: 1
+  name: Potential Ruby Reverse Shell
+  description: Detects execution of ruby with the "-e" flag and calls to "socket" related functions. This could be an indication of a potential attempt to setup a reverse shell
+  author: '@d4ns4n_'
+  created: 2026-07-31T22:20:38.768379017+00:00
+  modified: 2026-07-31T22:20:38.768379017+00:00
+  enabled: true
+  category: general
+  subcategory: null
+  mitre: []
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.name.contains("ruby") && (event.process.command_line.contains(" -e") || event.process.command_line.contains("rsocket") || event.process.command_line.contains("TCPSocket")) && (event.process.command_line.contains(" ash") || event.process.command_line.contains(" bash") || event.process.command_line.contains(" bsh") || event.process.command_line.contains(" csh") || event.process.command_line.contains(" ksh") || event.process.command_line.contains(" pdksh") || event.process.command_line.contains(" sh") || event.process.command_line.contains(" tcsh"))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,27 @@
+rule:
+  id: sigma-41e5c73d-9983-4b69-bd03-e13b67e9623c
+  version: 1
+  name: Equation Group Indicators
+  description: Detects suspicious shell commands used in various Equation Group scripts and tools
+  author: Florian Roth (Nextron Systems)
+  created: 2026-07-31T22:20:38.723962020+00:00
+  modified: 2026-07-31T22:20:38.723962020+00:00
+  enabled: true
+  category: execution
+  subcategory: null
+  mitre:
+  - technique: '1059.004'
+    name: Technique 1059.004
+    tactic: Execution
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

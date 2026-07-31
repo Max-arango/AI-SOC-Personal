@@ -1,0 +1,36 @@
+rule:
+  id: sigma-21541900-27a9-4454-9c4c-3f0a4240344a
+  version: 1
+  name: OMIGOD SCX RunAsProvider ExecuteShellCommand
+  description: |
+    Rule to detect the use of the SCX RunAsProvider Invoke_ExecuteShellCommand to execute any UNIX/Linux command using the /bin/sh shell.
+    SCXcore, started as the Microsoft Operations Manager UNIX/Linux Agent, is now used in a host of products including
+    Microsoft Operations Manager, Microsoft Azure, and Microsoft Operations Management Suite.
+  author: Roberto Rodriguez (Cyb3rWard0g), OTR (Open Threat Research), MSTIC
+  created: 2026-07-31T22:20:38.761001737+00:00
+  modified: 2026-07-31T22:20:38.761001737+00:00
+  enabled: true
+  category: privilege-escalation
+  subcategory: null
+  mitre:
+  - technique: '1068'
+    name: Technique 1068
+    tactic: Privilege Escalation
+  - technique: '1190'
+    name: Technique 1190
+    tactic: ''
+  - technique: '1203'
+    name: Technique 1203
+    tactic: Execution
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.user.username.contains("root") && event.process.command_line.contains("/bin/sh")))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

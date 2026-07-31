@@ -1,0 +1,27 @@
+rule:
+  id: sigma-e7bd1cfa-b446-4c88-8afb-403bcd79e3fa
+  version: 1
+  name: System Network Discovery - Linux
+  description: Detects enumeration of local network configuration
+  author: Ömer Günal and remotephone, oscd.community
+  created: 2026-07-31T22:20:38.780219469+00:00
+  modified: 2026-07-31T22:20:38.780219469+00:00
+  enabled: true
+  category: discovery
+  subcategory: null
+  mitre:
+  - technique: '1016'
+    name: Technique 1016
+    tactic: Discovery
+  severity: Info
+  risk:
+    base_score: 20
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,27 @@
+rule:
+  id: sigma-759d0d51-bc99-4b5e-9add-8f5b2c8e7512
+  version: 1
+  name: Creation Of An User Account
+  description: Detects the creation of a new user account. Such accounts may be used for persistence that do not require persistent remote access tools to be deployed on the system.
+  author: Marie Euler, Pawel Mazur
+  created: 2026-07-31T22:20:38.720582266+00:00
+  modified: 2026-07-31T22:20:38.720582266+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1136.001'
+    name: Technique 1136.001
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,25 @@
+rule:
+  id: sigma-32e62bc7-3de0-4bb1-90af-532978fe42c0
+  version: 1
+  name: Python Reverse Shell Execution Via PTY And Socket Modules
+  description: |
+    Detects the execution of python with calls to the socket and pty module in order to connect and spawn a potential reverse shell.
+  author: '@d4ns4n_, Nasreddine Bencherchali (Nextron Systems)'
+  created: 2026-07-31T22:20:38.765225817+00:00
+  modified: 2026-07-31T22:20:38.765225817+00:00
+  enabled: true
+  category: general
+  subcategory: null
+  mitre: []
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.name.contains("python") && (event.process.command_line.contains(" -c ") || event.process.command_line.contains("import") || event.process.command_line.contains("pty") || event.process.command_line.contains("socket") || event.process.command_line.contains("spawn") || event.process.command_line.contains(".connect"))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

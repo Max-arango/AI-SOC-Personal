@@ -1,0 +1,28 @@
+rule:
+  id: sigma-6adfbf8f-52be-4444-9bac-81b539624146
+  version: 1
+  name: Shell Execution via Find - Linux
+  description: |
+    Detects the use of the find command to execute a shell. Such behavior may be associated with privilege escalation, unauthorized command execution, or exploitation attempt.
+  author: Li Ling, Andy Parkidomo, Robert Rakowski, Blake Hartstein (Bloomberg L.P.)
+  created: 2026-07-31T22:20:38.753108463+00:00
+  modified: 2026-07-31T22:20:38.753108463+00:00
+  enabled: true
+  category: discovery
+  subcategory: null
+  mitre:
+  - technique: '1083'
+    name: Technique 1083
+    tactic: Discovery
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

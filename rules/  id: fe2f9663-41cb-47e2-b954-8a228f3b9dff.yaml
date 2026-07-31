@@ -1,0 +1,27 @@
+rule:
+  id: sigma-fe2f9663-41cb-47e2-b954-8a228f3b9dff
+  version: 1
+  name: Linux Base64 Encoded Shebang In CLI
+  description: Detects the presence of a base64 version of the shebang in the commandline, which could indicate a malicious payload about to be decoded
+  author: Nasreddine Bencherchali (Nextron Systems)
+  created: 2026-07-31T22:20:38.737286337+00:00
+  modified: 2026-07-31T22:20:38.737286337+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1140'
+    name: Technique 1140
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && (((event.process.command_line.contains("IyEvYmluL2Jhc2") || event.process.command_line.contains("IyEvYmluL2Rhc2") || event.process.command_line.contains("IyEvYmluL3pza") || event.process.command_line.contains("IyEvYmluL2Zpc2") || event.process.command_line.contains("IyEvYmluL3No"))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

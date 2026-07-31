@@ -1,0 +1,27 @@
+rule:
+  id: sigma-4b3cb710-5e83-4715-8c45-8b2b5b3e5751
+  version: 1
+  name: Modification of ld.so.preload
+  description: Identifies modification of ld.so.preload for shared object injection. This technique is used by attackers to load arbitrary code into processes.
+  author: E.M. Anhaus (originally from Atomic Blue Detections, Tony Lambert), oscd.community
+  created: 2026-07-31T22:20:38.717930253+00:00
+  modified: 2026-07-31T22:20:38.717930253+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1574.006'
+    name: Technique 1574.006
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

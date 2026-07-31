@@ -1,0 +1,33 @@
+rule:
+  id: sigma-33e814e0-1f00-4e43-9c34-31fb7ae2b174
+  version: 1
+  name: ESXi Network Configuration Discovery Via ESXCLI
+  description: Detects execution of the "esxcli" command with the "network" flag in order to retrieve information about the network configuration.
+  author: Cedric Maurugeon
+  created: 2026-07-31T22:20:38.748864255+00:00
+  modified: 2026-07-31T22:20:38.748864255+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1033'
+    name: Technique 1033
+    tactic: ''
+  - technique: '1007'
+    name: Technique 1007
+    tactic: ''
+  - technique: '1059.012'
+    name: Technique 1059.012
+    tactic: Execution
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

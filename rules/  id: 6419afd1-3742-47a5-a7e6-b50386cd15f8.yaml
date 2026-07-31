@@ -1,0 +1,29 @@
+rule:
+  id: sigma-6419afd1-3742-47a5-a7e6-b50386cd15f8
+  version: 1
+  name: Chmod Targeting Sensitive Directories
+  description: |
+    Detects chmod targeting files in sensitive directory paths on Linux systems.
+    Attackers may use chmod to change permissions of files in these directories to maintain persistence, escalate privileges, or disrupt system operations.
+  author: Christopher Peacock @SecurePeacock, SCYTHE @scythe_io
+  created: 2026-07-31T22:20:38.740086581+00:00
+  modified: 2026-07-31T22:20:38.740086581+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1222.002'
+    name: Technique 1222.002
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.name.contains("/chmod") && (event.process.command_line.contains("/tmp/") || event.process.command_line.contains("/.Library/") || event.process.command_line.contains("/etc/") || event.process.command_line.contains("/opt/"))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

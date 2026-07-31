@@ -1,0 +1,24 @@
+rule:
+  id: sigma-457df417-8b9d-4912-85f3-9dbda39c3645
+  version: 1
+  name: Suspicious Nohup Execution
+  description: Detects execution of binaries located in potentially suspicious locations via "nohup"
+  author: Joseliyo Sanchez, @Joseliyo_Jstnk
+  created: 2026-07-31T22:20:38.760262518+00:00
+  modified: 2026-07-31T22:20:38.760262518+00:00
+  enabled: true
+  category: general
+  subcategory: null
+  mitre: []
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.name.contains("/nohup") && event.process.command_line.contains("/tmp/")))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

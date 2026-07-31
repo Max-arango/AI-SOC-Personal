@@ -1,0 +1,24 @@
+rule:
+  id: sigma-f64b6e9a-5d9d-48a5-8289-e1dd2b3876e1
+  version: 1
+  name: Suspicious Log Entries
+  description: Detects suspicious log entries in Linux log files
+  author: Florian Roth (Nextron Systems)
+  created: 2026-07-31T22:20:38.727330068+00:00
+  modified: 2026-07-31T22:20:38.727330068+00:00
+  enabled: true
+  category: general
+  subcategory: null
+  mitre: []
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

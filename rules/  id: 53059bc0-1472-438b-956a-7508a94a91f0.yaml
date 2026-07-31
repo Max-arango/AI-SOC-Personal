@@ -1,0 +1,27 @@
+rule:
+  id: sigma-53059bc0-1472-438b-956a-7508a94a91f0
+  version: 1
+  name: Disable System Firewall
+  description: Detects disabling of system firewalls which could be used by adversaries to bypass controls that limit usage of the network.
+  author: Pawel Mazur
+  created: 2026-07-31T22:20:38.719814096+00:00
+  modified: 2026-07-31T22:20:38.719814096+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1686'
+    name: Technique 1686
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

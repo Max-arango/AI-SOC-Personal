@@ -1,0 +1,27 @@
+rule:
+  id: sigma-31545105-3444-4584-bebf-c466353230d2
+  version: 1
+  name: Touch Suspicious Service File
+  description: Detects usage of the "touch" process in service file.
+  author: Joseliyo Sanchez, @Joseliyo_Jstnk
+  created: 2026-07-31T22:20:38.780791258+00:00
+  modified: 2026-07-31T22:20:38.780791258+00:00
+  enabled: true
+  category: defense-evasion
+  subcategory: null
+  mitre:
+  - technique: '1070.006'
+    name: Technique 1070.006
+    tactic: Defense Evasion
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.name.contains("/touch") && event.process.command_line.contains(" -t ") && event.process.command_line.contains(".service")))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

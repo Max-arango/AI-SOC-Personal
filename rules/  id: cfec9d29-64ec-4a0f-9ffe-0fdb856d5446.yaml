@@ -1,0 +1,27 @@
+rule:
+  id: sigma-cfec9d29-64ec-4a0f-9ffe-0fdb856d5446
+  version: 1
+  name: Suspicious Git Clone - Linux
+  description: Detects execution of "git" in order to clone a remote repository that contain suspicious keywords which might be suspicious
+  author: Nasreddine Bencherchali (Nextron Systems)
+  created: 2026-07-31T22:20:38.774216975+00:00
+  modified: 2026-07-31T22:20:38.774216975+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1593.003'
+    name: Technique 1593.003
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

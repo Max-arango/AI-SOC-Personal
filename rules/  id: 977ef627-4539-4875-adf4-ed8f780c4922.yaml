@@ -1,0 +1,27 @@
+rule:
+  id: sigma-977ef627-4539-4875-adf4-ed8f780c4922
+  version: 1
+  name: Auditing Configuration Changes on Linux Host
+  description: Detect changes in auditd configuration files
+  author: Mikhail Larin, oscd.community
+  created: 2026-07-31T22:20:38.716922296+00:00
+  modified: 2026-07-31T22:20:38.716922296+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1685'
+    name: Technique 1685
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

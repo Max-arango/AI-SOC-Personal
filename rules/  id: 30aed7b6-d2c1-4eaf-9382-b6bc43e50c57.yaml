@@ -1,0 +1,27 @@
+rule:
+  id: sigma-30aed7b6-d2c1-4eaf-9382-b6bc43e50c57
+  version: 1
+  name: File Deletion
+  description: Detects file deletion using "rm", "shred" or "unlink" commands which are used often by adversaries to delete files left behind by the actions of their intrusion activity
+  author: Ömer Günal, oscd.community
+  created: 2026-07-31T22:20:38.752799575+00:00
+  modified: 2026-07-31T22:20:38.752799575+00:00
+  enabled: true
+  category: defense-evasion
+  subcategory: null
+  mitre:
+  - technique: '1070.004'
+    name: Technique 1070.004
+    tactic: Defense Evasion
+  severity: Info
+  risk:
+    base_score: 20
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && (((event.process.name.contains("/rm") || event.process.name.contains("/shred") || event.process.name.contains("/unlink"))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

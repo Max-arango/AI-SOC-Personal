@@ -1,0 +1,27 @@
+rule:
+  id: sigma-78a80655-a51e-4669-bc6b-e9d206a462ee
+  version: 1
+  name: Install Root Certificate
+  description: Detects installation of new certificate on the system which attackers may use to avoid warnings when connecting to controlled web servers or C2s
+  author: Ömer Günal, oscd.community
+  created: 2026-07-31T22:20:38.755219934+00:00
+  modified: 2026-07-31T22:20:38.755219934+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1553.004'
+    name: Technique 1553.004
+    tactic: ''
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && (((event.process.name.contains("/update-ca-certificates") || event.process.name.contains("/update-ca-trust"))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

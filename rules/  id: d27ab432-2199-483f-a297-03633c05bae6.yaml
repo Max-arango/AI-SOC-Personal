@@ -1,0 +1,28 @@
+rule:
+  id: sigma-d27ab432-2199-483f-a297-03633c05bae6
+  version: 1
+  name: OS Architecture Discovery Via Grep
+  description: |
+    Detects the use of grep to identify information about the operating system architecture. Often combined beforehand with the execution of "uname" or "cat /proc/cpuinfo"
+  author: Joseliyo Sanchez, @Joseliyo_Jstnk
+  created: 2026-07-31T22:20:38.754389907+00:00
+  modified: 2026-07-31T22:20:38.754389907+00:00
+  enabled: true
+  category: discovery
+  subcategory: null
+  mitre:
+  - technique: '1082'
+    name: Technique 1082
+    tactic: Discovery
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

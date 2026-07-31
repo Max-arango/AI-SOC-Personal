@@ -1,0 +1,29 @@
+rule:
+  id: sigma-97de11cd-4b67-4abf-9a8b-1020e670aa9e
+  version: 1
+  name: Pnscan Binary Data Transmission Activity
+  description: |
+    Detects command line patterns associated with the use of Pnscan for sending and receiving binary data across the network.
+    This behavior has been identified in a Linux malware campaign targeting Docker, Apache Hadoop, Redis, and Confluence and was previously used by the threat actor known as TeamTNT
+  author: David Burkett (@signalblur)
+  created: 2026-07-31T22:20:38.761984146+00:00
+  modified: 2026-07-31T22:20:38.761984146+00:00
+  enabled: true
+  category: discovery
+  subcategory: null
+  mitre:
+  - technique: '1046'
+    name: Technique 1046
+    tactic: Discovery
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.command_line.contains("-(W|R)\s?(\s|"|')([0-9a-fA-F]{2}\s?){2,20}(\s|"|')")))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,27 @@
+rule:
+  id: sigma-edd595d7-7895-4fa7-acb3-85a18a8772ca
+  version: 1
+  name: Steganography Unzip Hidden Information From Picture File
+  description: Detects extracting of zip file from image file
+  author: Pawel Mazur
+  created: 2026-07-31T22:20:38.714010628+00:00
+  modified: 2026-07-31T22:20:38.714010628+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1027.003'
+    name: Technique 1027.003
+    tactic: ''
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

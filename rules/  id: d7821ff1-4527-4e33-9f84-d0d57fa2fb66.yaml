@@ -1,0 +1,27 @@
+rule:
+  id: sigma-d7821ff1-4527-4e33-9f84-d0d57fa2fb66
+  version: 1
+  name: Print History File Contents
+  description: Detects events in which someone prints the contents of history files to the commandline or redirects it to a file for reconnaissance
+  author: Florian Roth (Nextron Systems)
+  created: 2026-07-31T22:20:38.774933615+00:00
+  modified: 2026-07-31T22:20:38.774933615+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1592.004'
+    name: Technique 1592.004
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

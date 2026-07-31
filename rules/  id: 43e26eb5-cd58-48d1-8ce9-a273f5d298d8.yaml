@@ -1,0 +1,27 @@
+rule:
+  id: sigma-43e26eb5-cd58-48d1-8ce9-a273f5d298d8
+  version: 1
+  name: Potential Container Discovery Via Inodes Listing
+  description: Detects listing of the inodes of the "/" directory to determine if the we are running inside of a container.
+  author: Seth Hanford
+  created: 2026-07-31T22:20:38.775971830+00:00
+  modified: 2026-07-31T22:20:38.775971830+00:00
+  enabled: true
+  category: discovery
+  subcategory: null
+  mitre:
+  - technique: '1082'
+    name: Technique 1082
+    tactic: Discovery
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

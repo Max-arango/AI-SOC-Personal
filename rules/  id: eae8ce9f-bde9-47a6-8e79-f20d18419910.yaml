@@ -1,0 +1,27 @@
+rule:
+  id: sigma-eae8ce9f-bde9-47a6-8e79-f20d18419910
+  version: 1
+  name: Suspicious History File Operations - Linux
+  description: Detects commandline operations on shell history files
+  author: Mikhail Larin, oscd.community
+  created: 2026-07-31T22:20:38.712355943+00:00
+  modified: 2026-07-31T22:20:38.712355943+00:00
+  enabled: true
+  category: credential-access
+  subcategory: null
+  mitre:
+  - technique: '1552.003'
+    name: Technique 1552.003
+    tactic: Credential Access
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

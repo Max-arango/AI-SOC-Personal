@@ -1,0 +1,28 @@
+rule:
+  id: sigma-db1ac3be-f606-4e3a-89e0-9607cbe6b98a
+  version: 1
+  name: Capsh Shell Invocation - Linux
+  description: |
+    Detects the use of the "capsh" utility to invoke a shell.
+  author: Li Ling, Andy Parkidomo, Robert Rakowski, Blake Hartstein (Bloomberg L.P.)
+  created: 2026-07-31T22:20:38.739338829+00:00
+  modified: 2026-07-31T22:20:38.739338829+00:00
+  enabled: true
+  category: execution
+  subcategory: null
+  mitre:
+  - technique: '1059'
+    name: Technique 1059
+    tactic: Execution
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.name.contains("/capsh") && event.process.command_line.contains(" --")))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

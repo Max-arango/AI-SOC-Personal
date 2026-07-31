@@ -1,0 +1,24 @@
+rule:
+  id: sigma-259df6bc-003f-4306-9f54-4ff1a08fa38e
+  version: 1
+  name: Potential Perl Reverse Shell Execution
+  description: Detects execution of the perl binary with the "-e" flag and common strings related to potential reverse shell activity
+  author: '@d4ns4n_, Nasreddine Bencherchali (Nextron Systems)'
+  created: 2026-07-31T22:20:38.761341139+00:00
+  modified: 2026-07-31T22:20:38.761341139+00:00
+  enabled: true
+  category: general
+  subcategory: null
+  mitre: []
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

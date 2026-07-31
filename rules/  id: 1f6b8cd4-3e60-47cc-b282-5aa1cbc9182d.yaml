@@ -1,0 +1,29 @@
+rule:
+  id: sigma-1f6b8cd4-3e60-47cc-b282-5aa1cbc9182d
+  version: 1
+  name: Remote Access Tool - Team Viewer Session Started On Linux Host
+  description: |
+    Detects the command line executed when TeamViewer starts a session started by a remote host.
+    Once a connection has been started, an investigator can verify the connection details by viewing the "incoming_connections.txt" log file in the TeamViewer folder.
+  author: Josh Nickels, Qi Nan
+  created: 2026-07-31T22:20:38.766323848+00:00
+  modified: 2026-07-31T22:20:38.766323848+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1133'
+    name: Technique 1133
+    tactic: ''
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.name.contains("/TeamViewer_Service") && event.process.name.contains("/TeamViewer_Desktop") && event.process.command_line.contains("/TeamViewer_Desktop --IPCport 5939 --Module 1")))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,27 @@
+rule:
+  id: sigma-22236d75-d5a0-4287-bf06-c93b1770860f
+  version: 1
+  name: Triple Cross eBPF Rootkit Install Commands
+  description: Detects default install commands of the Triple Cross eBPF rootkit based on the "deployer.sh" script
+  author: Nasreddine Bencherchali (Nextron Systems)
+  created: 2026-07-31T22:20:38.781305747+00:00
+  modified: 2026-07-31T22:20:38.781305747+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1014'
+    name: Technique 1014
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.name.contains("/sudo") && (event.process.command_line.contains(" tc ") || event.process.command_line.contains(" enp0s3 ")) && (event.process.command_line.contains(" qdisc ") || event.process.command_line.contains(" filter "))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

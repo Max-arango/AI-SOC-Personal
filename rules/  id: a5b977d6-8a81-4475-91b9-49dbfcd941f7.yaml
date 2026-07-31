@@ -1,0 +1,27 @@
+rule:
+  id: sigma-a5b977d6-8a81-4475-91b9-49dbfcd941f7
+  version: 1
+  name: Remove Immutable File Attribute - Auditd
+  description: Detects removing immutable file attribute.
+  author: Jakob Weinzettl, oscd.community
+  created: 2026-07-31T22:20:38.704361418+00:00
+  modified: 2026-07-31T22:20:38.704361418+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1222.002'
+    name: Technique 1222.002
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

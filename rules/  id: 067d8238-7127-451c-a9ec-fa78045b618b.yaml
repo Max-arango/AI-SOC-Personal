@@ -1,0 +1,27 @@
+rule:
+  id: sigma-067d8238-7127-451c-a9ec-fa78045b618b
+  version: 1
+  name: Linux Doas Tool Execution
+  description: Detects the doas tool execution in linux host platform. This utility tool allow standard users to perform tasks as root, the same way sudo does.
+  author: Sittikorn S, Teoderick Contreras
+  created: 2026-07-31T22:20:38.747856209+00:00
+  modified: 2026-07-31T22:20:38.747856209+00:00
+  enabled: true
+  category: privilege-escalation
+  subcategory: null
+  mitre:
+  - technique: '1548'
+    name: Technique 1548
+    tactic: Privilege Escalation
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.name.contains("/doas")))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

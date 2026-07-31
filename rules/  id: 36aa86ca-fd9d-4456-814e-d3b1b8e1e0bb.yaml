@@ -1,0 +1,27 @@
+rule:
+  id: sigma-36aa86ca-fd9d-4456-814e-d3b1b8e1e0bb
+  version: 1
+  name: Relevant ClamAV Message
+  description: Detects relevant ClamAV messages
+  author: Florian Roth (Nextron Systems)
+  created: 2026-07-31T22:20:38.723000483+00:00
+  modified: 2026-07-31T22:20:38.723000483+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1588.001'
+    name: Technique 1588.001
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,27 @@
+rule:
+  id: sigma-0f79c4d2-4e1f-4683-9c36-b5469a665e06
+  version: 1
+  name: Access of Sudoers File Content
+  description: Detects the execution of a text-based file access or inspection utilities to read the content of /etc/sudoers in order to potentially list all users that have sudo rights.
+  author: Florian Roth (Nextron Systems)
+  created: 2026-07-31T22:20:38.777578665+00:00
+  modified: 2026-07-31T22:20:38.777578665+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1592.004'
+    name: Technique 1592.004
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && (((event.process.name.contains("/cat") || event.process.name.contains("/ed") || event.process.name.contains("/egrep") || event.process.name.contains("/emacs") || event.process.name.contains("/fgrep") || event.process.name.contains("/grep") || event.process.name.contains("/head") || event.process.name.contains("/less") || event.process.name.contains("/more") || event.process.name.contains("/nano") || event.process.name.contains("/tail")) && event.process.command_line.contains(" /etc/sudoers")))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

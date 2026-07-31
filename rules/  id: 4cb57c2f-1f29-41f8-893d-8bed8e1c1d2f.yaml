@@ -1,0 +1,27 @@
+rule:
+  id: sigma-4cb57c2f-1f29-41f8-893d-8bed8e1c1d2f
+  version: 1
+  name: System Shutdown/Reboot - Linux
+  description: Adversaries may shutdown/reboot systems to interrupt access to, or aid in the destruction of, those systems.
+  author: Igor Fits, oscd.community
+  created: 2026-07-31T22:20:38.713465680+00:00
+  modified: 2026-07-31T22:20:38.713465680+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1529'
+    name: Technique 1529
+    tactic: ''
+  severity: Info
+  risk:
+    base_score: 20
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

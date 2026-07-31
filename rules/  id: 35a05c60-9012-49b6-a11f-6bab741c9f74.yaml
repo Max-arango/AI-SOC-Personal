@@ -1,0 +1,27 @@
+rule:
+  id: sigma-35a05c60-9012-49b6-a11f-6bab741c9f74
+  version: 1
+  name: Wget Creating Files in Tmp Directory
+  description: Detects the use of wget to download content in a temporary directory such as "/tmp" or "/var/tmp"
+  author: Joseliyo Sanchez, @Joseliyo_Jstnk
+  created: 2026-07-31T22:20:38.733275357+00:00
+  modified: 2026-07-31T22:20:38.733275357+00:00
+  enabled: true
+  category: command-and-control
+  subcategory: null
+  mitre:
+  - technique: '1105'
+    name: Technique 1105
+    tactic: Command and Control
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.file.modify" && ((event.process.name.contains("/wget") && (event.process.path.contains("/tmp/") || event.process.path.contains("/var/tmp/"))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

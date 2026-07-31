@@ -1,0 +1,32 @@
+rule:
+  id: sigma-55e862a8-dd9c-4651-807a-f21fcad56716
+  version: 1
+  name: Python One-Liners with Base64 Decoding - Linux
+  description: |
+    Detects the use of Python's base64 decoding functions in command line executions on Linux systems.
+    Malicious scripts often use python one-liners to decode and execute base64-encoded payloads, which is a common technique for obfuscation and evasion.
+  author: Hugh Ryan (HueCodes), Swachchhanda Shrawan Poudel (Nextron Systems)
+  created: 2026-07-31T22:20:38.763573300+00:00
+  modified: 2026-07-31T22:20:38.763573300+00:00
+  enabled: true
+  category: execution
+  subcategory: null
+  mitre:
+  - technique: '1059.006'
+    name: Technique 1059.006
+    tactic: Execution
+  - technique: '1027.010'
+    name: Technique 1027.010
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

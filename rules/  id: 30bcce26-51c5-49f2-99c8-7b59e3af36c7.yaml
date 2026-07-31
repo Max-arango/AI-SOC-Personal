@@ -1,0 +1,24 @@
+rule:
+  id: sigma-30bcce26-51c5-49f2-99c8-7b59e3af36c7
+  version: 1
+  name: Execution Of Script Located In Potentially Suspicious Directory
+  description: Detects executions of scripts located in potentially suspicious locations such as "/tmp" via a shell such as "bash", "sh", etc.
+  author: Joseliyo Sanchez, @Joseliyo_Jstnk
+  created: 2026-07-31T22:20:38.779377071+00:00
+  modified: 2026-07-31T22:20:38.779377071+00:00
+  enabled: true
+  category: general
+  subcategory: null
+  mitre: []
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

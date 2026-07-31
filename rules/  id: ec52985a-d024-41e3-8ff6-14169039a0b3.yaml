@@ -1,0 +1,27 @@
+rule:
+  id: sigma-ec52985a-d024-41e3-8ff6-14169039a0b3
+  version: 1
+  name: Mount Execution With Hidepid Parameter
+  description: Detects execution of the "mount" command with "hidepid" parameter to make invisible processes to other users from the system
+  author: Joseliyo Sanchez, @Joseliyo_Jstnk
+  created: 2026-07-31T22:20:38.758325051+00:00
+  modified: 2026-07-31T22:20:38.758325051+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1564'
+    name: Technique 1564
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.name.contains("/mount") && (event.process.command_line.contains("hidepid=2") || event.process.command_line.contains(" -o "))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

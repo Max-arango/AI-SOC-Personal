@@ -1,0 +1,27 @@
+rule:
+  id: sigma-f34047d9-20d3-4e8b-8672-0a35cc50dc71
+  version: 1
+  name: System Information Discovery - Auditd
+  description: Detects System Information Discovery commands
+  author: Pawel Mazur
+  created: 2026-07-31T22:20:38.716651228+00:00
+  modified: 2026-07-31T22:20:38.716651228+00:00
+  enabled: true
+  category: discovery
+  subcategory: null
+  mitre:
+  - technique: '1082'
+    name: Technique 1082
+    tactic: Discovery
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

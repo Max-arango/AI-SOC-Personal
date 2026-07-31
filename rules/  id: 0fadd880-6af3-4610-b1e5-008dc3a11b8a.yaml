@@ -1,0 +1,24 @@
+rule:
+  id: sigma-0fadd880-6af3-4610-b1e5-008dc3a11b8a
+  version: 1
+  name: Potential Suspicious BPF Activity - Linux
+  description: Detects the presence of "bpf_probe_write_user" BPF helper-generated warning messages. Which could be a sign of suspicious eBPF activity on the system.
+  author: Red Canary (idea), Nasreddine Bencherchali
+  created: 2026-07-31T22:20:38.725812551+00:00
+  modified: 2026-07-31T22:20:38.725812551+00:00
+  enabled: true
+  category: general
+  subcategory: null
+  mitre: []
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

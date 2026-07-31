@@ -1,0 +1,29 @@
+rule:
+  id: sigma-d2d642d7-b393-43fe-bae4-e81ed5915c4b
+  version: 1
+  name: Scheduled Task/Job At
+  description: |
+    Detects the use of at/atd which are utilities that are used to schedule tasks.
+    They are often abused by adversaries to maintain persistence or to perform task scheduling for initial or recurring execution of malicious code
+  author: Ömer Günal, oscd.community
+  created: 2026-07-31T22:20:38.735545542+00:00
+  modified: 2026-07-31T22:20:38.735545542+00:00
+  enabled: true
+  category: persistence
+  subcategory: null
+  mitre:
+  - technique: '1053.002'
+    name: Technique 1053.002
+    tactic: Persistence
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && (((event.process.name.contains("/at") || event.process.name.contains("/atd"))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

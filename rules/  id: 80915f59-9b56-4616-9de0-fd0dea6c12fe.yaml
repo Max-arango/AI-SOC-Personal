@@ -1,0 +1,29 @@
+rule:
+  id: sigma-80915f59-9b56-4616-9de0-fd0dea6c12fe
+  version: 1
+  name: Linux Logs Clearing Attempts
+  description: |
+    Detects logs clearing attempts on Linux systems via utilities such as 'rm', 'rmdir', 'shred', and 'unlink' targeting log files and directories.
+    Adversaries often try to clear logs to cover their tracks after performing malicious activities.
+  author: Ömer Günal, oscd.community
+  created: 2026-07-31T22:20:38.741172724+00:00
+  modified: 2026-07-31T22:20:38.741172724+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1685.006'
+    name: Technique 1685.006
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && (((event.process.name.contains("/rm") || event.process.name.contains("/rmdir") || event.process.name.contains("/shred") || event.process.name.contains("/unlink")) && (event.process.command_line.contains("/var/log") || event.process.command_line.contains("/var/spool/mail"))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

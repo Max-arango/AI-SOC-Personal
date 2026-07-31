@@ -1,0 +1,27 @@
+rule:
+  id: sigma-746c86fb-ccda-4816-8997-01386263acc4
+  version: 1
+  name: Container Residence Discovery Via Proc Virtual FS
+  description: Detects potential container discovery via listing of certain kernel features in the "/proc" virtual filesystem
+  author: Seth Hanford
+  created: 2026-07-31T22:20:38.771445659+00:00
+  modified: 2026-07-31T22:20:38.771445659+00:00
+  enabled: true
+  category: discovery
+  subcategory: null
+  mitre:
+  - technique: '1082'
+    name: Technique 1082
+    tactic: Discovery
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && (((event.process.name.contains("awk") || event.process.name.contains("/cat") || event.process.name.contains("grep") || event.process.name.contains("/head") || event.process.name.contains("/less") || event.process.name.contains("/more") || event.process.name.contains("/nl") || event.process.name.contains("/tail"))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

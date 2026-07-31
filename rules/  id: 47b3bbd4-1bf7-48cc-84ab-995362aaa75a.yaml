@@ -1,0 +1,28 @@
+rule:
+  id: sigma-47b3bbd4-1bf7-48cc-84ab-995362aaa75a
+  version: 1
+  name: Shell Execution via Git - Linux
+  description: |
+    Detects the use of the "git" utility to execute a shell. Such behavior may be associated with privilege escalation, unauthorized command execution, or to break out from restricted environments.
+  author: Li Ling, Andy Parkidomo, Robert Rakowski, Blake Hartstein (Bloomberg L.P.)
+  created: 2026-07-31T22:20:38.754087277+00:00
+  modified: 2026-07-31T22:20:38.754087277+00:00
+  enabled: true
+  category: execution
+  subcategory: null
+  mitre:
+  - technique: '1059'
+    name: Technique 1059
+    tactic: Execution
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.name.contains("/git") && (event.process.command_line.contains(" -p ") || event.process.command_line.contains("help")) && (event.process.command_line.contains("bash 0<&1") || event.process.command_line.contains("dash 0<&1") || event.process.command_line.contains("sh 0<&1"))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

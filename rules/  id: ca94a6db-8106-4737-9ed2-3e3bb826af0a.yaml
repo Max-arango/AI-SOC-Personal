@@ -1,0 +1,27 @@
+rule:
+  id: sigma-ca94a6db-8106-4737-9ed2-3e3bb826af0a
+  version: 1
+  name: Password Policy Discovery - Linux
+  description: Detects password policy discovery commands
+  author: Ömer Günal, oscd.community, Pawel Mazur
+  created: 2026-07-31T22:20:38.715832443+00:00
+  modified: 2026-07-31T22:20:38.715832443+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1201'
+    name: Technique 1201
+    tactic: ''
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

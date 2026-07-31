@@ -1,0 +1,27 @@
+rule:
+  id: sigma-72f4ab3f-787d-495d-a55d-68c2ff46cf4c
+  version: 1
+  name: Connection Proxy
+  description: Detects setting proxy configuration
+  author: Ömer Günal
+  created: 2026-07-31T22:20:38.762328582+00:00
+  modified: 2026-07-31T22:20:38.762328582+00:00
+  enabled: true
+  category: command-and-control
+  subcategory: null
+  mitre:
+  - technique: '1090'
+    name: Technique 1090
+    tactic: Command and Control
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && (((event.process.command_line.contains("http_proxy=") || event.process.command_line.contains("https_proxy="))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

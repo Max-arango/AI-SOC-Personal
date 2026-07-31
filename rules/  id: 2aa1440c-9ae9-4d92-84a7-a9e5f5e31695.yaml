@@ -1,0 +1,27 @@
+rule:
+  id: sigma-2aa1440c-9ae9-4d92-84a7-a9e5f5e31695
+  version: 1
+  name: Suspicious Activity in Shell Commands
+  description: Detects suspicious shell commands used in various exploit codes (see references)
+  author: Florian Roth (Nextron Systems)
+  created: 2026-07-31T22:20:38.727043186+00:00
+  modified: 2026-07-31T22:20:38.727043186+00:00
+  enabled: true
+  category: execution
+  subcategory: null
+  mitre:
+  - technique: '1059.004'
+    name: Technique 1059.004
+    tactic: Execution
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,30 @@
+rule:
+  id: sigma-c172b7b5-f3a1-4af2-90b7-822c63df86cb
+  version: 1
+  name: Mask System Power Settings Via Systemctl
+  description: |
+    Detects the use of systemctl mask to disable system power management targets such as suspend, hibernate, or hybrid sleep.
+    Adversaries may mask these targets to prevent a system from entering sleep or shutdown states, ensuring their malicious processes remain active and uninterrupted.
+    This behavior can be associated with persistence or defense evasion, as it impairs normal system power operations to maintain long-term access or avoid termination of malicious activity.
+  author: Milad Cheraghi, Nasreddine Bencherchali
+  created: 2026-07-31T22:20:38.780539022+00:00
+  modified: 2026-07-31T22:20:38.780539022+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1653'
+    name: Technique 1653
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,30 @@
+rule:
+  id: sigma-bed26dea-4525-47f4-b24a-76e30e44ffb0
+  version: 1
+  name: Audit Rules Deleted Via Auditctl
+  description: |
+    Detects the execution of 'auditctl' with the '-D' command line parameter, which deletes all configured audit rules and watches on Linux systems.
+    This technique is commonly used by attackers to disable audit logging and cover their tracks by removing monitoring capabilities.
+    Removal of audit rules can significantly impair detection of malicious activities on the affected system.
+  author: Mohamed LAKRI
+  created: 2026-07-31T22:20:38.735814525+00:00
+  modified: 2026-07-31T22:20:38.735814525+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1685.004'
+    name: Technique 1685.004
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.name.contains("/auditctl") && event.process.command_line.contains("-D")))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,27 @@
+rule:
+  id: sigma-8344c0e5-5783-47cc-9cf9-a0f7fd03e6cf
+  version: 1
+  name: Potential Discovery Activity Using Find - Linux
+  description: Detects usage of "find" binary in a suspicious manner to perform discovery
+  author: Nasreddine Bencherchali (Nextron Systems)
+  created: 2026-07-31T22:20:38.773638564+00:00
+  modified: 2026-07-31T22:20:38.773638564+00:00
+  enabled: true
+  category: discovery
+  subcategory: null
+  mitre:
+  - technique: '1083'
+    name: Technique 1083
+    tactic: Discovery
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.name.contains("/find") && (event.process.command_line.contains("-perm -4000") || event.process.command_line.contains("-perm -2000") || event.process.command_line.contains("-perm 0777") || event.process.command_line.contains("-perm -222") || event.process.command_line.contains("-perm -o w") || event.process.command_line.contains("-perm -o x") || event.process.command_line.contains("-perm -u=s") || event.process.command_line.contains("-perm -g=s"))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

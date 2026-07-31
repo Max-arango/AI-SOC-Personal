@@ -1,0 +1,33 @@
+rule:
+  id: sigma-d7a650c4-226c-451e-948f-cc490db506aa
+  version: 1
+  name: PUA - TruffleHog Execution - Linux
+  description: |
+    Detects execution of TruffleHog, a tool used to search for secrets in different platforms like Git, Jira, Slack, SharePoint, etc. that could be used maliciously.
+    While it is a legitimate tool, intended for use in CI pipelines and security assessments,
+    It was observed in the Shai-Hulud malware campaign targeting npm packages to steal sensitive information.
+  author: Swachchhanda Shrawan Poudel (Nextron Systems)
+  created: 2026-07-31T22:20:38.762951046+00:00
+  modified: 2026-07-31T22:20:38.762951046+00:00
+  enabled: true
+  category: discovery
+  subcategory: null
+  mitre:
+  - technique: '1083'
+    name: Technique 1083
+    tactic: Discovery
+  - technique: '1552.001'
+    name: Technique 1552.001
+    tactic: Credential Access
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.name.contains("/trufflehog")))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

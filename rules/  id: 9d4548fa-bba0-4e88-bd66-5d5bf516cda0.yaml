@@ -1,0 +1,29 @@
+rule:
+  id: sigma-9d4548fa-bba0-4e88-bd66-5d5bf516cda0
+  version: 1
+  name: Masquerading as Linux Crond Process
+  description: |
+    Masquerading occurs when the name or location of an executable, legitimate or malicious, is manipulated or abused for the sake of evading defenses and observation.
+    Several different variations of this technique have been observed.
+  author: Timur Zinniatullin, oscd.community
+  created: 2026-07-31T22:20:38.708133321+00:00
+  modified: 2026-07-31T22:20:38.708133321+00:00
+  enabled: true
+  category: defense-evasion
+  subcategory: null
+  mitre:
+  - technique: '1036.003'
+    name: Technique 1036.003
+    tactic: Defense Evasion
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

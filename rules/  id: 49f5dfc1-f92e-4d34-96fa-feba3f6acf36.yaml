@@ -1,0 +1,27 @@
+rule:
+  id: sigma-49f5dfc1-f92e-4d34-96fa-feba3f6acf36
+  version: 1
+  name: Disabling Security Tools - Builtin
+  description: Detects disabling security tools
+  author: Ömer Günal, Alejandro Ortuno, oscd.community
+  created: 2026-07-31T22:20:38.730183576+00:00
+  modified: 2026-07-31T22:20:38.730183576+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1686'
+    name: Technique 1686
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,28 @@
+rule:
+  id: sigma-dbfc7c98-04ab-4ab7-aa94-c74d22aa7376
+  version: 1
+  name: Potentially Suspicious Malware Callback Communication - Linux
+  description: |
+    Detects programs that connect to known malware callback ports based on threat intelligence reports.
+  author: hasselj
+  created: 2026-07-31T22:20:38.734995192+00:00
+  modified: 2026-07-31T22:20:38.734995192+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1571'
+    name: Technique 1571
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.network.connect"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

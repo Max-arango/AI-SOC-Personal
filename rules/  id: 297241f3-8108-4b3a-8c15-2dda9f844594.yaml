@@ -1,0 +1,31 @@
+rule:
+  id: sigma-297241f3-8108-4b3a-8c15-2dda9f844594
+  version: 1
+  name: Suspicious Invocation of Shell via Rsync
+  description: |
+    Detects the execution of a shell as sub process of "rsync" without the expected command line flag "-e" being used, which could be an indication of exploitation as described in CVE-2024-12084. This behavior is commonly associated with attempts to execute arbitrary commands or escalate privileges, potentially leading to unauthorized access or further exploitation.
+  author: Florian Roth
+  created: 2026-07-31T22:20:38.768082404+00:00
+  modified: 2026-07-31T22:20:38.768082404+00:00
+  enabled: true
+  category: execution
+  subcategory: null
+  mitre:
+  - technique: '1059'
+    name: Technique 1059
+    tactic: Execution
+  - technique: '1203'
+    name: Technique 1203
+    tactic: Execution
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && (((event.process.name.contains("/rsync") || event.process.name.contains("/rsyncd")) && (event.process.name.contains("/ash") || event.process.name.contains("/bash") || event.process.name.contains("/csh") || event.process.name.contains("/dash") || event.process.name.contains("/ksh") || event.process.name.contains("/sh") || event.process.name.contains("/tcsh") || event.process.name.contains("/zsh"))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,27 @@
+rule:
+  id: sigma-c9d8b7fd-78e4-44fe-88f6-599135d46d60
+  version: 1
+  name: Security Software Discovery - Linux
+  description: Detects usage of system utilities (only grep and egrep for now) to discover security software discovery
+  author: Daniil Yugoslavskiy, oscd.community
+  created: 2026-07-31T22:20:38.768969759+00:00
+  modified: 2026-07-31T22:20:38.768969759+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1518.001'
+    name: Technique 1518.001
+    tactic: ''
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && (((event.process.name.contains("/grep") || event.process.name.contains("/egrep")) && (event.process.command_line.contains("nessusd") || event.process.command_line.contains("td-agent") || event.process.command_line.contains("packetbeat") || event.process.command_line.contains("filebeat") || event.process.command_line.contains("auditbeat") || event.process.command_line.contains("osqueryd") || event.process.command_line.contains("cbagentd") || event.process.command_line.contains("falcond"))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

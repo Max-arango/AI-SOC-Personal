@@ -1,0 +1,38 @@
+rule:
+  id: sigma-6eea1bf6-f8d2-488a-a742-e6ef6c1b67db
+  version: 1
+  name: OMIGOD SCX RunAsProvider ExecuteScript
+  description: |
+    Rule to detect the use of the SCX RunAsProvider ExecuteScript to execute any UNIX/Linux script using the /bin/sh shell.
+    Script being executed gets created as a temp file in /tmp folder with a scx* prefix.
+    Then it is invoked from the following directory /etc/opt/microsoft/scx/conf/tmpdir/.
+    The file in that directory has the same prefix scx*. SCXcore, started as the Microsoft Operations Manager UNIX/Linux Agent, is now used in a host of products including
+    Microsoft Operations Manager, Microsoft Azure, and Microsoft Operations Management Suite.
+  author: Roberto Rodriguez (Cyb3rWard0g), OTR (Open Threat Research), MSTIC
+  created: 2026-07-31T22:20:38.760642879+00:00
+  modified: 2026-07-31T22:20:38.760642879+00:00
+  enabled: true
+  category: privilege-escalation
+  subcategory: null
+  mitre:
+  - technique: '1068'
+    name: Technique 1068
+    tactic: Privilege Escalation
+  - technique: '1190'
+    name: Technique 1190
+    tactic: ''
+  - technique: '1203'
+    name: Technique 1203
+    tactic: Execution
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.user.username.contains("root") && event.process.command_line.contains("/etc/opt/microsoft/scx/conf/tmpdir/scx")))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

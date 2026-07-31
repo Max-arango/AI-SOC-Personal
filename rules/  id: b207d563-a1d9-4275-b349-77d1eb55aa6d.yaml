@@ -1,0 +1,32 @@
+rule:
+  id: sigma-b207d563-a1d9-4275-b349-77d1eb55aa6d
+  version: 1
+  name: System Info Discovery via Sysinfo Syscall
+  description: |
+    Detects use of the sysinfo system call in Linux, which provides a snapshot of key system statistics such as uptime, load averages, memory usage, and the number of running processes.
+    Malware or reconnaissance tools might leverage sysinfo to fingerprint the system - gathering data to determine if it's a viable target.
+  author: Milad Cheraghi
+  created: 2026-07-31T22:20:38.721792254+00:00
+  modified: 2026-07-31T22:20:38.721792254+00:00
+  enabled: true
+  category: discovery
+  subcategory: null
+  mitre:
+  - technique: '1057'
+    name: Technique 1057
+    tactic: Discovery
+  - technique: '1082'
+    name: Technique 1082
+    tactic: Discovery
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

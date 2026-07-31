@@ -1,0 +1,27 @@
+rule:
+  id: sigma-ea34fb97-e2c4-4afb-810f-785e4459b194
+  version: 1
+  name: Curl Usage on Linux
+  description: Detects a curl process start on linux, which indicates a file download from a remote location or a simple web request to a remote server
+  author: Nasreddine Bencherchali (Nextron Systems)
+  created: 2026-07-31T22:20:38.745449004+00:00
+  modified: 2026-07-31T22:20:38.745449004+00:00
+  enabled: true
+  category: command-and-control
+  subcategory: null
+  mitre:
+  - technique: '1105'
+    name: Technique 1105
+    tactic: Command and Control
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.name.contains("/curl")))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

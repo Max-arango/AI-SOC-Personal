@@ -1,0 +1,27 @@
+rule:
+  id: sigma-c67e0c98-4d39-46ee-8f6b-437ebf6b950e
+  version: 1
+  name: Shellshock Expression
+  description: Detects shellshock expressions in log files
+  author: Florian Roth (Nextron Systems)
+  created: 2026-07-31T22:20:38.727982687+00:00
+  modified: 2026-07-31T22:20:38.727982687+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1505.003'
+    name: Technique 1505.003
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

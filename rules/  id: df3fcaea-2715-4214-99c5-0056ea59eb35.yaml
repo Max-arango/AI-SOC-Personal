@@ -1,0 +1,27 @@
+rule:
+  id: sigma-df3fcaea-2715-4214-99c5-0056ea59eb35
+  version: 1
+  name: Credentials In Files - Linux
+  description: Detecting attempts to extract passwords with grep
+  author: Igor Fits, oscd.community
+  created: 2026-07-31T22:20:38.706702173+00:00
+  modified: 2026-07-31T22:20:38.706702173+00:00
+  enabled: true
+  category: credential-access
+  subcategory: null
+  mitre:
+  - technique: '1552.001'
+    name: Technique 1552.001
+    tactic: Credential Access
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

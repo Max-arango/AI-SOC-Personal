@@ -1,0 +1,27 @@
+rule:
+  id: sigma-95d61234-7f56-465c-6f2d-b562c6fedbc4
+  version: 1
+  name: Linux Package Uninstall
+  description: Detects linux package removal using builtin tools such as "yum", "apt", "apt-get" or "dpkg".
+  author: Tuan Le (NCSGroup), Nasreddine Bencherchali (Nextron Systems)
+  created: 2026-07-31T22:20:38.767378691+00:00
+  modified: 2026-07-31T22:20:38.767378691+00:00
+  enabled: true
+  category: defense-evasion
+  subcategory: null
+  mitre:
+  - technique: '1070'
+    name: Technique 1070
+    tactic: Defense Evasion
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,27 @@
+rule:
+  id: sigma-cf610c15-ed71-46e1-bdf8-2bd1a99de6c4
+  version: 1
+  name: Download File To Potentially Suspicious Directory Via Wget
+  description: Detects the use of wget to download content to a suspicious directory
+  author: Joseliyo Sanchez, @Joseliyo_Jstnk
+  created: 2026-07-31T22:20:38.782920108+00:00
+  modified: 2026-07-31T22:20:38.782920108+00:00
+  enabled: true
+  category: command-and-control
+  subcategory: null
+  mitre:
+  - technique: '1105'
+    name: Technique 1105
+    tactic: Command and Control
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

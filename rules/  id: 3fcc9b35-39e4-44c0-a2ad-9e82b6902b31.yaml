@@ -1,0 +1,28 @@
+rule:
+  id: sigma-3fcc9b35-39e4-44c0-a2ad-9e82b6902b31
+  version: 1
+  name: Syslog Clearing or Removal Via System Utilities
+  description: |
+    Detects specific commands commonly used to remove or empty the syslog. Which is a technique often used by attacker as a method to hide their tracks
+  author: Max Altgelt (Nextron Systems), Roberto Rodriguez (Cyb3rWard0g), OTR (Open Threat Research), MSTIC
+  created: 2026-07-31T22:20:38.742515301+00:00
+  modified: 2026-07-31T22:20:38.742515301+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1685.006'
+    name: Technique 1685.006
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.command_line.contains("/var/log/syslog")))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

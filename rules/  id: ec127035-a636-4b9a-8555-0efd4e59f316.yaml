@@ -1,0 +1,29 @@
+rule:
+  id: sigma-ec127035-a636-4b9a-8555-0efd4e59f316
+  version: 1
+  name: Clipboard Collection with Xclip Tool
+  description: |
+    Detects attempts to collect data stored in the clipboard from users with the usage of xclip tool. Xclip has to be installed.
+    Highly recommended using rule on servers, due to high usage of clipboard utilities on user workstations.
+  author: Pawel Mazur, Roberto Rodriguez (Cyb3rWard0g), OTR (Open Threat Research), MSTIC
+  created: 2026-07-31T22:20:38.743011547+00:00
+  modified: 2026-07-31T22:20:38.743011547+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1115'
+    name: Technique 1115
+    tactic: ''
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.name.contains("xclip") && (event.process.command_line.contains("-sel") || event.process.command_line.contains("clip") || event.process.command_line.contains("-o"))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,30 @@
+rule:
+  id: sigma-86157017-c2b1-4d4a-8c33-93b8e67e4af4
+  version: 1
+  name: Potential Suspicious Change To Sensitive/Critical Files
+  description: |
+    Detects changes of sensitive and critical files. Monitors files that you don't expect to change without planning on Linux system.
+    These files include, but are not limited to, system configuration files, authentication files, and critical application files.
+    Attackers often target these files to maintain persistence, escalate privileges, or disrupt system operations.
+  author: '@d4ns4n_ (Wuerth-Phoenix)'
+  created: 2026-07-31T22:20:38.778750766+00:00
+  modified: 2026-07-31T22:20:38.778750766+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1565.001'
+    name: Technique 1565.001
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && (((event.process.command_line.contains("/bin/login") || event.process.command_line.contains("/bin/passwd") || event.process.command_line.contains("/boot/") || event.process.command_line.contains("/etc/*.conf") || event.process.command_line.contains("/etc/cron.") || event.process.command_line.contains("/etc/crontab") || event.process.command_line.contains("/etc/hosts") || event.process.command_line.contains("/etc/init.d") || event.process.command_line.contains("/etc/sudoers") || event.process.command_line.contains("/opt/bin/") || event.process.command_line.contains("/sbin") || event.process.command_line.contains("/usr/bin/") || event.process.command_line.contains("/usr/local/bin/"))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

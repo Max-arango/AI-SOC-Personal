@@ -1,0 +1,27 @@
+rule:
+  id: sigma-00eee2a5-fdb0-4746-a21d-e43fbdea5681
+  version: 1
+  name: Linux Doas Conf File Creation
+  description: Detects the creation of doas.conf file in linux host platform.
+  author: Sittikorn S, Teoderick Contreras
+  created: 2026-07-31T22:20:38.731002814+00:00
+  modified: 2026-07-31T22:20:38.731002814+00:00
+  enabled: true
+  category: privilege-escalation
+  subcategory: null
+  mitre:
+  - technique: '1548'
+    name: Technique 1548
+    tactic: Privilege Escalation
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.file.modify" && ((event.process.path.contains("/etc/doas.conf")))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

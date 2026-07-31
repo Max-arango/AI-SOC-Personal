@@ -1,0 +1,27 @@
+rule:
+  id: sigma-7e3c4651-c347-40c4-b1d4-d48590fdf684
+  version: 1
+  name: Code Injection by ld.so Preload
+  description: Detects the ld.so preload persistence file. See `man ld.so` for more information.
+  author: Christian Burkard (Nextron Systems)
+  created: 2026-07-31T22:20:38.725450908+00:00
+  modified: 2026-07-31T22:20:38.725450908+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1574.006'
+    name: Technique 1574.006
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

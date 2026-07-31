@@ -1,0 +1,28 @@
+rule:
+  id: sigma-bed978f8-7f3a-432b-82c5-9286a9b3031a
+  version: 1
+  name: Shell Invocation via Env Command - Linux
+  description: |
+    Detects the use of the env command to invoke a shell. This may indicate an attempt to bypass restricted environments, escalate privileges, or execute arbitrary commands.
+  author: Li Ling, Andy Parkidomo, Robert Rakowski, Blake Hartstein (Bloomberg L.P.)
+  created: 2026-07-31T22:20:38.748342133+00:00
+  modified: 2026-07-31T22:20:38.748342133+00:00
+  enabled: true
+  category: execution
+  subcategory: null
+  mitre:
+  - technique: '1059.004'
+    name: Technique 1059.004
+    tactic: Execution
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.name.contains("/env") && (event.process.command_line.contains("/bin/bash") || event.process.command_line.contains("/bin/dash") || event.process.command_line.contains("/bin/fish") || event.process.command_line.contains("/bin/sh") || event.process.command_line.contains("/bin/zsh"))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

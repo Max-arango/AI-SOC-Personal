@@ -1,0 +1,29 @@
+rule:
+  id: sigma-cb39d16b-b3b6-4a7a-8222-1cf24b686ffc
+  version: 1
+  name: Data Exfiltration with Wget
+  description: |
+    Detects attempts to post the file with the usage of wget utility.
+    The adversary can bypass the permission restriction with the misconfigured sudo permission for wget utility which could allow them to read files like /etc/shadow.
+  author: Pawel Mazur
+  created: 2026-07-31T22:20:38.705943077+00:00
+  modified: 2026-07-31T22:20:38.705943077+00:00
+  enabled: true
+  category: exfiltration
+  subcategory: null
+  mitre:
+  - technique: '1048.003'
+    name: Technique 1048.003
+    tactic: Exfiltration
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

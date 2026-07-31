@@ -1,0 +1,27 @@
+rule:
+  id: sigma-2625cc59-0634-40d0-821e-cb67382a3dd7
+  version: 1
+  name: Service Reload or Start - Linux
+  description: Detects the start, reload or restart of a service.
+  author: Jakob Weinzettl, oscd.community, CheraghiMilad
+  created: 2026-07-31T22:20:38.712846344+00:00
+  modified: 2026-07-31T22:20:38.712846344+00:00
+  enabled: true
+  category: persistence
+  subcategory: null
+  mitre:
+  - technique: '1543.002'
+    name: Technique 1543.002
+    tactic: Persistence
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

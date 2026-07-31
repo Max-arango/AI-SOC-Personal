@@ -1,0 +1,30 @@
+rule:
+  id: sigma-84c9e83c-599a-458a-a0cb-0ecce44e807a
+  version: 1
+  name: UFW Disable Attempt
+  description: |
+    Detects attempts to disable the Uncomplicated Firewall (UFW) on Linux systems.
+    UFW is a popular firewall management tool that provides an easy-to-use interface for configuring firewall rules.
+    Disabling UFW can leave a system vulnerable to attacks, as it may allow unauthorized access to network services and resources.
+  author: Joseliyo Sanchez, @Joseliyo_Jstnk
+  created: 2026-07-31T22:20:38.747483333+00:00
+  modified: 2026-07-31T22:20:38.747483333+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1686'
+    name: Technique 1686
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

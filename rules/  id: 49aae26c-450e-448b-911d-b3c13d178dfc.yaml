@@ -1,0 +1,30 @@
+rule:
+  id: sigma-49aae26c-450e-448b-911d-b3c13d178dfc
+  version: 1
+  name: Linux Keylogging with Pam.d
+  description: Detect attempt to enable auditing of TTY input
+  author: Pawel Mazur
+  created: 2026-07-31T22:20:38.715447164+00:00
+  modified: 2026-07-31T22:20:38.715447164+00:00
+  enabled: true
+  category: credential-access
+  subcategory: null
+  mitre:
+  - technique: '1003'
+    name: Technique 1003
+    tactic: Credential Access
+  - technique: '1056.001'
+    name: Technique 1056.001
+    tactic: Collection
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,32 @@
+rule:
+  id: sigma-7ab8f73a-fcff-428b-84aa-6a5ff7877dea
+  version: 1
+  name: Vim GTFOBin Abuse - Linux
+  description: |
+    Detects the use of "vim" and it's siblings commands to execute a shell or proxy commands.
+    Such behavior may be associated with privilege escalation, unauthorized command execution, or to break out from restricted environments.
+  author: Nasreddine Bencherchali (Nextron Systems), Luc Génaux
+  created: 2026-07-31T22:20:38.782200231+00:00
+  modified: 2026-07-31T22:20:38.782200231+00:00
+  enabled: true
+  category: execution
+  subcategory: null
+  mitre:
+  - technique: '1059'
+    name: Technique 1059
+    tactic: Execution
+  - technique: '1083'
+    name: Technique 1083
+    tactic: Discovery
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

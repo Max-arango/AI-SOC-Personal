@@ -1,0 +1,30 @@
+rule:
+  id: sigma-2992ac4d-31e9-4325-99f2-b18a73221bb2
+  version: 1
+  name: ESXi VM Kill Via ESXCLI
+  description: Detects execution of the "esxcli" command with the "vm" and "kill" flag in order to kill/shutdown a specific VM.
+  author: Nasreddine Bencherchali (Nextron Systems), Cedric Maurugeon
+  created: 2026-07-31T22:20:38.751785182+00:00
+  modified: 2026-07-31T22:20:38.751785182+00:00
+  enabled: true
+  category: execution
+  subcategory: null
+  mitre:
+  - technique: '1059.012'
+    name: Technique 1059.012
+    tactic: Execution
+  - technique: '1529'
+    name: Technique 1529
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.name.contains("/esxcli") && (event.process.command_line.contains("vm process") || event.process.command_line.contains("kill"))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

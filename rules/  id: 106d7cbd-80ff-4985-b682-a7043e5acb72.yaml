@@ -1,0 +1,30 @@
+rule:
+  id: sigma-106d7cbd-80ff-4985-b682-a7043e5acb72
+  version: 1
+  name: Loading of Kernel Module via Insmod
+  description: |
+    Detects loading of kernel modules with insmod command.
+    Loadable Kernel Modules (LKMs) are pieces of code that can be loaded and unloaded into the kernel upon demand.
+    Adversaries may use LKMs to obtain persistence within the system or elevate the privileges.
+  author: Pawel Mazur
+  created: 2026-07-31T22:20:38.720908773+00:00
+  modified: 2026-07-31T22:20:38.720908773+00:00
+  enabled: true
+  category: persistence
+  subcategory: null
+  mitre:
+  - technique: '1547.006'
+    name: Technique 1547.006
+    tactic: Persistence
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

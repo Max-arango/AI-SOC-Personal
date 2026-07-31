@@ -1,0 +1,27 @@
+rule:
+  id: sigma-6b14bac8-3e3a-4324-8109-42f0546a347f
+  version: 1
+  name: Scheduled Cron Task/Job - Linux
+  description: Detects abuse of the cron utility to perform task scheduling for initial or recurring execution of malicious code. Detection will focus on crontab jobs uploaded from the tmp folder.
+  author: Alejandro Ortuno, oscd.community
+  created: 2026-07-31T22:20:38.768650394+00:00
+  modified: 2026-07-31T22:20:38.768650394+00:00
+  enabled: true
+  category: persistence
+  subcategory: null
+  mitre:
+  - technique: '1053.003'
+    name: Technique 1053.003
+    tactic: Persistence
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.name.contains("crontab") && event.process.command_line.contains("/tmp/")))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

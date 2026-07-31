@@ -1,0 +1,32 @@
+rule:
+  id: sigma-de25eeb8-3655-4643-ac3a-b662d3f26b6b
+  version: 1
+  name: Disable Or Stop Services
+  description: |
+    Detects the usage of utilities such as 'systemctl', 'service'...etc to stop or disable tools and services on Linux systems.
+    Attackers may stop or disable security tools and services to evade detection, maintain persistence, or disrupt system operations.
+  author: Nasreddine Bencherchali (Nextron Systems)
+  created: 2026-07-31T22:20:38.770162243+00:00
+  modified: 2026-07-31T22:20:38.770162243+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1685'
+    name: Technique 1685
+    tactic: ''
+  - technique: '1489'
+    name: Technique 1489
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && (((event.process.name.contains("/service") || event.process.name.contains("/systemctl") || event.process.name.contains("/chkconfig")) && (event.process.command_line.contains(" stop ") || event.process.command_line.contains(" disable "))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

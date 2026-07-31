@@ -1,0 +1,27 @@
+rule:
+  id: sigma-312b42b1-bded-4441-8b58-163a3af58775
+  version: 1
+  name: Potentially Suspicious Execution From Tmp Folder
+  description: Detects a potentially suspicious execution of a process located in the '/tmp/' folder
+  author: Joseliyo Sanchez, @Joseliyo_Jstnk
+  created: 2026-07-31T22:20:38.773196687+00:00
+  modified: 2026-07-31T22:20:38.773196687+00:00
+  enabled: true
+  category: defense-evasion
+  subcategory: null
+  mitre:
+  - technique: '1036'
+    name: Technique 1036
+    tactic: Defense Evasion
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.name.contains("/tmp/")))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

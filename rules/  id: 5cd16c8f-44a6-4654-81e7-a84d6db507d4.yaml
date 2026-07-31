@@ -1,0 +1,29 @@
+rule:
+  id: sigma-5cd16c8f-44a6-4654-81e7-a84d6db507d4
+  version: 1
+  name: Process Execution From Shared Memory Directory
+  description: |
+    Detects the execution of a binary from the Linux shared memory directory /dev/shm.
+    This directory is a tmpfs mount backed entirely by RAM and is abused by attackers for fileless malware staging because files written there never touch physical disk and may evade disk-based detection.
+  author: Stan Beukers
+  created: 2026-07-31T22:20:38.772770335+00:00
+  modified: 2026-07-31T22:20:38.772770335+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1027.011'
+    name: Technique 1027.011
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.name.contains("/dev/shm/")))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

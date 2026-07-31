@@ -1,0 +1,27 @@
+rule:
+  id: sigma-b86d356d-6093-443d-971c-9b07db583c68
+  version: 1
+  name: Suspicious Curl Change User Agents - Linux
+  description: Detects a suspicious curl process start on linux with set useragent options
+  author: Nasreddine Bencherchali (Nextron Systems)
+  created: 2026-07-31T22:20:38.772138893+00:00
+  modified: 2026-07-31T22:20:38.772138893+00:00
+  enabled: true
+  category: command-and-control
+  subcategory: null
+  mitre:
+  - technique: '1071.001'
+    name: Technique 1071.001
+    tactic: Command and Control
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.name.contains("/curl") && (event.process.command_line.contains(" -A ") || event.process.command_line.contains(" --user-agent "))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

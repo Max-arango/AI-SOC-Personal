@@ -1,0 +1,27 @@
+rule:
+  id: sigma-18b042f0-2ecd-4b6e-9f8d-aa7a7e7de781
+  version: 1
+  name: Buffer Overflow Attempts
+  description: Detects buffer overflow attempts in Unix system log files
+  author: Florian Roth (Nextron Systems)
+  created: 2026-07-31T22:20:38.724629073+00:00
+  modified: 2026-07-31T22:20:38.724629073+00:00
+  enabled: true
+  category: privilege-escalation
+  subcategory: null
+  mitre:
+  - technique: '1068'
+    name: Technique 1068
+    tactic: Privilege Escalation
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

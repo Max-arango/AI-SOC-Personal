@@ -1,0 +1,33 @@
+rule:
+  id: sigma-d54c2f06-aca9-4e2b-81c9-5317858f4b79
+  version: 1
+  name: ESXi VSAN Information Discovery Via ESXCLI
+  description: Detects execution of the "esxcli" command with the "vsan" flag in order to retrieve information about virtual storage. Seen used by malware such as DarkSide.
+  author: Nasreddine Bencherchali (Nextron Systems), Cedric Maurugeon
+  created: 2026-07-31T22:20:38.752119676+00:00
+  modified: 2026-07-31T22:20:38.752119676+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1033'
+    name: Technique 1033
+    tactic: ''
+  - technique: '1007'
+    name: Technique 1007
+    tactic: ''
+  - technique: '1059.012'
+    name: Technique 1059.012
+    tactic: Execution
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

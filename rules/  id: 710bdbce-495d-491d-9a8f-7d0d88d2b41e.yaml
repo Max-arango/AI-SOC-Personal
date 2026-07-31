@@ -1,0 +1,32 @@
+rule:
+  id: sigma-710bdbce-495d-491d-9a8f-7d0d88d2b41e
+  version: 1
+  name: Special File Creation via Mknod Syscall
+  description: |
+    Detects usage of the `mknod` syscall to create special files (e.g., character or block devices).
+    Attackers or malware might use `mknod` to create fake devices, interact with kernel interfaces,
+    or establish covert channels in Linux systems.
+    Monitoring the use of `mknod` is important because this syscall is rarely used by legitimate applications,
+    and it can be abused to bypass file system restrictions or create backdoors.
+  author: Milad Cheraghi
+  created: 2026-07-31T22:20:38.722450705+00:00
+  modified: 2026-07-31T22:20:38.722450705+00:00
+  enabled: true
+  category: persistence
+  subcategory: null
+  mitre:
+  - technique: '1543.003'
+    name: Technique 1543.003
+    tactic: Persistence
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,27 @@
+rule:
+  id: sigma-b45e3d6f-42c6-47d8-a478-df6bd6cf534c
+  version: 1
+  name: Local System Accounts Discovery - Linux
+  description: Detects enumeration of local system accounts. This information can help adversaries determine which local accounts exist on a system to aid in follow-on behavior.
+  author: Alejandro Ortuno, oscd.community, CheraghiMilad
+  created: 2026-07-31T22:20:38.756407207+00:00
+  modified: 2026-07-31T22:20:38.756407207+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1087.001'
+    name: Technique 1087.001
+    tactic: ''
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,33 @@
+rule:
+  id: sigma-6c4e2f43-d94d-4ead-b64d-97e53fa2bd05
+  version: 1
+  name: New Cron File Created
+  description: |
+    Detects the creation of cron files in Cron directories, which could indicate potential persistence mechanisms being established by an attacker.
+    Note that not all cron file creations are malicious - legitimate system administration activities and software installations may also create cron files.
+    This detection should be investigated in context, considering factors such as the user creating the file, the timing of creation, and the contents of the cron job.
+    Focus investigation on unexpected cron files created by non-administrative users or during suspicious timeframes.
+    Additionally, it is recommended to review the contents of the newly created cron files to assess their intent.
+    Furthermore, it is suggested to baseline normal cron file creation and apply additional filters to reduce false positives based on the specific environment.
+  author: Roberto Rodriguez (Cyb3rWard0g), OTR (Open Threat Research), MSTIC
+  created: 2026-07-31T22:20:38.731855913+00:00
+  modified: 2026-07-31T22:20:38.731855913+00:00
+  enabled: true
+  category: persistence
+  subcategory: null
+  mitre:
+  - technique: '1053.003'
+    name: Technique 1053.003
+    tactic: Persistence
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.file.modify"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

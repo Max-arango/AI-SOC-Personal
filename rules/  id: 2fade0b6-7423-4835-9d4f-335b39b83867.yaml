@@ -1,0 +1,24 @@
+rule:
+  id: sigma-2fade0b6-7423-4835-9d4f-335b39b83867
+  version: 1
+  name: Shell Execution Of Process Located In Tmp Directory
+  description: Detects execution of shells from a parent process located in a temporary (/tmp) directory
+  author: Joseliyo Sanchez, @Joseliyo_Jstnk
+  created: 2026-07-31T22:20:38.779046148+00:00
+  modified: 2026-07-31T22:20:38.779046148+00:00
+  enabled: true
+  category: general
+  subcategory: null
+  mitre: []
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.name.contains("/tmp/") && (event.process.name.contains("/bash") || event.process.name.contains("/csh") || event.process.name.contains("/dash") || event.process.name.contains("/fish") || event.process.name.contains("/ksh") || event.process.name.contains("/sh") || event.process.name.contains("/zsh"))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

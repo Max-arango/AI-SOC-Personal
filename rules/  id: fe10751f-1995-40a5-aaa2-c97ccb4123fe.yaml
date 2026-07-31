@@ -1,0 +1,30 @@
+rule:
+  id: sigma-fe10751f-1995-40a5-aaa2-c97ccb4123fe
+  version: 1
+  name: Linux Capabilities Discovery
+  description: Detects attempts to discover the files with setuid/setgid capability on them. That would allow adversary to escalate their privileges.
+  author: Pawel Mazur
+  created: 2026-07-31T22:20:38.703656408+00:00
+  modified: 2026-07-31T22:20:38.703656408+00:00
+  enabled: true
+  category: discovery
+  subcategory: null
+  mitre:
+  - technique: '1083'
+    name: Technique 1083
+    tactic: Discovery
+  - technique: '1548'
+    name: Technique 1548
+    tactic: Privilege Escalation
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

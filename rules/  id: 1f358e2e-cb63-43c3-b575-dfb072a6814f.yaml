@@ -1,0 +1,27 @@
+rule:
+  id: sigma-1f358e2e-cb63-43c3-b575-dfb072a6814f
+  version: 1
+  name: System and Hardware Information Discovery
+  description: Detects system information discovery commands
+  author: Ömer Günal, oscd.community
+  created: 2026-07-31T22:20:38.718843769+00:00
+  modified: 2026-07-31T22:20:38.718843769+00:00
+  enabled: true
+  category: discovery
+  subcategory: null
+  mitre:
+  - technique: '1082'
+    name: Technique 1082
+    tactic: Discovery
+  severity: Info
+  risk:
+    base_score: 20
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,29 @@
+rule:
+  id: sigma-c52a914f-3d8b-4b2a-bb75-b3991e75f8ba
+  version: 1
+  name: Binary Padding - Linux
+  description: |
+    Adversaries may use binary padding to add junk data and change the on-disk representation of malware.
+    This rule detect using dd and truncate to add a junk data to file.
+  author: Igor Fits, oscd.community
+  created: 2026-07-31T22:20:38.703033065+00:00
+  modified: 2026-07-31T22:20:38.703033065+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1027.001'
+    name: Technique 1027.001
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,27 @@
+rule:
+  id: sigma-a94cdd87-6c54-4678-a6cc-2814ffe5a13d
+  version: 1
+  name: Unix Shell Configuration Modification
+  description: Detect unix shell configuration modification. Adversaries may establish persistence through executing malicious commands triggered when a new shell is opened.
+  author: Peter Matkovski, IAI
+  created: 2026-07-31T22:20:38.719559149+00:00
+  modified: 2026-07-31T22:20:38.719559149+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1546.004'
+    name: Technique 1546.004
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

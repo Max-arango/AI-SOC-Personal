@@ -1,0 +1,27 @@
+rule:
+  id: sigma-7a14080d-a048-4de8-ae58-604ce58a795b
+  version: 1
+  name: Remote File Copy
+  description: Detects the use of tools that copy files from or to remote systems
+  author: Ömer Günal
+  created: 2026-07-31T22:20:38.725164797+00:00
+  modified: 2026-07-31T22:20:38.725164797+00:00
+  enabled: true
+  category: command-and-control
+  subcategory: null
+  mitre:
+  - technique: '1105'
+    name: Technique 1105
+    tactic: Command and Control
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

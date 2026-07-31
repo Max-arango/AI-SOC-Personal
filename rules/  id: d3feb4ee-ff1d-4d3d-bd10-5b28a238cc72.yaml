@@ -1,0 +1,28 @@
+rule:
+  id: sigma-d3feb4ee-ff1d-4d3d-bd10-5b28a238cc72
+  version: 1
+  name: File and Directory Discovery - Linux
+  description: |
+    Detects usage of system utilities such as "find", "tree", "findmnt", etc, to discover files, directories and network shares.
+  author: Daniil Yugoslavskiy, oscd.community, CheraghiMilad
+  created: 2026-07-31T22:20:38.752534613+00:00
+  modified: 2026-07-31T22:20:38.752534613+00:00
+  enabled: true
+  category: discovery
+  subcategory: null
+  mitre:
+  - technique: '1083'
+    name: Technique 1083
+    tactic: Discovery
+  severity: Info
+  risk:
+    base_score: 20
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

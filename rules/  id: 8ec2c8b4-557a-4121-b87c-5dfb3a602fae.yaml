@@ -1,0 +1,27 @@
+rule:
+  id: sigma-8ec2c8b4-557a-4121-b87c-5dfb3a602fae
+  version: 1
+  name: JexBoss Command Sequence
+  description: Detects suspicious command sequence that JexBoss
+  author: Florian Roth (Nextron Systems)
+  created: 2026-07-31T22:20:38.728843446+00:00
+  modified: 2026-07-31T22:20:38.728843446+00:00
+  enabled: true
+  category: execution
+  subcategory: null
+  mitre:
+  - technique: '1059.004'
+    name: Technique 1059.004
+    tactic: Execution
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

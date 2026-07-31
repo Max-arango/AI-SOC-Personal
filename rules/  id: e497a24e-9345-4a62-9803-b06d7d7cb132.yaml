@@ -1,0 +1,36 @@
+rule:
+  id: sigma-e497a24e-9345-4a62-9803-b06d7d7cb132
+  version: 1
+  name: ASLR Disabled Via Sysctl or Direct Syscall - Linux
+  description: |
+    Detects actions that disable Address Space Layout Randomization (ASLR) in Linux, including:
+      - Use of the `personality` syscall with the ADDR_NO_RANDOMIZE flag (0x0040000)
+      - Modification of the /proc/sys/kernel/randomize_va_space file
+      - Execution of the `sysctl` command to set `kernel.randomize_va_space=0`
+    Disabling ASLR is often used by attackers during exploit development or to bypass memory protection mechanisms.
+    A successful use of these methods can reduce the effectiveness of ASLR and make memory corruption attacks more reliable.
+  author: Milad Cheraghi
+  created: 2026-07-31T22:20:38.715055720+00:00
+  modified: 2026-07-31T22:20:38.715055720+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1685'
+    name: Technique 1685
+    tactic: ''
+  - technique: '1055.009'
+    name: Technique 1055.009
+    tactic: Defense Evasion
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

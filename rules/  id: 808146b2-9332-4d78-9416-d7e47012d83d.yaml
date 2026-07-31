@@ -1,0 +1,30 @@
+rule:
+  id: sigma-808146b2-9332-4d78-9416-d7e47012d83d
+  version: 1
+  name: BPFDoor Abnormal Process ID or Lock File Accessed
+  description: detects BPFDoor .lock and .pid files access in temporary file storage facility
+  author: Rafal Piasecki
+  created: 2026-07-31T22:20:38.717352459+00:00
+  modified: 2026-07-31T22:20:38.717352459+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1106'
+    name: Technique 1106
+    tactic: ''
+  - technique: '1059'
+    name: Technique 1059
+    tactic: Execution
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

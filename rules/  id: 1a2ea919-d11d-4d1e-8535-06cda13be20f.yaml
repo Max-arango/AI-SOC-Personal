@@ -1,0 +1,27 @@
+rule:
+  id: sigma-1a2ea919-d11d-4d1e-8535-06cda13be20f
+  version: 1
+  name: Triple Cross eBPF Rootkit Default Persistence
+  description: Detects the creation of "ebpfbackdoor" files in both "cron.d" and "sudoers.d" directories. Which both are related to the TripleCross persistence method
+  author: Nasreddine Bencherchali (Nextron Systems)
+  created: 2026-07-31T22:20:38.732969058+00:00
+  modified: 2026-07-31T22:20:38.732969058+00:00
+  enabled: true
+  category: persistence
+  subcategory: null
+  mitre:
+  - technique: '1053.003'
+    name: Technique 1053.003
+    tactic: Persistence
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.file.modify" && ((event.process.path.contains("ebpfbackdoor")))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

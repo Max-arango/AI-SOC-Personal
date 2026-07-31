@@ -1,0 +1,30 @@
+rule:
+  id: sigma-b28e4eb3-8bbc-4f0c-819f-edfe8e2f25db
+  version: 1
+  name: ESXi Account Creation Via ESXCLI
+  description: Detects user account creation on ESXi system via esxcli
+  author: Cedric Maurugeon
+  created: 2026-07-31T22:20:38.751169032+00:00
+  modified: 2026-07-31T22:20:38.751169032+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1136'
+    name: Technique 1136
+    tactic: ''
+  - technique: '1059.012'
+    name: Technique 1059.012
+    tactic: Execution
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.name.contains("/esxcli") && (event.process.command_line.contains("system ") || event.process.command_line.contains("account ") || event.process.command_line.contains("add "))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

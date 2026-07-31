@@ -1,0 +1,29 @@
+rule:
+  id: sigma-36388120-b3f1-4ce9-b50b-280d9a7f4c04
+  version: 1
+  name: Kaspersky Endpoint Security Stopped Via CommandLine - Linux
+  description: |
+    Detects execution of the Kaspersky init.d stop script on Linux systems either directly or via systemctl.
+    This activity may indicate a manual interruption of the antivirus service by an administrator, or it could be a sign of potential tampering or evasion attempts by malicious actors.
+  author: Milad Cheraghi
+  created: 2026-07-31T22:20:38.736125977+00:00
+  modified: 2026-07-31T22:20:38.736125977+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1685'
+    name: Technique 1685
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && (((event.process.name.contains("/systemctl") || event.process.name.contains("/bash") || event.process.name.contains("/sh")) && (event.process.command_line.contains("stop") || event.process.command_line.contains("kesl"))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

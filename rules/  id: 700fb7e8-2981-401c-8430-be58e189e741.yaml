@@ -1,0 +1,27 @@
+rule:
+  id: sigma-700fb7e8-2981-401c-8430-be58e189e741
+  version: 1
+  name: Suspicious Package Installed - Linux
+  description: Detects installation of suspicious packages using system installation utilities
+  author: Nasreddine Bencherchali (Nextron Systems)
+  created: 2026-07-31T22:20:38.755638672+00:00
+  modified: 2026-07-31T22:20:38.755638672+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1553.004'
+    name: Technique 1553.004
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && (((event.process.command_line.contains("nmap") || event.process.command_line.contains(" nc") || event.process.command_line.contains("netcat") || event.process.command_line.contains("wireshark") || event.process.command_line.contains("tshark") || event.process.command_line.contains("openconnect") || event.process.command_line.contains("proxychains") || event.process.command_line.contains("socat"))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

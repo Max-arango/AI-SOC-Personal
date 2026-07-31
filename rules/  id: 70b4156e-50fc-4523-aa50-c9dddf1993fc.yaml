@@ -1,0 +1,29 @@
+rule:
+  id: sigma-70b4156e-50fc-4523-aa50-c9dddf1993fc
+  version: 1
+  name: Bpfdoor TCP Ports Redirect
+  description: |
+    All TCP traffic on particular port from attacker is routed to different port. ex. '/sbin/iptables -t nat -D PREROUTING -p tcp -s 192.168.1.1 --dport 22 -j REDIRECT --to-ports 42392'
+    The traffic looks like encrypted SSH communications going to TCP port 22, but in reality is being directed to the shell port once it hits the iptables rule for the attacker host only.
+  author: Rafal Piasecki
+  created: 2026-07-31T22:20:38.703360003+00:00
+  modified: 2026-07-31T22:20:38.703360003+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1686'
+    name: Technique 1686
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

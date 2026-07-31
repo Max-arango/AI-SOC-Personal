@@ -1,0 +1,27 @@
+rule:
+  id: sigma-c21c4eaa-ba2e-419a-92b2-8371703cbe21
+  version: 1
+  name: Setuid and Setgid
+  description: Detects suspicious change of file privileges with chown and chmod commands
+  author: Ömer Günal
+  created: 2026-07-31T22:20:38.770430683+00:00
+  modified: 2026-07-31T22:20:38.770430683+00:00
+  enabled: true
+  category: privilege-escalation
+  subcategory: null
+  mitre:
+  - technique: '1548.001'
+    name: Technique 1548.001
+    tactic: Privilege Escalation
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

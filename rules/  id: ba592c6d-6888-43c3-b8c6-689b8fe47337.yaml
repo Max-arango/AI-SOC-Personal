@@ -1,0 +1,27 @@
+rule:
+  id: sigma-ba592c6d-6888-43c3-b8c6-689b8fe47337
+  version: 1
+  name: Linux Base64 Encoded Pipe to Shell
+  description: Detects suspicious process command line that uses base64 encoded input for execution with a shell
+  author: pH-T (Nextron Systems)
+  created: 2026-07-31T22:20:38.736995381+00:00
+  modified: 2026-07-31T22:20:38.736995381+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1140'
+    name: Technique 1140
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

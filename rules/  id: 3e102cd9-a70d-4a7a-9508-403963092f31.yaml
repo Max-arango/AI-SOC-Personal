@@ -1,0 +1,27 @@
+rule:
+  id: sigma-3e102cd9-a70d-4a7a-9508-403963092f31
+  version: 1
+  name: Linux Network Service Scanning Tools Execution
+  description: Detects execution of network scanning and reconnaisance tools. These tools can be used for the enumeration of local or remote network services for example.
+  author: Alejandro Ortuno, oscd.community, Georg Lauenstein (sure[secure])
+  created: 2026-07-31T22:20:38.776956775+00:00
+  modified: 2026-07-31T22:20:38.776956775+00:00
+  enabled: true
+  category: discovery
+  subcategory: null
+  mitre:
+  - technique: '1046'
+    name: Technique 1046
+    tactic: Discovery
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && (((event.process.name.contains("/nc") || event.process.name.contains("/ncat") || event.process.name.contains("/netcat") || event.process.name.contains("/socat"))) && ((event.process.command_line.contains(" --listen ") || event.process.command_line.contains(" -l "))) && ((event.process.name.contains("/autorecon") || event.process.name.contains("/hping") || event.process.name.contains("/hping2") || event.process.name.contains("/hping3") || event.process.name.contains("/naabu") || event.process.name.contains("/nmap") || event.process.name.contains("/nping") || event.process.name.contains("/telnet") || event.process.name.contains("/zenmap"))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

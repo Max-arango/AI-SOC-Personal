@@ -1,0 +1,27 @@
+rule:
+  id: sigma-9069ea3c-b213-4c52-be13-86506a227ab1
+  version: 1
+  name: Linux Crypto Mining Indicators
+  description: Detects command line parameters or strings often used by crypto miners
+  author: Florian Roth (Nextron Systems)
+  created: 2026-07-31T22:20:38.745030588+00:00
+  modified: 2026-07-31T22:20:38.745030588+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1496'
+    name: Technique 1496
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && (((event.process.command_line.contains(" --cpu-priority=") || event.process.command_line.contains("--donate-level=0") || event.process.command_line.contains(" -o pool.") || event.process.command_line.contains(" --nicehash") || event.process.command_line.contains(" --algo=rx/0 ") || event.process.command_line.contains("stratum+tcp://") || event.process.command_line.contains("stratum+udp://") || event.process.command_line.contains("sh -c /sbin/modprobe msr allow_writes=on") || event.process.command_line.contains("LS1kb25hdGUtbGV2ZWw9") || event.process.command_line.contains("0tZG9uYXRlLWxldmVsP") || event.process.command_line.contains("tLWRvbmF0ZS1sZXZlbD") || event.process.command_line.contains("c3RyYXR1bSt0Y3A6Ly") || event.process.command_line.contains("N0cmF0dW0rdGNwOi8v") || event.process.command_line.contains("zdHJhdHVtK3RjcDovL") || event.process.command_line.contains("c3RyYXR1bSt1ZHA6Ly") || event.process.command_line.contains("N0cmF0dW0rdWRwOi8v") || event.process.command_line.contains("zdHJhdHVtK3VkcDovL"))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

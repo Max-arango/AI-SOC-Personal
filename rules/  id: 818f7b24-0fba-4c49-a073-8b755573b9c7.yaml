@@ -1,0 +1,27 @@
+rule:
+  id: sigma-818f7b24-0fba-4c49-a073-8b755573b9c7
+  version: 1
+  name: Linux Webshell Indicators
+  description: Detects suspicious sub processes of web server processes
+  author: Florian Roth (Nextron Systems), Nasreddine Bencherchali (Nextron Systems)
+  created: 2026-07-31T22:20:38.782598965+00:00
+  modified: 2026-07-31T22:20:38.782598965+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1505.003'
+    name: Technique 1505.003
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && (((event.process.name.contains("/whoami") || event.process.name.contains("/ifconfig") || event.process.name.contains("/ip") || event.process.name.contains("/bin/uname") || event.process.name.contains("/bin/cat") || event.process.name.contains("/bin/crontab") || event.process.name.contains("/hostname") || event.process.name.contains("/iptables") || event.process.name.contains("/netstat") || event.process.name.contains("/pwd") || event.process.name.contains("/route"))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

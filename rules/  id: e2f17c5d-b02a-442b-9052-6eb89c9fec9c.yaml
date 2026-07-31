@@ -1,0 +1,27 @@
+rule:
+  id: sigma-e2f17c5d-b02a-442b-9052-6eb89c9fec9c
+  version: 1
+  name: Screen Capture with Xwd
+  description: Detects adversary creating screen capture of a full with xwd. Highly recommended using rule on servers, due high usage of screenshot utilities on user workstations
+  author: Pawel Mazur
+  created: 2026-07-31T22:20:38.710498325+00:00
+  modified: 2026-07-31T22:20:38.710498325+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1113'
+    name: Technique 1113
+    tactic: ''
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

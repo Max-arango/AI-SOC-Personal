@@ -1,0 +1,33 @@
+rule:
+  id: sigma-38eb1dbb-011f-40b1-a126-cf03a0210563
+  version: 1
+  name: ESXi Syslog Configuration Change Via ESXCLI
+  description: Detects changes to the ESXi syslog configuration via "esxcli"
+  author: Cedric Maurugeon
+  created: 2026-07-31T22:20:38.750445799+00:00
+  modified: 2026-07-31T22:20:38.750445799+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1685'
+    name: Technique 1685
+    tactic: ''
+  - technique: '1690'
+    name: Technique 1690
+    tactic: ''
+  - technique: '1059.012'
+    name: Technique 1059.012
+    tactic: Execution
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.name.contains("/esxcli") && (event.process.command_line.contains("system") || event.process.command_line.contains("syslog") || event.process.command_line.contains("config")) && event.process.command_line.contains(" set")))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

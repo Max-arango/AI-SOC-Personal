@@ -1,0 +1,33 @@
+rule:
+  id: sigma-ed447910-bc30-4575-a598-3a2e49516a7a
+  version: 1
+  name: Linux Setuid Capability Set on a Binary via Setcap Utility
+  description: |
+    Detects the use of the 'setcap' utility to set the 'setuid' capability (cap_setuid) on a binary file.
+    This capability allows a non privileged process to make arbitrary manipulations of user IDs (UIDs), including setting its current UID to a value that would otherwise be restricted (i.e. UID 0, the root user).
+    This behavior can be used by adversaries to backdoor a binary in order to escalate privileges again in the future if needed.
+  author: Luc Génaux
+  created: 2026-07-31T22:20:38.738823028+00:00
+  modified: 2026-07-31T22:20:38.738823028+00:00
+  enabled: true
+  category: privilege-escalation
+  subcategory: null
+  mitre:
+  - technique: '1548'
+    name: Technique 1548
+    tactic: Privilege Escalation
+  - technique: '1554'
+    name: Technique 1554
+    tactic: ''
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.name.contains("/setcap") && event.process.command_line.contains("cap_setuid")))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

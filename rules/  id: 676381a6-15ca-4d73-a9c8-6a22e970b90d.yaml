@@ -1,0 +1,27 @@
+rule:
+  id: sigma-676381a6-15ca-4d73-a9c8-6a22e970b90d
+  version: 1
+  name: Local Groups Discovery - Linux
+  description: Detects enumeration of local system groups. Adversaries may attempt to find local system groups and permission settings
+  author: Ömer Günal, Alejandro Ortuno, oscd.community
+  created: 2026-07-31T22:20:38.756707607+00:00
+  modified: 2026-07-31T22:20:38.756707607+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1069.001'
+    name: Technique 1069.001
+    tactic: ''
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,33 @@
+rule:
+  id: sigma-f41dada5-3f56-4232-8503-3fb7f9cf2d60
+  version: 1
+  name: ESXi Storage Information Discovery Via ESXCLI
+  description: Detects execution of the "esxcli" command with the "storage" flag in order to retrieve information about the storage status and other related information. Seen used by malware such as DarkSide and LockBit.
+  author: Nasreddine Bencherchali (Nextron Systems), Cedric Maurugeon
+  created: 2026-07-31T22:20:38.749965009+00:00
+  modified: 2026-07-31T22:20:38.749965009+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1033'
+    name: Technique 1033
+    tactic: ''
+  - technique: '1007'
+    name: Technique 1007
+    tactic: ''
+  - technique: '1059.012'
+    name: Technique 1059.012
+    tactic: Execution
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

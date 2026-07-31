@@ -1,0 +1,27 @@
+rule:
+  id: sigma-8a46f16c-8c4c-82d1-b121-0fdd3ba70a84
+  version: 1
+  name: Group Has Been Deleted Via Groupdel
+  description: Detects execution of the "groupdel" binary. Which is used to delete a group. This is sometimes abused by threat actors in order to cover their tracks
+  author: Tuan Le (NCSGroup)
+  created: 2026-07-31T22:20:38.754811238+00:00
+  modified: 2026-07-31T22:20:38.754811238+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1531'
+    name: Technique 1531
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create" && ((event.process.name.contains("/groupdel")))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

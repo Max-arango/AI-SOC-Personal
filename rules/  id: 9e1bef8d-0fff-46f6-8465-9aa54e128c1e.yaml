@@ -1,0 +1,27 @@
+rule:
+  id: sigma-9e1bef8d-0fff-46f6-8465-9aa54e128c1e
+  version: 1
+  name: Use Of Hidden Paths Or Files
+  description: Detects calls to hidden files or files located in hidden directories in NIX systems.
+  author: David Burkett, @signalblur
+  created: 2026-07-31T22:20:38.717655432+00:00
+  modified: 2026-07-31T22:20:38.717655432+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1574.001'
+    name: Technique 1574.001
+    tactic: ''
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

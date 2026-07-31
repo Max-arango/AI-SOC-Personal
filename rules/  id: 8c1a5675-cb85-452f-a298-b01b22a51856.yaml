@@ -1,0 +1,29 @@
+rule:
+  id: sigma-8c1a5675-cb85-452f-a298-b01b22a51856
+  version: 1
+  name: Suspicious Invocation of Shell via AWK - Linux
+  description: |
+    Detects the execution of "awk" or it's sibling commands, to invoke a shell using the system() function.
+    This behavior is commonly associated with attempts to execute arbitrary commands or escalate privileges, potentially leading to unauthorized access or further exploitation.
+  author: Li Ling, Andy Parkidomo, Robert Rakowski, Blake Hartstein (Bloomberg L.P.)
+  created: 2026-07-31T22:20:38.736453150+00:00
+  modified: 2026-07-31T22:20:38.736453150+00:00
+  enabled: true
+  category: execution
+  subcategory: null
+  mitre:
+  - technique: '1059'
+    name: Technique 1059
+    tactic: Execution
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,24 @@
+rule:
+  id: sigma-13f08f54-e705-4498-91fd-cce9d9cee9f1
+  version: 1
+  name: Potentially Suspicious Shell Script Creation in Profile Folder
+  description: Detects the creation of shell scripts under the "profile.d" path.
+  author: Joseliyo Sanchez, @Joseliyo_Jstnk
+  created: 2026-07-31T22:20:38.732484722+00:00
+  modified: 2026-07-31T22:20:38.732484722+00:00
+  enabled: true
+  category: general
+  subcategory: null
+  mitre: []
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.file.modify" && ((event.process.path.contains("/etc/profile.d/") && (event.process.path.contains(".csh") || event.process.path.contains(".sh"))))
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

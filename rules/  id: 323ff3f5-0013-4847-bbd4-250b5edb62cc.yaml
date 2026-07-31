@@ -1,0 +1,29 @@
+rule:
+  id: sigma-323ff3f5-0013-4847-bbd4-250b5edb62cc
+  version: 1
+  name: Modify System Firewall
+  description: |
+    Detects the removal of system firewall rules. Adversaries may only delete or modify a specific system firewall rule to bypass controls limiting network usage or access.
+    Detection rules that match only on the disabling of firewalls will miss this.
+  author: IAI
+  created: 2026-07-31T22:20:38.708816144+00:00
+  modified: 2026-07-31T22:20:38.708816144+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1686'
+    name: Technique 1686
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []
