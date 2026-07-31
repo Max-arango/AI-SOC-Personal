@@ -1,0 +1,31 @@
+rule:
+  id: sigma-38e7f511-3f74-41d4-836e-f57dfa18eead
+  version: 1
+  name: Potential Malicious Usage of CloudTrail System Manager
+  description: |
+    Detect when System Manager successfully executes commands against an instance.
+  author: jamesc-grafana
+  created: 2026-07-31T22:31:34.301698911+00:00
+  modified: 2026-07-31T22:31:34.301698911+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1566'
+    name: Technique 1566
+    tactic: ''
+  - technique: '1566.002'
+    name: Technique 1566.002
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

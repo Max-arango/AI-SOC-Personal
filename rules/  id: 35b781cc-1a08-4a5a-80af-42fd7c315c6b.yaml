@@ -1,0 +1,30 @@
+rule:
+  id: sigma-35b781cc-1a08-4a5a-80af-42fd7c315c6b
+  version: 1
+  name: Discovery Using AzureHound
+  description: Detects AzureHound (A BloodHound data collector for Microsoft Azure) activity via the default User-Agent that is used during its operation after successful authentication.
+  author: Janantha Marasinghe
+  created: 2026-07-31T22:31:34.364103706+00:00
+  modified: 2026-07-31T22:31:34.364103706+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1087.004'
+    name: Technique 1087.004
+    tactic: ''
+  - technique: '1526'
+    name: Technique 1526
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

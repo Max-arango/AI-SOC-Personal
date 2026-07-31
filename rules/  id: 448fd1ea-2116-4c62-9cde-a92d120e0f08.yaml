@@ -1,0 +1,24 @@
+rule:
+  id: sigma-448fd1ea-2116-4c62-9cde-a92d120e0f08
+  version: 1
+  name: Azure Service Principal Removed
+  description: Identifies when a service principal was removed in Azure.
+  author: Austin Songer @austinsonger
+  created: 2026-07-31T22:31:34.350709798+00:00
+  modified: 2026-07-31T22:31:34.350709798+00:00
+  enabled: true
+  category: general
+  subcategory: null
+  mitre: []
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

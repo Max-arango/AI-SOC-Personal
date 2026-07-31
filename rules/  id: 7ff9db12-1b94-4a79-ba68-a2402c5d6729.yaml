@@ -1,0 +1,27 @@
+rule:
+  id: sigma-7ff9db12-1b94-4a79-ba68-a2402c5d6729
+  version: 1
+  name: Windows Webshell Strings
+  description: Detects common commands used in Windows webshells
+  author: Florian Roth (Nextron Systems), Nasreddine Bencherchali (Nextron Systems)
+  created: 2026-07-31T22:31:34.296290922+00:00
+  modified: 2026-07-31T22:31:34.296290922+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1505.003'
+    name: Technique 1505.003
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

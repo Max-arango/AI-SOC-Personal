@@ -1,0 +1,26 @@
+rule:
+  id: sigma-15ef3fac-f0f0-4dc4-ada0-660aa72980b3
+  version: 1
+  name: Azure Virtual Network Device Modified or Deleted
+  description: |
+    Identifies when a virtual network device is being modified or deleted.
+    This can be a network interface, network virtual appliance, virtual hub, or virtual router.
+  author: Austin Songer @austinsonger
+  created: 2026-07-31T22:31:34.334140002+00:00
+  modified: 2026-07-31T22:31:34.334140002+00:00
+  enabled: true
+  category: general
+  subcategory: null
+  mitre: []
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

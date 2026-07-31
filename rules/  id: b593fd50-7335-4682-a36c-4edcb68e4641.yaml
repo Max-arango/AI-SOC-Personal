@@ -1,0 +1,30 @@
+rule:
+  id: sigma-b593fd50-7335-4682-a36c-4edcb68e4641
+  version: 1
+  name: Monero Crypto Coin Mining Pool Lookup
+  description: Detects suspicious DNS queries to Monero mining pools
+  author: Florian Roth (Nextron Systems)
+  created: 2026-07-31T22:31:34.394428935+00:00
+  modified: 2026-07-31T22:31:34.394428935+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1496'
+    name: Technique 1496
+    tactic: ''
+  - technique: '1567'
+    name: Technique 1567
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

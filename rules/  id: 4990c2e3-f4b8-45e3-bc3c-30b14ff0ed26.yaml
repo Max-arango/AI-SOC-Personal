@@ -1,0 +1,24 @@
+rule:
+  id: sigma-4990c2e3-f4b8-45e3-bc3c-30b14ff0ed26
+  version: 1
+  name: AWS Glue Development Endpoint Activity
+  description: Detects possible suspicious glue development endpoint activity.
+  author: Austin Songer @austinsonger
+  created: 2026-07-31T22:31:34.312463888+00:00
+  modified: 2026-07-31T22:31:34.312463888+00:00
+  enabled: true
+  category: general
+  subcategory: null
+  mitre: []
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,32 @@
+rule:
+  id: sigma-16124c2d-e40b-4fcc-8f2c-5ab7870a2223
+  version: 1
+  name: AWS EC2 Disable EBS Encryption
+  description: |
+    Identifies disabling of default Amazon Elastic Block Store (EBS) encryption in the current region.
+    Disabling default encryption does not change the encryption status of your existing volumes.
+  author: Sittikorn S
+  created: 2026-07-31T22:31:34.303798261+00:00
+  modified: 2026-07-31T22:31:34.303798261+00:00
+  enabled: true
+  category: impact
+  subcategory: null
+  mitre:
+  - technique: '1486'
+    name: Technique 1486
+    tactic: Impact
+  - technique: '1565'
+    name: Technique 1565
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

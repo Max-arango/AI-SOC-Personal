@@ -1,0 +1,27 @@
+rule:
+  id: sigma-ada3bc4f-f0fd-42b9-ba91-e105e8af7342
+  version: 1
+  name: Server Side Template Injection Strings
+  description: Detects SSTI attempts sent via GET requests in access logs
+  author: Nasreddine Bencherchali (Nextron Systems)
+  created: 2026-07-31T22:31:34.294640038+00:00
+  modified: 2026-07-31T22:31:34.294640038+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1221'
+    name: Technique 1221
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

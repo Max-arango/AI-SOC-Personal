@@ -1,0 +1,26 @@
+rule:
+  id: sigma-69ffc84e-8b1a-4024-8351-e018f66b8275
+  version: 1
+  name: FortiGate - User Group Modified
+  description: |
+    Detects the modification of a user group on a Fortinet FortiGate Firewall.
+    The group could be used to grant VPN access to a network.
+  author: Marco Pedrinazzi (@pedrinazziM) (InTheCyber)
+  created: 2026-07-31T22:31:34.397658592+00:00
+  modified: 2026-07-31T22:31:34.397658592+00:00
+  enabled: true
+  category: general
+  subcategory: null
+  mitre: []
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

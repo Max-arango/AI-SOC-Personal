@@ -1,0 +1,33 @@
+rule:
+  id: sigma-9541f321-7cba-4b43-80fc-fbd1fb922808
+  version: 1
+  name: Azure Kubernetes Cluster Created or Deleted
+  description: Detects when a Azure Kubernetes Cluster is created or deleted.
+  author: Austin Songer @austinsonger
+  created: 2026-07-31T22:31:34.326426882+00:00
+  modified: 2026-07-31T22:31:34.326426882+00:00
+  enabled: true
+  category: impact
+  subcategory: null
+  mitre:
+  - technique: '1485'
+    name: Technique 1485
+    tactic: Impact
+  - technique: '1496'
+    name: Technique 1496
+    tactic: ''
+  - technique: '1489'
+    name: Technique 1489
+    tactic: ''
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

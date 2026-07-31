@@ -1,0 +1,27 @@
+rule:
+  id: sigma-7195a772-4b3f-43a4-a210-6a003d65caa1
+  version: 1
+  name: Suspicious User Agent
+  description: Detects suspicious malformed user agent strings in proxy logs
+  author: Florian Roth (Nextron Systems)
+  created: 2026-07-31T22:31:34.291353909+00:00
+  modified: 2026-07-31T22:31:34.291353909+00:00
+  enabled: true
+  category: command-and-control
+  subcategory: null
+  mitre:
+  - technique: '1071.001'
+    name: Technique 1071.001
+    tactic: Command and Control
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

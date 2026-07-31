@@ -1,0 +1,32 @@
+rule:
+  id: sigma-3569aefd-e535-4391-8c18-24bd01a21eaf
+  version: 1
+  name: Suspicious Email Delivered In Microsoft 365
+  description: |
+    Detects instances where an email, identified as malicious or suspicious by the Microsoft Defender for Office 365 (formerly ATP) engine, was delivered to a user's Inbox or Junk folder.
+    It might indicate that a potential threat, such as a spearphishing attachment or links, has bypassed initial blocking mechanisms and reached an end-user, requiring further investigation and potential remediation.
+  author: Marco Pedrinazzi (@pedrinazziM) (InTheCyber)
+  created: 2026-07-31T22:31:34.383508012+00:00
+  modified: 2026-07-31T22:31:34.383508012+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1566.001'
+    name: Technique 1566.001
+    tactic: ''
+  - technique: '1566.002'
+    name: Technique 1566.002
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

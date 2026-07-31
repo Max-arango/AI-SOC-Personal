@@ -1,0 +1,27 @@
+rule:
+  id: sigma-583aa0a2-30b1-4d62-8bf3-ab73689efe6c
+  version: 1
+  name: Java Payload Strings
+  description: Detects possible Java payloads in web access logs
+  author: frack113, Harjot Singh, "@cyb3rjy0t" (update)
+  created: 2026-07-31T22:31:34.292950960+00:00
+  modified: 2026-07-31T22:31:34.292950960+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1190'
+    name: Technique 1190
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

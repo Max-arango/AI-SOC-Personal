@@ -1,0 +1,30 @@
+rule:
+  id: sigma-0a5177f4-6ca9-44c2-aacf-d3f3d8b6e4d2
+  version: 1
+  name: AWS IAM Backdoor Users Keys
+  description: |
+    Detects AWS API key creation for a user by another user.
+    Backdoored users can be used to obtain persistence in the AWS environment.
+    Also with this alert, you can detect a flow of AWS keys in your org.
+  author: faloker
+  created: 2026-07-31T22:31:34.309469155+00:00
+  modified: 2026-07-31T22:31:34.309469155+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1098'
+    name: Technique 1098
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

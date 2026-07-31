@@ -1,0 +1,27 @@
+rule:
+  id: sigma-6ec820f2-e963-4801-9127-d8b2dce4d31b
+  version: 1
+  name: APT User Agent
+  description: Detects suspicious user agent strings used in APT malware in proxy logs
+  author: Florian Roth (Nextron Systems), Markus Neis
+  created: 2026-07-31T22:31:34.285389257+00:00
+  modified: 2026-07-31T22:31:34.285389257+00:00
+  enabled: true
+  category: command-and-control
+  subcategory: null
+  mitre:
+  - technique: '1071.001'
+    name: Technique 1071.001
+    tactic: Command and Control
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

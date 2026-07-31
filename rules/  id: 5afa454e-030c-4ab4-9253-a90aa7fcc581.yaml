@@ -1,0 +1,27 @@
+rule:
+  id: sigma-5afa454e-030c-4ab4-9253-a90aa7fcc581
+  version: 1
+  name: Device Registration or Join Without MFA
+  description: Monitor and alert for device registration or join events where MFA was not performed.
+  author: Michael Epping, '@mepples21'
+  created: 2026-07-31T22:31:34.364579501+00:00
+  modified: 2026-07-31T22:31:34.364579501+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078.004'
+    name: Technique 1078.004
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

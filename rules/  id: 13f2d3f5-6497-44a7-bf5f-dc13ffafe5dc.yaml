@@ -1,0 +1,28 @@
+rule:
+  id: sigma-13f2d3f5-6497-44a7-bf5f-dc13ffafe5dc
+  version: 1
+  name: Azure Login Bypassing Conditional Access Policies
+  description: |
+    Detects a successful login to the Microsoft Intune Company Portal which could allow bypassing Conditional Access Policies and InTune device trust using a tool like TokenSmith.
+  author: Josh Nickels, Marius Rothenbücher
+  created: 2026-07-31T22:31:34.382158755+00:00
+  modified: 2026-07-31T22:31:34.382158755+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078'
+    name: Technique 1078
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

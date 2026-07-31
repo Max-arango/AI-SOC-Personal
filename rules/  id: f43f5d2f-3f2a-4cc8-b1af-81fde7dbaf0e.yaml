@@ -1,0 +1,36 @@
+rule:
+  id: sigma-f43f5d2f-3f2a-4cc8-b1af-81fde7dbaf0e
+  version: 1
+  name: AWS Suspicious SAML Activity
+  description: Identifies when suspicious SAML activity has occurred in AWS. An adversary could gain backdoor access via SAML.
+  author: Austin Songer
+  created: 2026-07-31T22:31:34.319335799+00:00
+  modified: 2026-07-31T22:31:34.319335799+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078'
+    name: Technique 1078
+    tactic: ''
+  - technique: '1548'
+    name: Technique 1548
+    tactic: Privilege Escalation
+  - technique: '1550'
+    name: Technique 1550
+    tactic: ''
+  - technique: '1550.001'
+    name: Technique 1550.001
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

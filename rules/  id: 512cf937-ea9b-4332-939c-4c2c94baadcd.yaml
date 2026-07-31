@@ -1,0 +1,27 @@
+rule:
+  id: sigma-512cf937-ea9b-4332-939c-4c2c94baadcd
+  version: 1
+  name: Azure Firewall Modified or Deleted
+  description: Identifies when a firewall is created, modified, or deleted.
+  author: Austin Songer @austinsonger
+  created: 2026-07-31T22:31:34.322403535+00:00
+  modified: 2026-07-31T22:31:34.322403535+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1686.001'
+    name: Technique 1686.001
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

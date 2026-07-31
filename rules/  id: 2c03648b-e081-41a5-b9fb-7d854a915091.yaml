@@ -1,0 +1,27 @@
+rule:
+  id: sigma-2c03648b-e081-41a5-b9fb-7d854a915091
+  version: 1
+  name: Rclone Activity via Proxy
+  description: Detects the use of rclone, a command-line program to manage files on cloud storage, via its default user-agent string
+  author: Janantha Marasinghe
+  created: 2026-07-31T22:31:34.290854374+00:00
+  modified: 2026-07-31T22:31:34.290854374+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1567.002'
+    name: Technique 1567.002
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,29 @@
+rule:
+  id: sigma-77caf516-34e5-4df9-b4db-20744fea0a60
+  version: 1
+  name: AWS Successful Console Login Without MFA
+  description: |
+    Detects successful AWS console logins that were performed without Multi-Factor Authentication (MFA).
+    This alert can be used to identify potential unauthorized access attempts, as logging in without MFA can indicate compromised credentials or misconfigured security settings.
+  author: Thuya@Hacktilizer, Ivan Saakov
+  created: 2026-07-31T22:31:34.298161429+00:00
+  modified: 2026-07-31T22:31:34.298161429+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078.004'
+    name: Technique 1078.004
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

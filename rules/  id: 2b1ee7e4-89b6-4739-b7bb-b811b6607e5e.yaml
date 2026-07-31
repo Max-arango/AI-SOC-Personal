@@ -1,0 +1,33 @@
+rule:
+  id: sigma-2b1ee7e4-89b6-4739-b7bb-b811b6607e5e
+  version: 1
+  name: PwnDrp Access
+  description: Detects downloads from PwnDrp web servers developed for red team testing and most likely also used for criminal activity
+  author: Florian Roth (Nextron Systems)
+  created: 2026-07-31T22:31:34.281646341+00:00
+  modified: 2026-07-31T22:31:34.281646341+00:00
+  enabled: true
+  category: command-and-control
+  subcategory: null
+  mitre:
+  - technique: '1071.001'
+    name: Technique 1071.001
+    tactic: Command and Control
+  - technique: '1102.001'
+    name: Technique 1102.001
+    tactic: ''
+  - technique: '1102.003'
+    name: Technique 1102.003
+    tactic: ''
+  severity: Critical
+  risk:
+    base_score: 90
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

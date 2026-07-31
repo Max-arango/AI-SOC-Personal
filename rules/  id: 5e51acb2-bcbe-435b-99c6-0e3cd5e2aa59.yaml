@@ -1,0 +1,33 @@
+rule:
+  id: sigma-5e51acb2-bcbe-435b-99c6-0e3cd5e2aa59
+  version: 1
+  name: Cisco Stage Data
+  description: Various protocols maybe used to put data on the device for exfil or infil
+  author: Austin Clark
+  created: 2026-07-31T22:31:34.392428312+00:00
+  modified: 2026-07-31T22:31:34.392428312+00:00
+  enabled: true
+  category: collection
+  subcategory: null
+  mitre:
+  - technique: '1074'
+    name: Technique 1074
+    tactic: Collection
+  - technique: '1105'
+    name: Technique 1105
+    tactic: Command and Control
+  - technique: '1560.001'
+    name: Technique 1560.001
+    tactic: Collection
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

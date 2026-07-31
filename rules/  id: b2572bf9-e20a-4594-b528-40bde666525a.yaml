@@ -1,0 +1,27 @@
+rule:
+  id: sigma-b2572bf9-e20a-4594-b528-40bde666525a
+  version: 1
+  name: Impossible Travel
+  description: Identifies user activities originating from geographically distant locations within a time period shorter than the time it takes to travel from the first location to the second.
+  author: Mark Morowczynski '@markmorow', Gloria Lee, '@gleeiamglo'
+  created: 2026-07-31T22:31:34.355423712+00:00
+  modified: 2026-07-31T22:31:34.355423712+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078'
+    name: Technique 1078
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

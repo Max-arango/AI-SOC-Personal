@@ -1,0 +1,27 @@
+rule:
+  id: sigma-58f88172-a73d-442b-94c9-95eaed3cbb36
+  version: 1
+  name: New Federated Domain Added
+  description: Detects the addition of a new Federated Domain.
+  author: Splunk Threat Research Team (original rule), Harjot Singh @cyb3rjy0t (sigma rule)
+  created: 2026-07-31T22:31:34.383039925+00:00
+  modified: 2026-07-31T22:31:34.383039925+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1484.002'
+    name: Technique 1484.002
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

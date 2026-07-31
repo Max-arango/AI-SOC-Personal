@@ -1,0 +1,30 @@
+rule:
+  id: sigma-09438caa-07b1-4870-8405-1dbafe3dad95
+  version: 1
+  name: Azure Subscription Permission Elevation Via ActivityLogs
+  description: |
+    Detects when a user has been elevated to manage all Azure Subscriptions.
+    This change should be investigated immediately if it isn't planned.
+    This setting could allow an attacker access to Azure subscriptions in your environment.
+  author: Austin Songer @austinsonger
+  created: 2026-07-31T22:31:34.334933173+00:00
+  modified: 2026-07-31T22:31:34.334933173+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078.004'
+    name: Technique 1078.004
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,27 @@
+rule:
+  id: sigma-bae2865c-5565-470d-b505-9496c87d0c30
+  version: 1
+  name: SMB Spoolss Name Piped Usage
+  description: Detects the use of the spoolss named pipe over SMB. This can be used to trigger the authentication via NTLM of any machine that has the spoolservice enabled.
+  author: OTR (Open Threat Research), @neu5ron
+  created: 2026-07-31T22:31:34.400154022+00:00
+  modified: 2026-07-31T22:31:34.400154022+00:00
+  enabled: true
+  category: lateral-movement
+  subcategory: null
+  mitre:
+  - technique: '1021.002'
+    name: Technique 1021.002
+    tactic: Lateral Movement
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

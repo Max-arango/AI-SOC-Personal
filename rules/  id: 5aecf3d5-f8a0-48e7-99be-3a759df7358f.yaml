@@ -1,0 +1,27 @@
+rule:
+  id: sigma-5aecf3d5-f8a0-48e7-99be-3a759df7358f
+  version: 1
+  name: App Granted Privileged Delegated Or App Permissions
+  description: Detects when administrator grants either application permissions (app roles) or highly privileged delegated permissions
+  author: Bailey Bercik '@baileybercik', Mark Morowczynski '@markmorow'
+  created: 2026-07-31T22:31:34.342656769+00:00
+  modified: 2026-07-31T22:31:34.342656769+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1098.003'
+    name: Technique 1098.003
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

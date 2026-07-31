@@ -1,0 +1,27 @@
+rule:
+  id: sigma-8a63cdd4-6207-414a-85bc-7e032bd3c1a2
+  version: 1
+  name: AWS RDS Master Password Change
+  description: Detects the change of database master password. It may be a part of data exfiltration.
+  author: faloker
+  created: 2026-07-31T22:31:34.312883689+00:00
+  modified: 2026-07-31T22:31:34.312883689+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1020'
+    name: Technique 1020
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

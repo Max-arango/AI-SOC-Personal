@@ -1,0 +1,33 @@
+rule:
+  id: sigma-4922a5dd-6743-4fc2-8e81-144374280997
+  version: 1
+  name: Flash Player Update from Suspicious Location
+  description: Detects a flashplayer update from an unofficial location
+  author: Florian Roth (Nextron Systems)
+  created: 2026-07-31T22:31:34.282598403+00:00
+  modified: 2026-07-31T22:31:34.282598403+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1189'
+    name: Technique 1189
+    tactic: ''
+  - technique: '1204.002'
+    name: Technique 1204.002
+    tactic: Execution
+  - technique: '1036.005'
+    name: Technique 1036.005
+    tactic: Defense Evasion
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

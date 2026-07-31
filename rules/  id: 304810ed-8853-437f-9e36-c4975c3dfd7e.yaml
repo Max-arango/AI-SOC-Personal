@@ -1,0 +1,27 @@
+rule:
+  id: sigma-304810ed-8853-437f-9e36-c4975c3dfd7e
+  version: 1
+  name: HackTool - BabyShark Agent Default URL Pattern
+  description: Detects Baby Shark C2 Framework default communication patterns
+  author: Florian Roth (Nextron Systems)
+  created: 2026-07-31T22:31:34.279252830+00:00
+  modified: 2026-07-31T22:31:34.279252830+00:00
+  enabled: true
+  category: command-and-control
+  subcategory: null
+  mitre:
+  - technique: '1071.001'
+    name: Technique 1071.001
+    tactic: Command and Control
+  severity: Critical
+  risk:
+    base_score: 90
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

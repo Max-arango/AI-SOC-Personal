@@ -1,0 +1,27 @@
+rule:
+  id: sigma-821b4dc3-1295-41e7-b157-39ab212dd6bd
+  version: 1
+  name: Sign-In From Malware Infected IP
+  description: Indicates sign-ins from IP addresses infected with malware that is known to actively communicate with a bot server.
+  author: Mark Morowczynski '@markmorow', Gloria Lee, '@gleeiamglo'
+  created: 2026-07-31T22:31:34.357612385+00:00
+  modified: 2026-07-31T22:31:34.357612385+00:00
+  enabled: true
+  category: command-and-control
+  subcategory: null
+  mitre:
+  - technique: '1090'
+    name: Technique 1090
+    tactic: Command and Control
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

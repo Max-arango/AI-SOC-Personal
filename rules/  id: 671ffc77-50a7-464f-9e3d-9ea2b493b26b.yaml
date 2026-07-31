@@ -1,0 +1,36 @@
+rule:
+  id: sigma-671ffc77-50a7-464f-9e3d-9ea2b493b26b
+  version: 1
+  name: Cisco Modify Configuration
+  description: Modifications to a config that will serve an adversary's impacts or persistence
+  author: Austin Clark
+  created: 2026-07-31T22:31:34.392184942+00:00
+  modified: 2026-07-31T22:31:34.392184942+00:00
+  enabled: true
+  category: impact
+  subcategory: null
+  mitre:
+  - technique: '1490'
+    name: Technique 1490
+    tactic: Impact
+  - technique: '1505'
+    name: Technique 1505
+    tactic: ''
+  - technique: '1565.002'
+    name: Technique 1565.002
+    tactic: ''
+  - technique: '1053'
+    name: Technique 1053
+    tactic: Persistence
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

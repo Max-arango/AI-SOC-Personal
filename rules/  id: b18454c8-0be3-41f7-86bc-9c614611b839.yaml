@@ -1,0 +1,26 @@
+rule:
+  id: sigma-b18454c8-0be3-41f7-86bc-9c614611b839
+  version: 1
+  name: Multi Factor Authentication Disabled For User Account
+  description: |
+    Detects changes to the "StrongAuthenticationRequirement" value, where the state is set to "0" or "Disabled".
+    Threat actors were seen disabling multi factor authentication for users in order to maintain or achieve access to the account. Also see in SIM Swap attacks.
+  author: Harjot Singh (@cyb3rjy0t)
+  created: 2026-07-31T22:31:34.352726844+00:00
+  modified: 2026-07-31T22:31:34.352726844+00:00
+  enabled: true
+  category: general
+  subcategory: null
+  mitre: []
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

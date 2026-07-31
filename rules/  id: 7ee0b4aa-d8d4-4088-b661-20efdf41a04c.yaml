@@ -1,0 +1,33 @@
+rule:
+  id: sigma-7ee0b4aa-d8d4-4088-b661-20efdf41a04c
+  version: 1
+  name: Azure Kubernetes Secret or Config Object Access
+  description: Identifies when a Kubernetes account access a sensitive objects such as configmaps or secrets.
+  author: Austin Songer @austinsonger
+  created: 2026-07-31T22:31:34.330741116+00:00
+  modified: 2026-07-31T22:31:34.330741116+00:00
+  enabled: true
+  category: impact
+  subcategory: null
+  mitre:
+  - technique: '1485'
+    name: Technique 1485
+    tactic: Impact
+  - technique: '1496'
+    name: Technique 1496
+    tactic: ''
+  - technique: '1489'
+    name: Technique 1489
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

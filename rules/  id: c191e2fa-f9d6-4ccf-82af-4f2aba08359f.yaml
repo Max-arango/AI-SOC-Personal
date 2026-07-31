@@ -1,0 +1,27 @@
+rule:
+  id: sigma-c191e2fa-f9d6-4ccf-82af-4f2aba08359f
+  version: 1
+  name: Logon from a Risky IP Address
+  description: Detects when a Microsoft Cloud App Security reported when a user signs into your sanctioned apps from a risky IP address.
+  author: Austin Songer @austinsonger
+  created: 2026-07-31T22:31:34.385884543+00:00
+  modified: 2026-07-31T22:31:34.385884543+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078'
+    name: Technique 1078
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

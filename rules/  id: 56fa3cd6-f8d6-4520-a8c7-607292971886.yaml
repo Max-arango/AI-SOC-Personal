@@ -1,0 +1,33 @@
+rule:
+  id: sigma-56fa3cd6-f8d6-4520-a8c7-607292971886
+  version: 1
+  name: Cisco BGP Authentication Failures
+  description: Detects BGP failures which may be indicative of brute force attacks to manipulate routing
+  author: Tim Brown
+  created: 2026-07-31T22:31:34.392940331+00:00
+  modified: 2026-07-31T22:31:34.392940331+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078'
+    name: Technique 1078
+    tactic: ''
+  - technique: '1110'
+    name: Technique 1110
+    tactic: ''
+  - technique: '1557'
+    name: Technique 1557
+    tactic: ''
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

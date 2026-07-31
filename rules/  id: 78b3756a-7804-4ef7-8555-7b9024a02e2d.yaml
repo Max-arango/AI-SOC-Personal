@@ -1,0 +1,27 @@
+rule:
+  id: sigma-78b3756a-7804-4ef7-8555-7b9024a02e2d
+  version: 1
+  name: AWS S3 Data Management Tampering
+  description: Detects when a user tampers with S3 data management in Amazon Web Services.
+  author: Austin Songer @austinsonger
+  created: 2026-07-31T22:31:34.316088312+00:00
+  modified: 2026-07-31T22:31:34.316088312+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1537'
+    name: Technique 1537
+    tactic: ''
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

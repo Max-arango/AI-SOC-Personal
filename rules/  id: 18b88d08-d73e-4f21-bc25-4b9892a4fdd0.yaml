@@ -1,0 +1,27 @@
+rule:
+  id: sigma-18b88d08-d73e-4f21-bc25-4b9892a4fdd0
+  version: 1
+  name: PST Export Alert Using eDiscovery Alert
+  description: Alert on when a user has performed an eDiscovery search or exported a PST file from the search. This PST file usually has sensitive information including email body content
+  author: Sorina Ionescu
+  created: 2026-07-31T22:31:34.386488953+00:00
+  modified: 2026-07-31T22:31:34.386488953+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1114'
+    name: Technique 1114
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

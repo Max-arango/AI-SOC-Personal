@@ -1,0 +1,27 @@
+rule:
+  id: sigma-2b669496-d215-47d8-bd9a-f4a45bf07cda
+  version: 1
+  name: Data Exfiltration to Unsanctioned Apps
+  description: Detects when a Microsoft Cloud App Security reported when a user or IP address uses an app that is not sanctioned to perform an activity that resembles an attempt to exfiltrate information from your organization.
+  author: Austin Songer @austinsonger
+  created: 2026-07-31T22:31:34.385320883+00:00
+  modified: 2026-07-31T22:31:34.385320883+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1537'
+    name: Technique 1537
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

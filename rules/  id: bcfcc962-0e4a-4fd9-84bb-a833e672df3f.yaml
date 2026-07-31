@@ -1,0 +1,24 @@
+rule:
+  id: sigma-bcfcc962-0e4a-4fd9-84bb-a833e672df3f
+  version: 1
+  name: Azure Virtual Network Modified or Deleted
+  description: Identifies when a Virtual Network is modified or deleted in Azure.
+  author: Austin Songer @austinsonger
+  created: 2026-07-31T22:31:34.335524024+00:00
+  modified: 2026-07-31T22:31:34.335524024+00:00
+  enabled: true
+  category: general
+  subcategory: null
+  mitre: []
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,27 @@
+rule:
+  id: sigma-33d50d03-20ec-4b74-a74e-1e65a38af1c0
+  version: 1
+  name: AWS EKS Cluster Created or Deleted
+  description: Identifies when an EKS cluster is created or deleted.
+  author: Austin Songer
+  created: 2026-07-31T22:31:34.306915702+00:00
+  modified: 2026-07-31T22:31:34.306915702+00:00
+  enabled: true
+  category: impact
+  subcategory: null
+  mitre:
+  - technique: '1485'
+    name: Technique 1485
+    tactic: Impact
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,25 @@
+rule:
+  id: sigma-68c2c604-92ad-468b-bf4a-aac49adad08c
+  version: 1
+  name: HTTP Request to Low Reputation TLD or Suspicious File Extension
+  description: |
+    Detects HTTP requests to low reputation TLDs (e.g. .xyz, .top, .ru) or ending in suspicious file extensions (.exe, .dll, .hta), which may indicate malicious activity.
+  author: '@signalblur, Corelight'
+  created: 2026-07-31T22:31:34.403947856+00:00
+  modified: 2026-07-31T22:31:34.403947856+00:00
+  enabled: true
+  category: general
+  subcategory: null
+  mitre: []
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

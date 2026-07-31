@@ -1,0 +1,27 @@
+rule:
+  id: sigma-e402c26a-267a-45bd-9615-bd9ceda6da85
+  version: 1
+  name: Stale Accounts In A Privileged Role
+  description: Identifies when an account hasn't signed in during the past n number of days.
+  author: Mark Morowczynski '@markmorow', Gloria Lee, '@gleeiamglo'
+  created: 2026-07-31T22:31:34.360889894+00:00
+  modified: 2026-07-31T22:31:34.360889894+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078'
+    name: Technique 1078
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

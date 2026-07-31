@@ -1,0 +1,39 @@
+rule:
+  id: sigma-6ad91e31-53df-4826-bd27-0166171c8040
+  version: 1
+  name: Google Cloud Kubernetes Admission Controller
+  description: |
+    Identifies when an admission controller is executed in GCP Kubernetes.
+    A Kubernetes Admission controller intercepts, and possibly modifies, requests to the Kubernetes API server.
+    The behavior of this admission controller is determined by an admission webhook (MutatingAdmissionWebhook or ValidatingAdmissionWebhook) that the user deploys in the cluster.
+    An adversary can use such webhooks as the MutatingAdmissionWebhook for obtaining persistence in the cluster.
+    For example, attackers can intercept and modify the pod creation operations in the cluster and add their malicious container to every created pod. An adversary can use the webhook ValidatingAdmissionWebhook, which could be used to obtain access credentials.
+    An adversary could use the webhook to intercept the requests to the API server, record secrets, and other sensitive information.
+  author: Austin Songer @austinsonger
+  created: 2026-07-31T22:31:34.373160072+00:00
+  modified: 2026-07-31T22:31:34.373160072+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078'
+    name: Technique 1078
+    tactic: ''
+  - technique: '1552'
+    name: Technique 1552
+    tactic: Credential Access
+  - technique: '1552.007'
+    name: Technique 1552.007
+    tactic: Credential Access
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

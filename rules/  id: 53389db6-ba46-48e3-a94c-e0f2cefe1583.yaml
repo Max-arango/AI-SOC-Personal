@@ -1,0 +1,27 @@
+rule:
+  id: sigma-53389db6-ba46-48e3-a94c-e0f2cefe1583
+  version: 1
+  name: MITRE BZAR Indicators for Persistence
+  description: Windows DCE-RPC functions which indicate a persistence techniques on the remote system. All credit for the Zeek mapping of the suspicious endpoint/operation field goes to MITRE.
+  author: '@neu5ron, SOC Prime'
+  created: 2026-07-31T22:31:34.399457616+00:00
+  modified: 2026-07-31T22:31:34.399457616+00:00
+  enabled: true
+  category: persistence
+  subcategory: null
+  mitre:
+  - technique: '1547.004'
+    name: Technique 1547.004
+    tactic: Persistence
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

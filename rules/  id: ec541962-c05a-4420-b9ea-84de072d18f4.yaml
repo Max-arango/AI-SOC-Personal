@@ -1,0 +1,26 @@
+rule:
+  id: sigma-ec541962-c05a-4420-b9ea-84de072d18f4
+  version: 1
+  name: New AWS Lambda Function URL Configuration Created
+  description: |
+    Detects when a user creates a Lambda function URL configuration, which could be used to expose the function to the internet and potentially allow unauthorized access to the function's IAM role for AWS API calls.
+    This could give an adversary access to the privileges associated with the Lambda service role that is attached to that function.
+  author: Ivan Saakov
+  created: 2026-07-31T22:31:34.311411497+00:00
+  modified: 2026-07-31T22:31:34.311411497+00:00
+  enabled: true
+  category: general
+  subcategory: null
+  mitre: []
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

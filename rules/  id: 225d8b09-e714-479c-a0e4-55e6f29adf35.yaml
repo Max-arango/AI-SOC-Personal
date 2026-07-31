@@ -1,0 +1,27 @@
+rule:
+  id: sigma-225d8b09-e714-479c-a0e4-55e6f29adf35
+  version: 1
+  name: Azure Kubernetes Events Deleted
+  description: Detects when Events are deleted in Azure Kubernetes. An adversary may delete events in Azure Kubernetes in an attempt to evade detection.
+  author: Austin Songer @austinsonger
+  created: 2026-07-31T22:31:34.327572756+00:00
+  modified: 2026-07-31T22:31:34.327572756+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1685'
+    name: Technique 1685
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,33 @@
+rule:
+  id: sigma-71d65515-c436-43c0-841b-236b1f32c21e
+  version: 1
+  name: Cisco File Deletion
+  description: See what files are being deleted from flash file systems
+  author: Austin Clark
+  created: 2026-07-31T22:31:34.391440802+00:00
+  modified: 2026-07-31T22:31:34.391440802+00:00
+  enabled: true
+  category: defense-evasion
+  subcategory: null
+  mitre:
+  - technique: '1070.004'
+    name: Technique 1070.004
+    tactic: Defense Evasion
+  - technique: '1561.001'
+    name: Technique 1561.001
+    tactic: ''
+  - technique: '1561.002'
+    name: Technique 1561.002
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

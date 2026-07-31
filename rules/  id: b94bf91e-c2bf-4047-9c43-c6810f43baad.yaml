@@ -1,0 +1,29 @@
+rule:
+  id: sigma-b94bf91e-c2bf-4047-9c43-c6810f43baad
+  version: 1
+  name: AWS ECS Task Definition That Queries The Credential Endpoint
+  description: |
+    Detects when an Elastic Container Service (ECS) Task Definition includes a command to query the credential endpoint.
+    This can indicate a potential adversary adding a backdoor to establish persistence or escalate privileges.
+  author: Darin Smith
+  created: 2026-07-31T22:31:34.305607110+00:00
+  modified: 2026-07-31T22:31:34.305607110+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1525'
+    name: Technique 1525
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

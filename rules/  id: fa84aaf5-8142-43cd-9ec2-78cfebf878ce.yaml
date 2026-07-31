@@ -1,0 +1,27 @@
+rule:
+  id: sigma-fa84aaf5-8142-43cd-9ec2-78cfebf878ce
+  version: 1
+  name: Temporary Access Pass Added To An Account
+  description: Detects when a temporary access pass (TAP) is added to an account. TAPs added to priv accounts should be investigated
+  author: Mark Morowczynski '@markmorow', Yochana Henderson, '@Yochana-H'
+  created: 2026-07-31T22:31:34.351683211+00:00
+  modified: 2026-07-31T22:31:34.351683211+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078.004'
+    name: Technique 1078.004
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

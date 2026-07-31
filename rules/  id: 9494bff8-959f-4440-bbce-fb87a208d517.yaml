@@ -1,0 +1,27 @@
+rule:
+  id: sigma-9494bff8-959f-4440-bbce-fb87a208d517
+  version: 1
+  name: Changes to Device Registration Policy
+  description: Monitor and alert for changes to the device registration policy.
+  author: Michael Epping, '@mepples21'
+  created: 2026-07-31T22:31:34.337703496+00:00
+  modified: 2026-07-31T22:31:34.337703496+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1484'
+    name: Technique 1484
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

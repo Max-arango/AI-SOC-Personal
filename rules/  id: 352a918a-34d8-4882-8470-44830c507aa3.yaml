@@ -1,0 +1,32 @@
+rule:
+  id: sigma-352a918a-34d8-4882-8470-44830c507aa3
+  version: 1
+  name: Malicious Usage Of IMDS Credentials Outside Of AWS Infrastructure
+  description: |
+    Detects when an instance identity has taken an action that isn't inside SSM.
+    This can indicate that a compromised EC2 instance is being used as a pivot point.
+  author: jamesc-grafana
+  created: 2026-07-31T22:31:34.299372067+00:00
+  modified: 2026-07-31T22:31:34.299372067+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078'
+    name: Technique 1078
+    tactic: ''
+  - technique: '1078.002'
+    name: Technique 1078.002
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

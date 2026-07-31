@@ -1,0 +1,30 @@
+rule:
+  id: sigma-459a2970-bb84-4e6a-a32e-ff0fbd99448d
+  version: 1
+  name: Azure Key Vault Modified or Deleted
+  description: Identifies when a key vault is modified or deleted.
+  author: Austin Songer @austinsonger
+  created: 2026-07-31T22:31:34.324677400+00:00
+  modified: 2026-07-31T22:31:34.324677400+00:00
+  enabled: true
+  category: credential-access
+  subcategory: null
+  mitre:
+  - technique: '1552'
+    name: Technique 1552
+    tactic: Credential Access
+  - technique: '1552.001'
+    name: Technique 1552.001
+    tactic: Credential Access
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

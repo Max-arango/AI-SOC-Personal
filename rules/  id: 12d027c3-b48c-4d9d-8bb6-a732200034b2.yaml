@@ -1,0 +1,36 @@
+rule:
+  id: sigma-12d027c3-b48c-4d9d-8bb6-a732200034b2
+  version: 1
+  name: Azure Kubernetes Service Account Modified or Deleted
+  description: Identifies when a service account is modified or deleted.
+  author: Austin Songer @austinsonger
+  created: 2026-07-31T22:31:34.331398619+00:00
+  modified: 2026-07-31T22:31:34.331398619+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1531'
+    name: Technique 1531
+    tactic: ''
+  - technique: '1485'
+    name: Technique 1485
+    tactic: Impact
+  - technique: '1496'
+    name: Technique 1496
+    tactic: ''
+  - technique: '1489'
+    name: Technique 1489
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,33 @@
+rule:
+  id: sigma-00d0b5ab-1f55-4120-8e83-487c0a7baf19
+  version: 1
+  name: Download From Suspicious TLD - Blacklist
+  description: Detects download of certain file types from hosts in suspicious TLDs
+  author: Florian Roth (Nextron Systems)
+  created: 2026-07-31T22:31:34.276751957+00:00
+  modified: 2026-07-31T22:31:34.276751957+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1566'
+    name: Technique 1566
+    tactic: ''
+  - technique: '1203'
+    name: Technique 1203
+    tactic: Execution
+  - technique: '1204.002'
+    name: Technique 1204.002
+    tactic: Execution
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

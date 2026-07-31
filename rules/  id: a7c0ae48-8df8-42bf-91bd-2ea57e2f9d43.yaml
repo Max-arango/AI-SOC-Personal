@@ -1,0 +1,33 @@
+rule:
+  id: sigma-a7c0ae48-8df8-42bf-91bd-2ea57e2f9d43
+  version: 1
+  name: Juniper BGP Missing MD5
+  description: Detects juniper BGP missing MD5 digest. Which may be indicative of brute force attacks to manipulate routing.
+  author: Tim Brown
+  created: 2026-07-31T22:31:34.398547438+00:00
+  modified: 2026-07-31T22:31:34.398547438+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078'
+    name: Technique 1078
+    tactic: ''
+  - technique: '1110'
+    name: Technique 1110
+    tactic: ''
+  - technique: '1557'
+    name: Technique 1557
+    tactic: ''
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

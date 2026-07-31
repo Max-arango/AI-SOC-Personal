@@ -1,0 +1,27 @@
+rule:
+  id: sigma-c2496b41-16a9-4016-a776-b23f8910dc58
+  version: 1
+  name: Certificate-Based Authentication Enabled
+  description: Detects when certificate based authentication has been enabled in an Azure Active Directory tenant.
+  author: Harjot Shah Singh, '@cyb3rjy0t'
+  created: 2026-07-31T22:31:34.337460619+00:00
+  modified: 2026-07-31T22:31:34.337460619+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1556'
+    name: Technique 1556
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

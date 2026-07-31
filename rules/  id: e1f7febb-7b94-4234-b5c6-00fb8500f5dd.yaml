@@ -1,0 +1,28 @@
+rule:
+  id: sigma-e1f7febb-7b94-4234-b5c6-00fb8500f5dd
+  version: 1
+  name: New Network ACL Entry Added
+  description: |
+    Detects that network ACL entries have been added to a route table which could indicate that new attack vectors have been opened up in the AWS account.
+  author: jamesc-grafana
+  created: 2026-07-31T22:31:34.299622991+00:00
+  modified: 2026-07-31T22:31:34.299622991+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1686.001'
+    name: Technique 1686.001
+    tactic: ''
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

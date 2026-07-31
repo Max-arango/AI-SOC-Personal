@@ -1,0 +1,27 @@
+rule:
+  id: sigma-6897cd82-6664-11ed-9022-0242ac120002
+  version: 1
+  name: PST Export Alert Using New-ComplianceSearchAction
+  description: Alert when a user has performed an export to a search using 'New-ComplianceSearchAction' with the '-Export' flag. This detection will detect PST export even if the 'eDiscovery search or exported' alert is disabled in the O365.This rule will apply to ExchangePowerShell usage and from the cloud.
+  author: Nikita Khalimonenkov
+  created: 2026-07-31T22:31:34.386812842+00:00
+  modified: 2026-07-31T22:31:34.386812842+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1114'
+    name: Technique 1114
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

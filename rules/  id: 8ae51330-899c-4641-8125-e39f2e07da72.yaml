@@ -1,0 +1,27 @@
+rule:
+  id: sigma-8ae51330-899c-4641-8125-e39f2e07da72
+  version: 1
+  name: DNS TXT Answer with Possible Execution Strings
+  description: Detects strings used in command execution in DNS TXT Answer
+  author: Markus Neis
+  created: 2026-07-31T22:31:34.395199470+00:00
+  modified: 2026-07-31T22:31:34.395199470+00:00
+  enabled: true
+  category: command-and-control
+  subcategory: null
+  mitre:
+  - technique: '1071.004'
+    name: Technique 1071.004
+    tactic: Command and Control
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

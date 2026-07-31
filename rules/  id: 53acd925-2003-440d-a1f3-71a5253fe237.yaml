@@ -1,0 +1,27 @@
+rule:
+  id: sigma-53acd925-2003-440d-a1f3-71a5253fe237
+  version: 1
+  name: Anonymous IP Address
+  description: Indicates sign-ins from an anonymous IP address, for example, using an anonymous browser or VPN.
+  author: Gloria Lee, '@gleeiamglo'
+  created: 2026-07-31T22:31:34.354778236+00:00
+  modified: 2026-07-31T22:31:34.354778236+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1528'
+    name: Technique 1528
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

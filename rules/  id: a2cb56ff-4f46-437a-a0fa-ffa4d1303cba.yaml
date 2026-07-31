@@ -1,0 +1,27 @@
+rule:
+  id: sigma-a2cb56ff-4f46-437a-a0fa-ffa4d1303cba
+  version: 1
+  name: Azure AD Threat Intelligence
+  description: Indicates user activity that is unusual for the user or consistent with known attack patterns.
+  author: Mark Morowczynski '@markmorow', Gloria Lee, '@gleeiamglo'
+  created: 2026-07-31T22:31:34.360006540+00:00
+  modified: 2026-07-31T22:31:34.360006540+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078'
+    name: Technique 1078
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

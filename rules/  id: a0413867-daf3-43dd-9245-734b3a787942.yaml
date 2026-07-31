@@ -1,0 +1,27 @@
+rule:
+  id: sigma-a0413867-daf3-43dd-9245-734b3a787942
+  version: 1
+  name: Bitlocker Key Retrieval
+  description: Monitor and alert for Bitlocker key retrieval.
+  author: Michael Epping, '@mepples21'
+  created: 2026-07-31T22:31:34.337183148+00:00
+  modified: 2026-07-31T22:31:34.337183148+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078.004'
+    name: Technique 1078.004
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

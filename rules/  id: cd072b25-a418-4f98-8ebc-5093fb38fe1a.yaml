@@ -1,0 +1,33 @@
+rule:
+  id: sigma-cd072b25-a418-4f98-8ebc-5093fb38fe1a
+  version: 1
+  name: Cisco Collect Data
+  description: Collect pertinent data from the configuration files
+  author: Austin Clark
+  created: 2026-07-31T22:31:34.388908357+00:00
+  modified: 2026-07-31T22:31:34.388908357+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1087.001'
+    name: Technique 1087.001
+    tactic: ''
+  - technique: '1552.001'
+    name: Technique 1552.001
+    tactic: Credential Access
+  - technique: '1005'
+    name: Technique 1005
+    tactic: ''
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

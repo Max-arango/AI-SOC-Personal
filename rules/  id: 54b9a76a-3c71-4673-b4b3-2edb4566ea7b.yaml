@@ -1,0 +1,30 @@
+rule:
+  id: sigma-54b9a76a-3c71-4673-b4b3-2edb4566ea7b
+  version: 1
+  name: AWS EC2 VM Export Failure
+  description: An attempt to export an AWS EC2 instance has been detected. A VM Export might indicate an attempt to extract information from an instance.
+  author: Diogo Braz
+  created: 2026-07-31T22:31:34.304985181+00:00
+  modified: 2026-07-31T22:31:34.304985181+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1005'
+    name: Technique 1005
+    tactic: ''
+  - technique: '1537'
+    name: Technique 1537
+    tactic: ''
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,27 @@
+rule:
+  id: sigma-d7eab125-5f94-43df-8710-795b80fa1189
+  version: 1
+  name: Microsoft 365 - Impossible Travel Activity
+  description: Detects when a Microsoft Cloud App Security reported a risky sign-in attempt due to a login associated with an impossible travel.
+  author: Austin Songer @austinsonger
+  created: 2026-07-31T22:31:34.385604724+00:00
+  modified: 2026-07-31T22:31:34.385604724+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078'
+    name: Technique 1078
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

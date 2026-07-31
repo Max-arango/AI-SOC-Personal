@@ -1,0 +1,30 @@
+rule:
+  id: sigma-28eea407-28d7-4e42-b0be-575d5ba60b2c
+  version: 1
+  name: Azure AD Only Single Factor Authentication Required
+  description: Detect when users are authenticating without MFA being required.
+  author: MikeDuddington, '@dudders1'
+  created: 2026-07-31T22:31:34.365041152+00:00
+  modified: 2026-07-31T22:31:34.365041152+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078.004'
+    name: Technique 1078.004
+    tactic: ''
+  - technique: '1556.006'
+    name: Technique 1556.006
+    tactic: ''
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

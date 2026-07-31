@@ -1,0 +1,27 @@
+rule:
+  id: sigma-c3f265c7-ff03-4056-8ab2-d486227b4599
+  version: 1
+  name: Restore Public AWS RDS Instance
+  description: Detects the recovery of a new public database instance from a snapshot. It may be a part of data exfiltration.
+  author: faloker
+  created: 2026-07-31T22:31:34.313812305+00:00
+  modified: 2026-07-31T22:31:34.313812305+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1020'
+    name: Technique 1020
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

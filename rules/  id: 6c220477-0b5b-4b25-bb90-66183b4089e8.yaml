@@ -1,0 +1,27 @@
+rule:
+  id: sigma-6c220477-0b5b-4b25-bb90-66183b4089e8
+  version: 1
+  name: Suspicious Inbox Forwarding
+  description: Detects when a Microsoft Cloud App Security reported suspicious email forwarding rules, for example, if a user created an inbox rule that forwards a copy of all emails to an external address.
+  author: Austin Songer @austinsonger
+  created: 2026-07-31T22:31:34.387103671+00:00
+  modified: 2026-07-31T22:31:34.387103671+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1020'
+    name: Technique 1020
+    tactic: ''
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

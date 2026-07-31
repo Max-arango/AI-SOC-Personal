@@ -1,0 +1,27 @@
+rule:
+  id: sigma-b094d9fb-b1ad-4650-9f1a-fb7be9f1d34b
+  version: 1
+  name: Cisco Show Commands Input
+  description: See what commands are being input into the device by other people, full credentials can be in the history
+  author: Austin Clark
+  created: 2026-07-31T22:31:34.391669636+00:00
+  modified: 2026-07-31T22:31:34.391669636+00:00
+  enabled: true
+  category: credential-access
+  subcategory: null
+  mitre:
+  - technique: '1552.003'
+    name: Technique 1552.003
+    tactic: Credential Access
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

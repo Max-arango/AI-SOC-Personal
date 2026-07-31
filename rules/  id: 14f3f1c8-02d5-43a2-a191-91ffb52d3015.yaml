@@ -1,0 +1,29 @@
+rule:
+  id: sigma-14f3f1c8-02d5-43a2-a191-91ffb52d3015
+  version: 1
+  name: RDS Database Security Group Modification
+  description: |
+    Detects changes to the security group entries for RDS databases.
+    This can indicate that a misconfiguration has occurred which potentially exposes the database to the public internet, a wider audience within the VPC or that removal of valid rules has occurred which could impact the availability of the database to legitimate services and users.
+  author: jamesc-grafana
+  created: 2026-07-31T22:31:34.301379422+00:00
+  modified: 2026-07-31T22:31:34.301379422+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1190'
+    name: Technique 1190
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

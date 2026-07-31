@@ -1,0 +1,30 @@
+rule:
+  id: sigma-db014773-b1d3-46bd-ba26-133337c0ffee
+  version: 1
+  name: AWS IAM S3Browser LoginProfile Creation
+  description: Detects S3 Browser utility performing reconnaissance looking for existing IAM Users without a LoginProfile defined then (when found) creating a LoginProfile.
+  author: daniel.bohannon@permiso.io (@danielhbohannon)
+  created: 2026-07-31T22:31:34.309805605+00:00
+  modified: 2026-07-31T22:31:34.309805605+00:00
+  enabled: true
+  category: execution
+  subcategory: null
+  mitre:
+  - technique: '1059.009'
+    name: Technique 1059.009
+    tactic: Execution
+  - technique: '1078.004'
+    name: Technique 1078.004
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

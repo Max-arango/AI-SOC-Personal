@@ -1,0 +1,27 @@
+rule:
+  id: sigma-eb6c2004-1cef-427f-8885-9042974e5eb6
+  version: 1
+  name: Suspicious Network Communication With IPFS
+  description: Detects connections to interplanetary file system (IPFS) containing a user's email address which mirrors behaviours observed in recent phishing campaigns leveraging IPFS to host credential harvesting webpages.
+  author: Gavin Knapp
+  created: 2026-07-31T22:31:34.283085930+00:00
+  modified: 2026-07-31T22:31:34.283085930+00:00
+  enabled: true
+  category: collection
+  subcategory: null
+  mitre:
+  - technique: '1056'
+    name: Technique 1056
+    tactic: Collection
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

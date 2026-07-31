@@ -1,0 +1,27 @@
+rule:
+  id: sigma-7bbc309f-e2b1-4eb1-8369-131a367d67d3
+  version: 1
+  name: Too Many Global Admins
+  description: Identifies an event where there are there are too many accounts assigned the Global Administrator role.
+  author: Mark Morowczynski '@markmorow', Gloria Lee, '@gleeiamglo'
+  created: 2026-07-31T22:31:34.363325502+00:00
+  modified: 2026-07-31T22:31:34.363325502+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078'
+    name: Technique 1078
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

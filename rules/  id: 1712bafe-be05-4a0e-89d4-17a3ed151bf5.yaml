@@ -1,0 +1,28 @@
+rule:
+  id: sigma-1712bafe-be05-4a0e-89d4-17a3ed151bf5
+  version: 1
+  name: Potential Hello-World Scraper Botnet Activity
+  description: |
+    Detects network traffic potentially associated with a scraper botnet variant that uses the "Hello-World/1.0" user-agent string.
+  author: Joseph A. M.
+  created: 2026-07-31T22:31:34.278836182+00:00
+  modified: 2026-07-31T22:31:34.278836182+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1595'
+    name: Technique 1595
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

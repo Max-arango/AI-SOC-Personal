@@ -1,0 +1,26 @@
+rule:
+  id: sigma-39c9f26d-6e3b-4dbb-9c7a-4154b0281112
+  version: 1
+  name: AWS Bucket Deleted
+  description: |
+    Detects the deletion of S3 buckets in AWS CloudTrail logs.
+    Monitoring the deletion of S3 buckets is critical for security and data integrity, as it may indicate potential data loss or unauthorized access attempts.
+  author: Ivan Saakov, Nasreddine Bencherchali
+  created: 2026-07-31T22:31:34.297558142+00:00
+  modified: 2026-07-31T22:31:34.297558142+00:00
+  enabled: true
+  category: general
+  subcategory: null
+  mitre: []
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

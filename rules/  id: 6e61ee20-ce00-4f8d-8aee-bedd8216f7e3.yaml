@@ -1,0 +1,27 @@
+rule:
+  id: sigma-6e61ee20-ce00-4f8d-8aee-bedd8216f7e3
+  version: 1
+  name: AWS GuardDuty Important Change
+  description: Detects updates of the GuardDuty list of trusted IPs, perhaps to disable security alerts against malicious IPs.
+  author: faloker
+  created: 2026-07-31T22:31:34.309130907+00:00
+  modified: 2026-07-31T22:31:34.309130907+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1685'
+    name: Technique 1685
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

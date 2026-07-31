@@ -1,0 +1,31 @@
+rule:
+  id: sigma-1279262f-1464-422f-ac0d-5b545320c526
+  version: 1
+  name: AWS KMS Imported Key Material Usage
+  description: |
+    Detects the import or deletion of key material in AWS KMS, which can be used as part of ransomware attacks. This activity is uncommon and provides a high certainty signal.
+  author: toopricey
+  created: 2026-07-31T22:31:34.310893208+00:00
+  modified: 2026-07-31T22:31:34.310893208+00:00
+  enabled: true
+  category: impact
+  subcategory: null
+  mitre:
+  - technique: '1486'
+    name: Technique 1486
+    tactic: Impact
+  - technique: '1608.003'
+    name: Technique 1608.003
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

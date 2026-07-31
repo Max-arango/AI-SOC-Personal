@@ -1,0 +1,28 @@
+rule:
+  id: sigma-1fc0809e-06bf-4de3-ad52-25e5263b7623
+  version: 1
+  name: Publicly Accessible RDP Service
+  description: |
+    Detects connections from routable IPs to an RDP listener. Which is indicative of a publicly-accessible RDP service.
+  author: Josh Brower @DefensiveDepth
+  created: 2026-07-31T22:31:34.404575227+00:00
+  modified: 2026-07-31T22:31:34.404575227+00:00
+  enabled: true
+  category: lateral-movement
+  subcategory: null
+  mitre:
+  - technique: '1021.001'
+    name: Technique 1021.001
+    tactic: Lateral Movement
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

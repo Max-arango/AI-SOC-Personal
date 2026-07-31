@@ -1,0 +1,30 @@
+rule:
+  id: sigma-e9a2b582-3f6a-48ac-b4a1-6849cdc50b3c
+  version: 1
+  name: Apache Threading Error
+  description: Detects an issue in apache logs that reports threading related errors
+  author: Florian Roth (Nextron Systems)
+  created: 2026-07-31T22:31:34.273848908+00:00
+  modified: 2026-07-31T22:31:34.273848908+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1190'
+    name: Technique 1190
+    tactic: ''
+  - technique: '1210'
+    name: Technique 1210
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

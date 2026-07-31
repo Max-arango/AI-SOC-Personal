@@ -1,0 +1,27 @@
+rule:
+  id: sigma-0b4b72e3-4c53-4d5b-b198-2c58cfef39a9
+  version: 1
+  name: Guest User Invited By Non Approved Inviters
+  description: Detects when a user that doesn't have permissions to invite a guest user attempts to invite one.
+  author: Mark Morowczynski '@markmorow', Yochana Henderson, '@Yochana-H'
+  created: 2026-07-31T22:31:34.346553321+00:00
+  modified: 2026-07-31T22:31:34.346553321+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078.004'
+    name: Technique 1078.004
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

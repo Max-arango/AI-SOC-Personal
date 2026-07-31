@@ -1,0 +1,27 @@
+rule:
+  id: sigma-f7b5b004-dece-46e4-a4a5-f6fd0e1c6947
+  version: 1
+  name: Privileged Account Creation
+  description: Detects when a new admin is created.
+  author: Mark Morowczynski '@markmorow', Yochana Henderson, '@Yochana-H', Tim Shelton
+  created: 2026-07-31T22:31:34.349767597+00:00
+  modified: 2026-07-31T22:31:34.349767597+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078.004'
+    name: Technique 1078.004
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

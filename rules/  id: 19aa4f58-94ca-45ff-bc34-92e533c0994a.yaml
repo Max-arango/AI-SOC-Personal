@@ -1,0 +1,27 @@
+rule:
+  id: sigma-19aa4f58-94ca-45ff-bc34-92e533c0994a
+  version: 1
+  name: Suspicious User-Agents Related To Recon Tools
+  description: Detects known suspicious (default) user-agents related to scanning/recon tools
+  author: Nasreddine Bencherchali (Nextron Systems), Tim Shelton
+  created: 2026-07-31T22:31:34.295150944+00:00
+  modified: 2026-07-31T22:31:34.295150944+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1190'
+    name: Technique 1190
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

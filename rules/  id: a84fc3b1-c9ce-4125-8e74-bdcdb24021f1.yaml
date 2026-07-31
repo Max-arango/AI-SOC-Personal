@@ -1,0 +1,27 @@
+rule:
+  id: sigma-a84fc3b1-c9ce-4125-8e74-bdcdb24021f1
+  version: 1
+  name: Primary Refresh Token Access Attempt
+  description: Indicates access attempt to the PRT resource which can be used to move laterally into an organization or perform credential theft
+  author: Mark Morowczynski '@markmorow', Gloria Lee, '@gleeiamglo'
+  created: 2026-07-31T22:31:34.358986098+00:00
+  modified: 2026-07-31T22:31:34.358986098+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1528'
+    name: Technique 1528
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

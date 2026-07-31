@@ -1,0 +1,30 @@
+rule:
+  id: sigma-50a3c7aa-ec29-44a4-92c1-fce229eef6fc
+  version: 1
+  name: CA Policy Updated by Non Approved Actor
+  description: Monitor and alert on conditional access changes. Is Initiated by (actor) approved to make changes? Review Modified Properties and compare "old" vs "new" value.
+  author: Corissa Koopmans, '@corissalea'
+  created: 2026-07-31T22:31:34.336391011+00:00
+  modified: 2026-07-31T22:31:34.336391011+00:00
+  enabled: true
+  category: privilege-escalation
+  subcategory: null
+  mitre:
+  - technique: '1548'
+    name: Technique 1548
+    tactic: Privilege Escalation
+  - technique: '1556'
+    name: Technique 1556
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

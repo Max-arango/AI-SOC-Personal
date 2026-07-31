@@ -1,0 +1,27 @@
+rule:
+  id: sigma-258b6593-215d-4a26-a141-c8e31c1299a6
+  version: 1
+  name: Anomalous User Activity
+  description: Indicates that there are anomalous patterns of behavior like suspicious changes to the directory.
+  author: Mark Morowczynski '@markmorow', Gloria Lee, '@gleeiamglo'
+  created: 2026-07-31T22:31:34.354092235+00:00
+  modified: 2026-07-31T22:31:34.354092235+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1098'
+    name: Technique 1098
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

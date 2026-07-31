@@ -1,0 +1,30 @@
+rule:
+  id: sigma-1b45b0d1-773f-4f23-aedc-814b759563b1
+  version: 1
+  name: Application AppID Uri Configuration Changes
+  description: Detects when a configuration change is made to an applications AppID URI.
+  author: Mark Morowczynski '@markmorow', Bailey Bercik '@baileybercik'
+  created: 2026-07-31T22:31:34.339631174+00:00
+  modified: 2026-07-31T22:31:34.339631174+00:00
+  enabled: true
+  category: credential-access
+  subcategory: null
+  mitre:
+  - technique: '1552'
+    name: Technique 1552
+    tactic: Credential Access
+  - technique: '1078.004'
+    name: Technique 1078.004
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

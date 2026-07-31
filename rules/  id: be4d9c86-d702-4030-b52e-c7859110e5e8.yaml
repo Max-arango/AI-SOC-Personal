@@ -1,0 +1,27 @@
+rule:
+  id: sigma-be4d9c86-d702-4030-b52e-c7859110e5e8
+  version: 1
+  name: Activity From Anonymous IP Address
+  description: Identifies that users were active from an IP address that has been identified as an anonymous proxy IP address.
+  author: Mark Morowczynski '@markmorow', Gloria Lee, '@gleeiamglo'
+  created: 2026-07-31T22:31:34.354521828+00:00
+  modified: 2026-07-31T22:31:34.354521828+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078'
+    name: Technique 1078
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

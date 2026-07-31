@@ -1,0 +1,30 @@
+rule:
+  id: sigma-53bb4f7f-48a8-4475-ac30-5a82ddfdf6fc
+  version: 1
+  name: Potential MFA Bypass Using Legacy Client Authentication
+  description: Detects successful authentication from potential clients using legacy authentication via user agent strings. This could be a sign of MFA bypass using a password spray attack.
+  author: Harjot Singh, '@cyb3rjy0t'
+  created: 2026-07-31T22:31:34.366926450+00:00
+  modified: 2026-07-31T22:31:34.366926450+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078.004'
+    name: Technique 1078.004
+    tactic: ''
+  - technique: '1110'
+    name: Technique 1110
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

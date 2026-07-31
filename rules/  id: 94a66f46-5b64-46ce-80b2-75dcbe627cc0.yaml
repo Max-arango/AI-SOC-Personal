@@ -1,0 +1,27 @@
+rule:
+  id: sigma-94a66f46-5b64-46ce-80b2-75dcbe627cc0
+  version: 1
+  name: Roles Activation Doesn't Require MFA
+  description: Identifies when a privilege role can be activated without performing mfa.
+  author: Mark Morowczynski '@markmorow', Gloria Lee, '@gleeiamglo'
+  created: 2026-07-31T22:31:34.362482888+00:00
+  modified: 2026-07-31T22:31:34.362482888+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078'
+    name: Technique 1078
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

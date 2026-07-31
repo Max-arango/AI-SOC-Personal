@@ -1,0 +1,27 @@
+rule:
+  id: sigma-13f81a90-a69c-4fab-8f07-b5bb55416a9f
+  version: 1
+  name: Google Cloud Service Account Disabled or Deleted
+  description: Identifies when a service account is disabled or deleted in Google Cloud.
+  author: Austin Songer @austinsonger
+  created: 2026-07-31T22:31:34.375519868+00:00
+  modified: 2026-07-31T22:31:34.375519868+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1531'
+    name: Technique 1531
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,27 @@
+rule:
+  id: sigma-20f754db-d025-4a8f-9d74-e0037e999a9a
+  version: 1
+  name: SES Identity Has Been Deleted
+  description: Detects an instance of an SES identity being deleted via the "DeleteIdentity" event. This may be an indicator of an adversary removing the account that carried out suspicious or malicious activities
+  author: Janantha Marasinghe
+  created: 2026-07-31T22:31:34.302860873+00:00
+  modified: 2026-07-31T22:31:34.302860873+00:00
+  enabled: true
+  category: defense-evasion
+  subcategory: null
+  mitre:
+  - technique: '1070'
+    name: Technique 1070
+    tactic: Defense Evasion
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

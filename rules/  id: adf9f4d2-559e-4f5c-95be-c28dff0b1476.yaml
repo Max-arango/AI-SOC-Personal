@@ -1,0 +1,27 @@
+rule:
+  id: sigma-adf9f4d2-559e-4f5c-95be-c28dff0b1476
+  version: 1
+  name: New Country
+  description: Detects sign-ins from new countries. The detection considers past activity locations to determine new and infrequent locations.
+  author: Mark Morowczynski '@markmorow', Gloria Lee, '@gleeiamglo'
+  created: 2026-07-31T22:31:34.358059424+00:00
+  modified: 2026-07-31T22:31:34.358059424+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078'
+    name: Technique 1078
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

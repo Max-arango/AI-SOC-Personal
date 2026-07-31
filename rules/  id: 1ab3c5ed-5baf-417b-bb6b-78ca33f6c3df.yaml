@@ -1,0 +1,33 @@
+rule:
+  id: sigma-1ab3c5ed-5baf-417b-bb6b-78ca33f6c3df
+  version: 1
+  name: AWS EC2 Startup Shell Script Change
+  description: Detects changes to the EC2 instance startup script. The shell script will be executed as root/SYSTEM every time the specific instances are booted up.
+  author: faloker
+  created: 2026-07-31T22:31:34.304530837+00:00
+  modified: 2026-07-31T22:31:34.304530837+00:00
+  enabled: true
+  category: execution
+  subcategory: null
+  mitre:
+  - technique: '1059.001'
+    name: Technique 1059.001
+    tactic: Execution
+  - technique: '1059.003'
+    name: Technique 1059.003
+    tactic: Execution
+  - technique: '1059.004'
+    name: Technique 1059.004
+    tactic: Execution
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

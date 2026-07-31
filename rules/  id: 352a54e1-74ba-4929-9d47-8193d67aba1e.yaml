@@ -1,0 +1,27 @@
+rule:
+  id: sigma-352a54e1-74ba-4929-9d47-8193d67aba1e
+  version: 1
+  name: Azure Domain Federation Settings Modified
+  description: Identifies when an user or application modified the federation settings on the domain.
+  author: Austin Songer
+  created: 2026-07-31T22:31:34.345465823+00:00
+  modified: 2026-07-31T22:31:34.345465823+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078'
+    name: Technique 1078
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

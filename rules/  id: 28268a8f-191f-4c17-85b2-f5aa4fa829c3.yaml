@@ -1,0 +1,24 @@
+rule:
+  id: sigma-28268a8f-191f-4c17-85b2-f5aa4fa829c3
+  version: 1
+  name: Google Cloud DNS Zone Modified or Deleted
+  description: Identifies when a DNS Zone is modified or deleted in Google Cloud.
+  author: Austin Songer @austinsonger
+  created: 2026-07-31T22:31:34.371576645+00:00
+  modified: 2026-07-31T22:31:34.371576645+00:00
+  enabled: true
+  category: general
+  subcategory: null
+  mitre: []
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,27 @@
+rule:
+  id: sigma-7cb02516-6d95-4ffc-8eee-162075e111ac
+  version: 1
+  name: Successful IIS Shortname Fuzzing Scan
+  description: When IIS uses an old .Net Framework it's possible to enumerate folders with the symbol "~"
+  author: frack113
+  created: 2026-07-31T22:31:34.292654567+00:00
+  modified: 2026-07-31T22:31:34.292654567+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1190'
+    name: Technique 1190
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

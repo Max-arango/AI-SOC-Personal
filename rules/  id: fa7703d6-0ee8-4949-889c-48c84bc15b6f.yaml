@@ -1,0 +1,24 @@
+rule:
+  id: sigma-fa7703d6-0ee8-4949-889c-48c84bc15b6f
+  version: 1
+  name: New Kind of Network (NKN) Detection
+  description: NKN is a networking service using blockchain technology to support a decentralized network of peers. While there are legitimate uses for it, it can also be used as a C2 channel. This rule looks for a DNS request to the ma>
+  author: Michael Portera (@mportatoes)
+  created: 2026-07-31T22:31:34.402113634+00:00
+  modified: 2026-07-31T22:31:34.402113634+00:00
+  enabled: true
+  category: general
+  subcategory: null
+  mitre: []
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,27 @@
+rule:
+  id: sigma-cd0a4943-0edd-42cf-b50c-06f77a10d4c1
+  version: 1
+  name: FortiGate - New Administrator Account Created
+  description: Detects the creation of an administrator account on a Fortinet FortiGate Firewall.
+  author: Marco Pedrinazzi (@pedrinazziM) (InTheCyber)
+  created: 2026-07-31T22:31:34.396214629+00:00
+  modified: 2026-07-31T22:31:34.396214629+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1136.001'
+    name: Technique 1136.001
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,32 @@
+rule:
+  id: sigma-9a60e676-26ac-44c3-814b-0c2a8b977adf
+  version: 1
+  name: User Access Blocked by Azure Conditional Access
+  description: |
+    Detect access has been blocked by Conditional Access policies.
+    The access policy does not allow token issuance which might be sights≈ of unauthorizeed login to valid accounts.
+  author: AlertIQ
+  created: 2026-07-31T22:31:34.369946504+00:00
+  modified: 2026-07-31T22:31:34.369946504+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1110'
+    name: Technique 1110
+    tactic: ''
+  - technique: '1078.004'
+    name: Technique 1078.004
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

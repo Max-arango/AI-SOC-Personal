@@ -1,0 +1,27 @@
+rule:
+  id: sigma-a6355fbe-f36f-45d8-8efc-ab42465cbc52
+  version: 1
+  name: Delegated Permissions Granted For All Users
+  description: Detects when highly privileged delegated permissions are granted on behalf of all users
+  author: Bailey Bercik '@baileybercik', Mark Morowczynski '@markmorow'
+  created: 2026-07-31T22:31:34.340587231+00:00
+  modified: 2026-07-31T22:31:34.340587231+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1528'
+    name: Technique 1528
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

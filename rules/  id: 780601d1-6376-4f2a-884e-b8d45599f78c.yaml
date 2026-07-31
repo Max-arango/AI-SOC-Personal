@@ -1,0 +1,24 @@
+rule:
+  id: sigma-780601d1-6376-4f2a-884e-b8d45599f78c
+  version: 1
+  name: Google Workspace MFA Disabled
+  description: Detects when multi-factor authentication (MFA) is disabled.
+  author: Austin Songer
+  created: 2026-07-31T22:31:34.378816041+00:00
+  modified: 2026-07-31T22:31:34.378816041+00:00
+  enabled: true
+  category: general
+  subcategory: null
+  mitre: []
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

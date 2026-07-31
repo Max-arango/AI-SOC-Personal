@@ -1,0 +1,27 @@
+rule:
+  id: sigma-38360161-76c4-4283-842e-efcf997dafc8
+  version: 1
+  name: Suspicious Login Activity Classified By Google
+  description: Detects Google Workspace login activity that's classified as suspicious by Google.
+  author: Tom Kluter
+  created: 2026-07-31T22:31:34.381577475+00:00
+  modified: 2026-07-31T22:31:34.381577475+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078.004'
+    name: Technique 1078.004
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,27 @@
+rule:
+  id: sigma-c1d147ae-a951-48e5-8b41-dcd0170c7213
+  version: 1
+  name: App Granted Microsoft Permissions
+  description: Detects when an application is granted delegated or app role permissions for Microsoft Graph, Exchange, Sharepoint, or Azure AD
+  author: Bailey Bercik '@baileybercik', Mark Morowczynski '@markmorow'
+  created: 2026-07-31T22:31:34.342164520+00:00
+  modified: 2026-07-31T22:31:34.342164520+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1528'
+    name: Technique 1528
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

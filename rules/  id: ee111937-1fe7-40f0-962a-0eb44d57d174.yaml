@@ -1,0 +1,24 @@
+rule:
+  id: sigma-ee111937-1fe7-40f0-962a-0eb44d57d174
+  version: 1
+  name: Suspicious OAuth App File Download Activities
+  description: Detects when a Microsoft Cloud App Security reported when an app downloads multiple files from Microsoft SharePoint or Microsoft OneDrive in a manner that is unusual for the user.
+  author: Austin Songer @austinsonger
+  created: 2026-07-31T22:31:34.387377081+00:00
+  modified: 2026-07-31T22:31:34.387377081+00:00
+  enabled: true
+  category: general
+  subcategory: null
+  mitre: []
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

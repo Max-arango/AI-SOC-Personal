@@ -1,0 +1,33 @@
+rule:
+  id: sigma-905d389b-b853-46d0-9d3d-dea0d3a3cd49
+  version: 1
+  name: AWS STS AssumeRole Misuse
+  description: Identifies the suspicious use of AssumeRole. Attackers could move laterally and escalate privileges.
+  author: Austin Songer @austinsonger
+  created: 2026-07-31T22:31:34.318078352+00:00
+  modified: 2026-07-31T22:31:34.318078352+00:00
+  enabled: true
+  category: privilege-escalation
+  subcategory: null
+  mitre:
+  - technique: '1548'
+    name: Technique 1548
+    tactic: Privilege Escalation
+  - technique: '1550'
+    name: Technique 1550
+    tactic: ''
+  - technique: '1550.001'
+    name: Technique 1550.001
+    tactic: ''
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

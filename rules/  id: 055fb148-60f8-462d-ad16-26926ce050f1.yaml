@@ -1,0 +1,29 @@
+rule:
+  id: sigma-055fb148-60f8-462d-ad16-26926ce050f1
+  version: 1
+  name: AWS User Login Profile Was Modified
+  description: |
+    Detects activity when someone is changing passwords on behalf of other users.
+    An attacker with the "iam:UpdateLoginProfile" permission on other users can change the password used to login to the AWS console on any user that already has a login profile setup.
+  author: toffeebr33k
+  created: 2026-07-31T22:31:34.319639499+00:00
+  modified: 2026-07-31T22:31:34.319639499+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1098'
+    name: Technique 1098
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

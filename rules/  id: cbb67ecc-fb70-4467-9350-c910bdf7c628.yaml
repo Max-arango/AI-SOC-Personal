@@ -1,0 +1,27 @@
+rule:
+  id: sigma-cbb67ecc-fb70-4467-9350-c910bdf7c628
+  version: 1
+  name: Added Credentials to Existing Application
+  description: Detects when a new credential is added to an existing application. Any additional credentials added outside of expected processes could be a malicious actor using those credentials.
+  author: Mark Morowczynski '@markmorow', Bailey Bercik '@baileybercik'
+  created: 2026-07-31T22:31:34.340154627+00:00
+  modified: 2026-07-31T22:31:34.340154627+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1098.001'
+    name: Technique 1098.001
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

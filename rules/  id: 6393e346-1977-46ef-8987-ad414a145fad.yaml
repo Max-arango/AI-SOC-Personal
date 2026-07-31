@@ -1,0 +1,28 @@
+rule:
+  id: sigma-6393e346-1977-46ef-8987-ad414a145fad
+  version: 1
+  name: AWS ConsoleLogin Failed Authentication
+  description: |
+    Detects failed AWS console login attempts due to authentication failures. Monitoring these events is crucial for identifying potential brute-force attacks or unauthorized access attempts to AWS accounts.
+  author: Ivan Saakov, Nasreddine Bencherchali
+  created: 2026-07-31T22:31:34.297848830+00:00
+  modified: 2026-07-31T22:31:34.297848830+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1110'
+    name: Technique 1110
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

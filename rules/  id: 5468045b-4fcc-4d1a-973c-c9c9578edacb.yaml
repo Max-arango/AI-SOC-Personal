@@ -1,0 +1,33 @@
+rule:
+  id: sigma-5468045b-4fcc-4d1a-973c-c9c9578edacb
+  version: 1
+  name: Raw Paste Service Access
+  description: Detects direct access to raw pastes in different paste services often used by malware in their second stages to download malicious code in encrypted or encoded form
+  author: Florian Roth (Nextron Systems)
+  created: 2026-07-31T22:31:34.282124705+00:00
+  modified: 2026-07-31T22:31:34.282124705+00:00
+  enabled: true
+  category: command-and-control
+  subcategory: null
+  mitre:
+  - technique: '1071.001'
+    name: Technique 1071.001
+    tactic: Command and Control
+  - technique: '1102.001'
+    name: Technique 1102.001
+    tactic: ''
+  - technique: '1102.003'
+    name: Technique 1102.003
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

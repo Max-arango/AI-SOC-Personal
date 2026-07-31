@@ -1,0 +1,30 @@
+rule:
+  id: sigma-9b1b8e9b-0a5d-4af1-9d2f-4c4b6e7c2c9d
+  version: 1
+  name: AWS STS GetCallerIdentity Enumeration Via TruffleHog
+  description: |
+    Detects the use of TruffleHog for AWS credential validation by identifying GetCallerIdentity API calls where the userAgent indicates TruffleHog.
+    Threat actors leverage TruffleHog to enumerate and validate exposed AWS keys.
+    Successful exploitation allows threat actors to confirm the validity of compromised AWS credentials, facilitating further unauthorized access and actions within the AWS environment.
+  author: Adan Alvarez @adanalvarez
+  created: 2026-07-31T22:31:34.318559471+00:00
+  modified: 2026-07-31T22:31:34.318559471+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1087.004'
+    name: Technique 1087.004
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

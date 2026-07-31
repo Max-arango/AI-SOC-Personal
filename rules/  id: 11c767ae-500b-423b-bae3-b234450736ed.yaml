@@ -1,0 +1,27 @@
+rule:
+  id: sigma-11c767ae-500b-423b-bae3-b234450736ed
+  version: 1
+  name: Users Added to Global or Device Admin Roles
+  description: Monitor and alert for users added to device admin roles.
+  author: Michael Epping, '@mepples21'
+  created: 2026-07-31T22:31:34.339179765+00:00
+  modified: 2026-07-31T22:31:34.339179765+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078.004'
+    name: Technique 1078.004
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

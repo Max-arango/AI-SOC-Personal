@@ -1,0 +1,28 @@
+rule:
+  id: sigma-76737c19-66ee-4c07-b65a-a03301d1573d
+  version: 1
+  name: GCP Break-glass Container Workload Deployed
+  description: |
+    Detects the deployment of workloads that are deployed by using the break-glass flag to override Binary Authorization controls.
+  author: Bryan Lim
+  created: 2026-07-31T22:31:34.370549250+00:00
+  modified: 2026-07-31T22:31:34.370549250+00:00
+  enabled: true
+  category: privilege-escalation
+  subcategory: null
+  mitre:
+  - technique: '1548'
+    name: Technique 1548
+    tactic: Privilege Escalation
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

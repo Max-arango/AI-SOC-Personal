@@ -1,0 +1,24 @@
+rule:
+  id: sigma-7100f7e3-92ce-4584-b7b7-01b40d3d4118
+  version: 1
+  name: Default Cobalt Strike Certificate
+  description: Detects the presence of default Cobalt Strike certificate in the HTTPS traffic
+  author: Bhabesh Raj
+  created: 2026-07-31T22:31:34.400406697+00:00
+  modified: 2026-07-31T22:31:34.400406697+00:00
+  enabled: true
+  category: general
+  subcategory: null
+  mitre: []
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

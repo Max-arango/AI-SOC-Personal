@@ -1,0 +1,27 @@
+rule:
+  id: sigma-234f9f48-904b-4736-a34c-55d23919e4b7
+  version: 1
+  name: Google Cloud Re-identifies Sensitive Information
+  description: Identifies when sensitive information is re-identified in google Cloud.
+  author: Austin Songer @austinsonger
+  created: 2026-07-31T22:31:34.371346537+00:00
+  modified: 2026-07-31T22:31:34.371346537+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1565'
+    name: Technique 1565
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

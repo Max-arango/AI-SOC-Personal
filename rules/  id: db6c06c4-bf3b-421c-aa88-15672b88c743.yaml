@@ -1,0 +1,27 @@
+rule:
+  id: sigma-db6c06c4-bf3b-421c-aa88-15672b88c743
+  version: 1
+  name: Changes To PIM Settings
+  description: Detects when changes are made to PIM roles
+  author: Mark Morowczynski '@markmorow', Yochana Henderson, '@Yochana-H'
+  created: 2026-07-31T22:31:34.348488797+00:00
+  modified: 2026-07-31T22:31:34.348488797+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078.004'
+    name: Technique 1078.004
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

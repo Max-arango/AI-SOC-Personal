@@ -1,0 +1,30 @@
+rule:
+  id: sigma-195c1119-ef07-4909-bb12-e66f5e07bf3c
+  version: 1
+  name: Download from Suspicious Dyndns Hosts
+  description: Detects download of certain file types from hosts with dynamic DNS names (selected list)
+  author: Florian Roth (Nextron Systems)
+  created: 2026-07-31T22:31:34.275631158+00:00
+  modified: 2026-07-31T22:31:34.275631158+00:00
+  enabled: true
+  category: command-and-control
+  subcategory: null
+  mitre:
+  - technique: '1105'
+    name: Technique 1105
+    tactic: Command and Control
+  - technique: '1568'
+    name: Technique 1568
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

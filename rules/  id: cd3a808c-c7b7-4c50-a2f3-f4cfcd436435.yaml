@@ -1,0 +1,27 @@
+rule:
+  id: sigma-cd3a808c-c7b7-4c50-a2f3-f4cfcd436435
+  version: 1
+  name: Google Cloud Kubernetes CronJob
+  description: |
+    Identifies when a Google Cloud Kubernetes CronJob runs in Azure Cloud. Kubernetes Job is a controller that creates one or more pods and ensures that a specified number of them successfully terminate.
+    Kubernetes Job can be used to run containers that perform finite tasks for batch jobs. Kubernetes CronJob is used to schedule Jobs.
+    An Adversary may use Kubernetes CronJob for scheduling execution of malicious code that would run as a container in the cluster.
+  author: Austin Songer @austinsonger
+  created: 2026-07-31T22:31:34.373650035+00:00
+  modified: 2026-07-31T22:31:34.373650035+00:00
+  enabled: true
+  category: general
+  subcategory: null
+  mitre: []
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

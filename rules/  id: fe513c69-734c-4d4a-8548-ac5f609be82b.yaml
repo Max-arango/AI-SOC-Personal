@@ -1,0 +1,27 @@
+rule:
+  id: sigma-fe513c69-734c-4d4a-8548-ac5f609be82b
+  version: 1
+  name: Google Cloud Firewall Modified or Deleted
+  description: Detects  when a firewall rule is modified or deleted in Google Cloud Platform (GCP).
+  author: Austin Songer @austinsonger
+  created: 2026-07-31T22:31:34.371887189+00:00
+  modified: 2026-07-31T22:31:34.371887189+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1685'
+    name: Technique 1685
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

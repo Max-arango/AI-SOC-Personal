@@ -1,0 +1,27 @@
+rule:
+  id: sigma-3940b5f1-3f46-44aa-b746-ebe615b879e0
+  version: 1
+  name: AWS Route 53 Domain Transfer Lock Disabled
+  description: Detects when a transfer lock was removed from a Route 53 domain. It is recommended to refrain from performing this action unless intending to transfer the domain to a different registrar.
+  author: Elastic, Austin Songer @austinsonger
+  created: 2026-07-31T22:31:34.314834659+00:00
+  modified: 2026-07-31T22:31:34.314834659+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1098'
+    name: Technique 1098
+    tactic: ''
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

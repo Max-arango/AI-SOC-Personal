@@ -1,0 +1,29 @@
+rule:
+  id: sigma-ddbbe845-1d74-43a8-8231-2156d180234d
+  version: 1
+  name: FortiGate - New Local User Created
+  description: |
+    Detects the creation of a new local user on a Fortinet FortiGate Firewall.
+    The new local user could be used for VPN connections.
+  author: Marco Pedrinazzi (@pedrinazziM) (InTheCyber)
+  created: 2026-07-31T22:31:34.397085524+00:00
+  modified: 2026-07-31T22:31:34.397085524+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1136.001'
+    name: Technique 1136.001
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

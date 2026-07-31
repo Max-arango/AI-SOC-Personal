@@ -1,0 +1,27 @@
+rule:
+  id: sigma-b04934b2-0a68-4845-8a19-bdfed3a68a7a
+  version: 1
+  name: App Assigned To Azure RBAC/Microsoft Entra Role
+  description: Detects when an app is assigned Azure AD roles, such as global administrator, or Azure RBAC roles, such as subscription owner.
+  author: Bailey Bercik '@baileybercik', Mark Morowczynski '@markmorow'
+  created: 2026-07-31T22:31:34.343028140+00:00
+  modified: 2026-07-31T22:31:34.343028140+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1098.003'
+    name: Technique 1098.003
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

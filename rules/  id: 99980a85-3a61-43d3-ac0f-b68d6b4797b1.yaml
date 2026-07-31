@@ -1,0 +1,24 @@
+rule:
+  id: sigma-99980a85-3a61-43d3-ac0f-b68d6b4797b1
+  version: 1
+  name: Google Cloud VPN Tunnel Modified or Deleted
+  description: Identifies when a VPN Tunnel Modified or Deleted in Google Cloud.
+  author: Austin Songer @austinsonger
+  created: 2026-07-31T22:31:34.377083866+00:00
+  modified: 2026-07-31T22:31:34.377083866+00:00
+  enabled: true
+  category: general
+  subcategory: null
+  mitre: []
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,27 @@
+rule:
+  id: sigma-c1182e02-49a3-481c-b3de-0fadc4091488
+  version: 1
+  name: Rare Subscription-level Operations In Azure
+  description: Identifies IPs from which users grant access to other users on azure resources and alerts when a previously unseen source IP address is used.
+  author: sawwinnnaung
+  created: 2026-07-31T22:31:34.334665400+00:00
+  modified: 2026-07-31T22:31:34.334665400+00:00
+  enabled: true
+  category: credential-access
+  subcategory: null
+  mitre:
+  - technique: '1003'
+    name: Technique 1003
+    tactic: Credential Access
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

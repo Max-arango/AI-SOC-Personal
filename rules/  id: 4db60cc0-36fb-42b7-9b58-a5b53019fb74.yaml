@@ -1,0 +1,27 @@
+rule:
+  id: sigma-4db60cc0-36fb-42b7-9b58-a5b53019fb74
+  version: 1
+  name: AWS CloudTrail Important Change
+  description: Detects disabling, deleting and updating of a Trail
+  author: vitaliy0x1
+  created: 2026-07-31T22:31:34.298439370+00:00
+  modified: 2026-07-31T22:31:34.298439370+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1685.002'
+    name: Technique 1685.002
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

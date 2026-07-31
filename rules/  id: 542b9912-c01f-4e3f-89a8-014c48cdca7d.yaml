@@ -1,0 +1,24 @@
+rule:
+  id: sigma-542b9912-c01f-4e3f-89a8-014c48cdca7d
+  version: 1
+  name: Azure Device No Longer Managed or Compliant
+  description: Identifies when a device in azure is no longer managed or compliant
+  author: Austin Songer @austinsonger
+  created: 2026-07-31T22:31:34.344918517+00:00
+  modified: 2026-07-31T22:31:34.344918517+00:00
+  enabled: true
+  category: general
+  subcategory: null
+  mitre: []
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

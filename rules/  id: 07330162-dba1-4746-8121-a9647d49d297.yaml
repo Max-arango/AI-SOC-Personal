@@ -1,0 +1,27 @@
+rule:
+  id: sigma-07330162-dba1-4746-8121-a9647d49d297
+  version: 1
+  name: AWS Config Disabling Channel/Recorder
+  description: Detects AWS Config Service disabling
+  author: vitaliy0x1
+  created: 2026-07-31T22:31:34.302274733+00:00
+  modified: 2026-07-31T22:31:34.302274733+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1685.002'
+    name: Technique 1685.002
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

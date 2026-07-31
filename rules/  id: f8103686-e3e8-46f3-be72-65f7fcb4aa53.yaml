@@ -1,0 +1,32 @@
+rule:
+  id: sigma-f8103686-e3e8-46f3-be72-65f7fcb4aa53
+  version: 1
+  name: AWS Console GetSigninToken Potential Abuse
+  description: |
+    Detects potentially suspicious events involving "GetSigninToken".
+    An adversary using the "aws_consoler" tool can leverage this console API to create temporary federated credential that help obfuscate which AWS credential is compromised (the original access key) and enables the adversary to pivot from the AWS CLI to console sessions without the need for MFA using the new access key issued in this request.
+  author: Chester Le Bron (@123Le_Bron)
+  created: 2026-07-31T22:31:34.302614763+00:00
+  modified: 2026-07-31T22:31:34.302614763+00:00
+  enabled: true
+  category: lateral-movement
+  subcategory: null
+  mitre:
+  - technique: '1021.007'
+    name: Technique 1021.007
+    tactic: Lateral Movement
+  - technique: '1550.001'
+    name: Technique 1550.001
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

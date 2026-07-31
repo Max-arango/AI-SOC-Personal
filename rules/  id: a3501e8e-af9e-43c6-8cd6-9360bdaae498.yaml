@@ -1,0 +1,29 @@
+rule:
+  id: sigma-a3501e8e-af9e-43c6-8cd6-9360bdaae498
+  version: 1
+  name: Activity from Suspicious IP Addresses
+  description: |
+    Detects when a Microsoft Cloud App Security reported users were active from an IP address identified as risky by Microsoft Threat Intelligence.
+    These IP addresses are involved in malicious activities, such as Botnet C&C, and may indicate compromised account.
+  author: Austin Songer @austinsonger
+  created: 2026-07-31T22:31:34.384121871+00:00
+  modified: 2026-07-31T22:31:34.384121871+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1573'
+    name: Technique 1573
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

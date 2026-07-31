@@ -1,0 +1,33 @@
+rule:
+  id: sigma-92dae1ed-1c9d-4eff-a567-33acbd95b00e
+  version: 1
+  name: Possible Impacket SecretDump Remote Activity - Zeek
+  description: Detect AD credential dumping using impacket secretdump HKTL. Based on the SIGMA rules/windows/builtin/win_impacket_secretdump.yml
+  author: Samir Bousseaden, @neu5ron
+  created: 2026-07-31T22:31:34.405181318+00:00
+  modified: 2026-07-31T22:31:34.405181318+00:00
+  enabled: true
+  category: credential-access
+  subcategory: null
+  mitre:
+  - technique: '1003.002'
+    name: Technique 1003.002
+    tactic: Credential Access
+  - technique: '1003.004'
+    name: Technique 1003.004
+    tactic: Credential Access
+  - technique: '1003.003'
+    name: Technique 1003.003
+    tactic: Credential Access
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

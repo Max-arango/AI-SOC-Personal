@@ -1,0 +1,29 @@
+rule:
+  id: sigma-7a4409fc-f8ca-45f6-8006-127d779eaad9
+  version: 1
+  name: LoadBalancer Security Group Modification
+  description: |
+    Detects changes to the security groups associated with an Elastic Load Balancer (ELB) or Application Load Balancer (ALB).
+    This can indicate that a misconfiguration allowing more traffic into the system than required, or could indicate that an attacker is attempting to enable new connections into a VPC or subnet controlled by the account.
+  author: jamesc-grafana
+  created: 2026-07-31T22:31:34.301047067+00:00
+  modified: 2026-07-31T22:31:34.301047067+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1190'
+    name: Technique 1190
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

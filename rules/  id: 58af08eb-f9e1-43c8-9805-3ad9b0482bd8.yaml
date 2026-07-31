@@ -1,0 +1,27 @@
+rule:
+  id: sigma-58af08eb-f9e1-43c8-9805-3ad9b0482bd8
+  version: 1
+  name: Invalid PIM License
+  description: Identifies when an organization doesn't have the proper license for PIM and is out of compliance.
+  author: Mark Morowczynski '@markmorow', Gloria Lee, '@gleeiamglo'
+  created: 2026-07-31T22:31:34.361226848+00:00
+  modified: 2026-07-31T22:31:34.361226848+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078'
+    name: Technique 1078
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,27 @@
+rule:
+  id: sigma-a3f55ebd-0c01-4ed6-adc0-8fb76d8cd3cd
+  version: 1
+  name: Malicious IP Address Sign-In Failure Rate
+  description: Indicates sign-in from a malicious IP address based on high failure rates.
+  author: Mark Morowczynski '@markmorow', Gloria Lee, '@gleeiamglo'
+  created: 2026-07-31T22:31:34.356784609+00:00
+  modified: 2026-07-31T22:31:34.356784609+00:00
+  enabled: true
+  category: command-and-control
+  subcategory: null
+  mitre:
+  - technique: '1090'
+    name: Technique 1090
+    tactic: Command and Control
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

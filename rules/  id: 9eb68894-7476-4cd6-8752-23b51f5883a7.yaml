@@ -1,0 +1,30 @@
+rule:
+  id: sigma-9eb68894-7476-4cd6-8752-23b51f5883a7
+  version: 1
+  name: Bitsadmin to Uncommon TLD
+  description: Detects Bitsadmin connections to domains with uncommon TLDs
+  author: Florian Roth (Nextron Systems), Tim Shelton
+  created: 2026-07-31T22:31:34.286499096+00:00
+  modified: 2026-07-31T22:31:34.286499096+00:00
+  enabled: true
+  category: command-and-control
+  subcategory: null
+  mitre:
+  - technique: '1071.001'
+    name: Technique 1071.001
+    tactic: Command and Control
+  - technique: '1197'
+    name: Technique 1197
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

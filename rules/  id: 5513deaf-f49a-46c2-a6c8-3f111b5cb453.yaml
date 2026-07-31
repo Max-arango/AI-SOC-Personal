@@ -1,0 +1,27 @@
+rule:
+  id: sigma-5513deaf-f49a-46c2-a6c8-3f111b5cb453
+  version: 1
+  name: SQL Injection Strings In URI
+  description: Detects potential SQL injection attempts via GET requests in access logs.
+  author: Saw Win Naung, Nasreddine Bencherchali (Nextron Systems), Thurein Oo (Yoma Bank)
+  created: 2026-07-31T22:31:34.294295236+00:00
+  modified: 2026-07-31T22:31:34.294295236+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1190'
+    name: Technique 1190
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

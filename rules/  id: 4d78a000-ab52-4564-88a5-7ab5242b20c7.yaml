@@ -1,0 +1,30 @@
+rule:
+  id: sigma-4d78a000-ab52-4564-88a5-7ab5242b20c7
+  version: 1
+  name: Change to Authentication Method
+  description: Change to authentication method could be an indicator of an attacker adding an auth method to the account so they can have continued access.
+  author: AlertIQ
+  created: 2026-07-31T22:31:34.344502575+00:00
+  modified: 2026-07-31T22:31:34.344502575+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1556'
+    name: Technique 1556
+    tactic: ''
+  - technique: '1098'
+    name: Technique 1098
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

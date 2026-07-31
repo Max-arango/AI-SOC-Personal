@@ -1,0 +1,33 @@
+rule:
+  id: sigma-2e69f167-47b5-4ae7-a390-47764529eff5
+  version: 1
+  name: Transferring Files with Credential Data via Network Shares - Zeek
+  description: Transferring files with well-known filenames (sensitive files with credential data) using network shares
+  author: '@neu5ron, Teymur Kheirkhabarov, oscd.community'
+  created: 2026-07-31T22:31:34.406792419+00:00
+  modified: 2026-07-31T22:31:34.406792419+00:00
+  enabled: true
+  category: credential-access
+  subcategory: null
+  mitre:
+  - technique: '1003.002'
+    name: Technique 1003.002
+    tactic: Credential Access
+  - technique: '1003.001'
+    name: Technique 1003.001
+    tactic: Credential Access
+  - technique: '1003.003'
+    name: Technique 1003.003
+    tactic: Credential Access
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

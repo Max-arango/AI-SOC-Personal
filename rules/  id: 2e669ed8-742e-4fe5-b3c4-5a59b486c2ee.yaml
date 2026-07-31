@@ -1,0 +1,26 @@
+rule:
+  id: sigma-2e669ed8-742e-4fe5-b3c4-5a59b486c2ee
+  version: 1
+  name: Activity Performed by Terminated User
+  description: |
+    Detects when a Microsoft Cloud App Security reported for users whose account were terminated in Azure AD, but still perform activities in other platforms such as AWS or Salesforce.
+    This is especially relevant for users who use another account to manage resources, since these accounts are often not terminated when a user leaves the company.
+  author: Austin Songer @austinsonger
+  created: 2026-07-31T22:31:34.384491750+00:00
+  modified: 2026-07-31T22:31:34.384491750+00:00
+  enabled: true
+  category: general
+  subcategory: null
+  mitre: []
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

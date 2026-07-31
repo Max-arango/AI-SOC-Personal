@@ -1,0 +1,33 @@
+rule:
+  id: sigma-d2656e78-c069-4571-8220-9e0ab5913f19
+  version: 1
+  name: AWS GuardDuty Detector Deleted Or Updated
+  description: |
+    Detects successful deletion or disabling of an AWS GuardDuty detector, possibly by an attacker trying to avoid detection of its malicious activities.
+    Upon deletion, GuardDuty stops monitoring the environment and all existing findings are lost.
+    Verify with the user identity that this activity is legitimate.
+  author: suktech24
+  created: 2026-07-31T22:31:34.298986136+00:00
+  modified: 2026-07-31T22:31:34.298986136+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1685'
+    name: Technique 1685
+    tactic: ''
+  - technique: '1685.002'
+    name: Technique 1685.002
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

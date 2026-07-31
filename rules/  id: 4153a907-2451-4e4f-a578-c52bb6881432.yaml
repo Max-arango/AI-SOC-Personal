@@ -1,0 +1,30 @@
+rule:
+  id: sigma-4153a907-2451-4e4f-a578-c52bb6881432
+  version: 1
+  name: Suspicious DNS Query with B64 Encoded String
+  description: Detects suspicious DNS queries using base64 encoding
+  author: Florian Roth (Nextron Systems)
+  created: 2026-07-31T22:31:34.394662839+00:00
+  modified: 2026-07-31T22:31:34.394662839+00:00
+  enabled: true
+  category: exfiltration
+  subcategory: null
+  mitre:
+  - technique: '1048.003'
+    name: Technique 1048.003
+    tactic: Exfiltration
+  - technique: '1071.004'
+    name: Technique 1071.004
+    tactic: Command and Control
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

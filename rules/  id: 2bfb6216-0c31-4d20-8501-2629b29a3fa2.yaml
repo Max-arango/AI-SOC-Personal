@@ -1,0 +1,29 @@
+rule:
+  id: sigma-2bfb6216-0c31-4d20-8501-2629b29a3fa2
+  version: 1
+  name: FortiGate - New VPN SSL Web Portal Added
+  description: |
+    Detects the addition of a VPN SSL Web Portal on a Fortinet FortiGate Firewall.
+    This behavior was observed in pair with modification of VPN SSL settings.
+  author: Marco Pedrinazzi (@pedrinazziM) (InTheCyber)
+  created: 2026-07-31T22:31:34.397385157+00:00
+  modified: 2026-07-31T22:31:34.397385157+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1133'
+    name: Technique 1133
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

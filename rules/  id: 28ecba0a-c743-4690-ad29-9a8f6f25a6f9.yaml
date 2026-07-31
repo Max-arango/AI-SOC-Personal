@@ -1,0 +1,27 @@
+rule:
+  id: sigma-28ecba0a-c743-4690-ad29-9a8f6f25a6f9
+  version: 1
+  name: Password Spray Activity
+  description: Indicates that a password spray attack has been successfully performed.
+  author: Mark Morowczynski '@markmorow', Gloria Lee, '@gleeiamglo'
+  created: 2026-07-31T22:31:34.358496302+00:00
+  modified: 2026-07-31T22:31:34.358496302+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1110'
+    name: Technique 1110
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

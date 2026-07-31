@@ -1,0 +1,27 @@
+rule:
+  id: sigma-19128e5e-4743-48dc-bd97-52e5775af817
+  version: 1
+  name: Azure AD Account Credential Leaked
+  description: Indicates that the user's valid credentials have been leaked.
+  author: Mark Morowczynski '@markmorow', Gloria Lee, '@gleeiamglo'
+  created: 2026-07-31T22:31:34.356365269+00:00
+  modified: 2026-07-31T22:31:34.356365269+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1589'
+    name: Technique 1589
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

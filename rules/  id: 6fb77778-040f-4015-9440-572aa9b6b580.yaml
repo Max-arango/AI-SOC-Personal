@@ -1,0 +1,29 @@
+rule:
+  id: sigma-6fb77778-040f-4015-9440-572aa9b6b580
+  version: 1
+  name: Ingress/Egress Security Group Modification
+  description: |
+    Detects when an account makes changes to the ingress or egress rules of a security group.
+    This can indicate that an attacker is attempting to open up new attack vectors in the account, that they are trying to exfiltrate data over the network, or that they are trying to allow machines in that VPC/Subnet to contact a C&C server.
+  author: jamesc-grafana
+  created: 2026-07-31T22:31:34.300742657+00:00
+  modified: 2026-07-31T22:31:34.300742657+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1190'
+    name: Technique 1190
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

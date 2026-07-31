@@ -1,0 +1,33 @@
+rule:
+  id: sigma-5496ff55-42ec-4369-81cb-00f417029e25
+  version: 1
+  name: Multifactor Authentication Interrupted
+  description: Identifies user login with multifactor authentication failures, which might be an indication an attacker has the password for the account but can't pass the MFA challenge.
+  author: AlertIQ
+  created: 2026-07-31T22:31:34.369346119+00:00
+  modified: 2026-07-31T22:31:34.369346119+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078.004'
+    name: Technique 1078.004
+    tactic: ''
+  - technique: '1110'
+    name: Technique 1110
+    tactic: ''
+  - technique: '1621'
+    name: Technique 1621
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

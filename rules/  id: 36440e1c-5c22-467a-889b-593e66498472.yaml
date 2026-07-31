@@ -1,0 +1,27 @@
+rule:
+  id: sigma-36440e1c-5c22-467a-889b-593e66498472
+  version: 1
+  name: Malicious IP Address Sign-In Suspicious
+  description: Indicates sign-in from a malicious IP address known to be malicious at time of sign-in.
+  author: Mark Morowczynski '@markmorow', Gloria Lee, '@gleeiamglo'
+  created: 2026-07-31T22:31:34.357209383+00:00
+  modified: 2026-07-31T22:31:34.357209383+00:00
+  enabled: true
+  category: command-and-control
+  subcategory: null
+  mitre:
+  - technique: '1090'
+    name: Technique 1090
+    tactic: Command and Control
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

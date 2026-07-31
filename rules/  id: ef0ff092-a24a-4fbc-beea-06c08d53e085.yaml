@@ -1,0 +1,33 @@
+rule:
+  id: sigma-ef0ff092-a24a-4fbc-beea-06c08d53e085
+  version: 1
+  name: Cisco Dot1x Disabled
+  description: |
+    Detects the manual disablement of IEEE 802.1X (dot1x) on a Cisco network device interface.
+    Disabling dot1x bypasses Network Access Control (NAC) mechanisms, potentially allowing unauthorized devices to gain access to the internal network.
+    This activity is a common technique used by attackers or malicious insiders to establish persistence or perform lateral movement via rogue devices.
+  author: Luc Génaux
+  created: 2026-07-31T22:31:34.391221985+00:00
+  modified: 2026-07-31T22:31:34.391221985+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1685'
+    name: Technique 1685
+    tactic: ''
+  - technique: '1556.004'
+    name: Technique 1556.004
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

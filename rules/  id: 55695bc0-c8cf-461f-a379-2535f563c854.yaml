@@ -1,0 +1,29 @@
+rule:
+  id: sigma-55695bc0-c8cf-461f-a379-2535f563c854
+  version: 1
+  name: Applications That Are Using ROPC Authentication Flow
+  description: |
+    Resource owner password credentials (ROPC) should be avoided if at all possible as this requires the user to expose their current password credentials to the application directly.
+    The application then uses those credentials to authenticate the user against the identity provider.
+  author: Mark Morowczynski '@markmorow', Bailey Bercik '@baileybercik'
+  created: 2026-07-31T22:31:34.367598323+00:00
+  modified: 2026-07-31T22:31:34.367598323+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078'
+    name: Technique 1078
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

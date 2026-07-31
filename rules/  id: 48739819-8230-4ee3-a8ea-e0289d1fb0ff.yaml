@@ -1,0 +1,30 @@
+rule:
+  id: sigma-48739819-8230-4ee3-a8ea-e0289d1fb0ff
+  version: 1
+  name: Azure Active Directory Hybrid Health AD FS Service Delete
+  description: |
+    This detection uses azureactivity logs (Administrative category) to identify the deletion of an Azure AD Hybrid health AD FS service instance in a tenant.
+    A threat actor can create a new AD Health ADFS service and create a fake server to spoof AD FS signing logs.
+    The health AD FS service can then be deleted after it is not longer needed via HTTP requests to Azure.
+  author: Roberto Rodriguez (Cyb3rWard0g), OTR (Open Threat Research), MSTIC
+  created: 2026-07-31T22:31:34.320271947+00:00
+  modified: 2026-07-31T22:31:34.320271947+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1578.003'
+    name: Technique 1578.003
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

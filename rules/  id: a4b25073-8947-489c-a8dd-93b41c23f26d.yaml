@@ -1,0 +1,27 @@
+rule:
+  id: sigma-a4b25073-8947-489c-a8dd-93b41c23f26d
+  version: 1
+  name: Windows LAPS Credential Dump From Entra ID
+  description: Detects when an account dumps the LAPS password from Entra ID.
+  author: andrewdanis
+  created: 2026-07-31T22:31:34.343999100+00:00
+  modified: 2026-07-31T22:31:34.343999100+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1098.005'
+    name: Technique 1098.005
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

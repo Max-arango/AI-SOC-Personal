@@ -1,0 +1,33 @@
+rule:
+  id: sigma-b640c0b8-87f8-4daa-aef8-95a24261dd1d
+  version: 1
+  name: MITRE BZAR Indicators for Execution
+  description: Windows DCE-RPC functions which indicate an execution techniques on the remote system. All credit for the Zeek mapping of the suspicious endpoint/operation field goes to MITRE
+  author: '@neu5ron, SOC Prime'
+  created: 2026-07-31T22:31:34.399048543+00:00
+  modified: 2026-07-31T22:31:34.399048543+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1047'
+    name: Technique 1047
+    tactic: ''
+  - technique: '1053.002'
+    name: Technique 1053.002
+    tactic: Persistence
+  - technique: '1569.002'
+    name: Technique 1569.002
+    tactic: Execution
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

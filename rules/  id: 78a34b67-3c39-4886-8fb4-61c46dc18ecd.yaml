@@ -1,0 +1,27 @@
+rule:
+  id: sigma-78a34b67-3c39-4886-8fb4-61c46dc18ecd
+  version: 1
+  name: Microsoft 365 - Unusual Volume of File Deletion
+  description: Detects when a Microsoft Cloud App Security reported a user has deleted a unusual a large volume of files.
+  author: austinsonger
+  created: 2026-07-31T22:31:34.387644433+00:00
+  modified: 2026-07-31T22:31:34.387644433+00:00
+  enabled: true
+  category: impact
+  subcategory: null
+  mitre:
+  - technique: '1485'
+    name: Technique 1485
+    tactic: Impact
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,27 @@
+rule:
+  id: sigma-039a7469-0296-4450-84c0-f6966b16dc6d
+  version: 1
+  name: PIM Approvals And Deny Elevation
+  description: Detects when a PIM elevation is approved or denied. Outside of normal operations should be investigated.
+  author: Mark Morowczynski '@markmorow', Yochana Henderson, '@Yochana-H'
+  created: 2026-07-31T22:31:34.347817123+00:00
+  modified: 2026-07-31T22:31:34.347817123+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078.004'
+    name: Technique 1078.004
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,30 @@
+rule:
+  id: sigma-248649b7-d64f-46f0-9fb2-a52774166fb5
+  version: 1
+  name: Application Using Device Code Authentication Flow
+  description: |
+    Device code flow is an OAuth 2.0 protocol flow specifically for input constrained devices and is not used in all environments.
+    If this type of flow is seen in the environment and not being used in an input constrained device scenario, further investigation is warranted.
+    This can be a misconfigured application or potentially something malicious.
+  author: Mark Morowczynski '@markmorow', Bailey Bercik '@baileybercik'
+  created: 2026-07-31T22:31:34.367318067+00:00
+  modified: 2026-07-31T22:31:34.367318067+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078'
+    name: Technique 1078
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

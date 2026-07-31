@@ -1,0 +1,27 @@
+rule:
+  id: sigma-2975af79-28c4-4d2f-a951-9095f229df29
+  version: 1
+  name: Cobalt Strike DNS Beaconing
+  description: Detects suspicious DNS queries known from Cobalt Strike beacons
+  author: Florian Roth (Nextron Systems)
+  created: 2026-07-31T22:31:34.394097541+00:00
+  modified: 2026-07-31T22:31:34.394097541+00:00
+  enabled: true
+  category: command-and-control
+  subcategory: null
+  mitre:
+  - technique: '1071.004'
+    name: Technique 1071.004
+    tactic: Command and Control
+  severity: Critical
+  risk:
+    base_score: 90
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

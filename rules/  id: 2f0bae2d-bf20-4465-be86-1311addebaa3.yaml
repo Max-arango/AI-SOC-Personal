@@ -1,0 +1,24 @@
+rule:
+  id: sigma-2f0bae2d-bf20-4465-be86-1311addebaa3
+  version: 1
+  name: Google Cloud Kubernetes Secrets Modified or Deleted
+  description: Identifies when the Secrets are Modified or Deleted.
+  author: Austin Songer @austinsonger
+  created: 2026-07-31T22:31:34.374949717+00:00
+  modified: 2026-07-31T22:31:34.374949717+00:00
+  enabled: true
+  category: general
+  subcategory: null
+  mitre: []
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

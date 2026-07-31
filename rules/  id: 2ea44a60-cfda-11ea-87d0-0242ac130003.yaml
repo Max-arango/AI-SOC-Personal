@@ -1,0 +1,27 @@
+rule:
+  id: sigma-2ea44a60-cfda-11ea-87d0-0242ac130003
+  version: 1
+  name: Webshell ReGeorg Detection Via Web Logs
+  description: Certain strings in the uri_query field when combined with null referer and null user agent can indicate activity associated with the webshell ReGeorg.
+  author: Cian Heasley
+  created: 2026-07-31T22:31:34.295737893+00:00
+  modified: 2026-07-31T22:31:34.295737893+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1505.003'
+    name: Technique 1505.003
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,27 @@
+rule:
+  id: sigma-a607e1fe-74bf-4440-a3ec-b059b9103157
+  version: 1
+  name: AWS SecurityHub Findings Evasion
+  description: Detects the modification of the findings on SecurityHub.
+  author: Sittikorn S
+  created: 2026-07-31T22:31:34.316536023+00:00
+  modified: 2026-07-31T22:31:34.316536023+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1685'
+    name: Technique 1685
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

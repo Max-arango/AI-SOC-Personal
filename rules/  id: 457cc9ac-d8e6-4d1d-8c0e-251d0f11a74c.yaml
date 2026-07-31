@@ -1,0 +1,27 @@
+rule:
+  id: sigma-457cc9ac-d8e6-4d1d-8c0e-251d0f11a74c
+  version: 1
+  name: Modification or Deletion of an AWS RDS Cluster
+  description: Detects modifications to an RDS cluster or its deletion, which may indicate potential data exfiltration attempts, unauthorized access, or exposure of sensitive information.
+  author: Ivan Saakov
+  created: 2026-07-31T22:31:34.313400101+00:00
+  modified: 2026-07-31T22:31:34.313400101+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1020'
+    name: Technique 1020
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

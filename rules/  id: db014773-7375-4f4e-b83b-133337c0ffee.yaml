@@ -1,0 +1,30 @@
+rule:
+  id: sigma-db014773-7375-4f4e-b83b-133337c0ffee
+  version: 1
+  name: AWS IAM S3Browser Templated S3 Bucket Policy Creation
+  description: Detects S3 browser utility creating Inline IAM policy containing default S3 bucket name placeholder value of "<YOUR-BUCKET-NAME>".
+  author: daniel.bohannon@permiso.io (@danielhbohannon)
+  created: 2026-07-31T22:31:34.310220584+00:00
+  modified: 2026-07-31T22:31:34.310220584+00:00
+  enabled: true
+  category: execution
+  subcategory: null
+  mitre:
+  - technique: '1059.009'
+    name: Technique 1059.009
+    tactic: Execution
+  - technique: '1078.004'
+    name: Technique 1078.004
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

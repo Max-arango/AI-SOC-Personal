@@ -1,0 +1,29 @@
+rule:
+  id: sigma-21e44d78-95e7-421b-a464-ffd8395659c4
+  version: 1
+  name: HTTP Request With Empty User Agent
+  description: |
+    Detects a potentially suspicious empty user agent strings in proxy log.
+    Could potentially indicate an uncommon request method.
+  author: Florian Roth (Nextron Systems)
+  created: 2026-07-31T22:31:34.286983870+00:00
+  modified: 2026-07-31T22:31:34.286983870+00:00
+  enabled: true
+  category: command-and-control
+  subcategory: null
+  mitre:
+  - technique: '1071.001'
+    name: Technique 1071.001
+    tactic: Command and Control
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

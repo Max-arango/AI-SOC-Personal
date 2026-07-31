@@ -1,0 +1,27 @@
+rule:
+  id: sigma-25cb1ba1-8a19-4a23-a198-d252664c8cef
+  version: 1
+  name: AWS EFS Fileshare Modified or Deleted
+  description: |
+    Detects when a EFS Fileshare is modified or deleted.
+    You can't delete a file system that is in use.
+    If the file system has any mount targets, the adversary must first delete them, so deletion of a mount will occur before deletion of a fileshare.
+  author: Austin Songer @austinsonger
+  created: 2026-07-31T22:31:34.305976100+00:00
+  modified: 2026-07-31T22:31:34.305976100+00:00
+  enabled: true
+  category: general
+  subcategory: null
+  mitre: []
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,27 @@
+rule:
+  id: sigma-2d1b83e4-17c6-4896-a37b-29140b40a788
+  version: 1
+  name: Google Workspace User Granted Admin Privileges
+  description: Detects when an Google Workspace user is granted admin privileges.
+  author: Austin Songer
+  created: 2026-07-31T22:31:34.380103541+00:00
+  modified: 2026-07-31T22:31:34.380103541+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1098'
+    name: Technique 1098
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

@@ -1,0 +1,29 @@
+rule:
+  id: sigma-59b70e4d-dd17-44a9-b740-acf07ae3eb6a
+  version: 1
+  name: AWS Bedrock Guardrail Deleted
+  description: |
+    Detects deletion of an Amazon Bedrock guardrail, which may indicate attempts to remove
+    model safety controls and allow unsafe or unauthorized model responses.
+  author: Marco Pedrinazzi (@pedrinazziM) (InTheCyber)
+  created: 2026-07-31T22:31:34.296967222+00:00
+  modified: 2026-07-31T22:31:34.296967222+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1685'
+    name: Technique 1685
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

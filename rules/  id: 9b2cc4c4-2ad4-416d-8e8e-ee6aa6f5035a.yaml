@@ -1,0 +1,27 @@
+rule:
+  id: sigma-9b2cc4c4-2ad4-416d-8e8e-ee6aa6f5035a
+  version: 1
+  name: End User Consent
+  description: Detects when an end user consents to an application
+  author: Bailey Bercik '@baileybercik', Mark Morowczynski '@markmorow'
+  created: 2026-07-31T22:31:34.340968339+00:00
+  modified: 2026-07-31T22:31:34.340968339+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1528'
+    name: Technique 1528
+    tactic: ''
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

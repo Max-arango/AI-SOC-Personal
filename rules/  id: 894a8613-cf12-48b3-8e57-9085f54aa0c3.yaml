@@ -1,0 +1,27 @@
+rule:
+  id: sigma-894a8613-cf12-48b3-8e57-9085f54aa0c3
+  version: 1
+  name: Potential Base64 Encoded User-Agent
+  description: Detects User Agent strings that end with an equal sign, which can be a sign of base64 encoding.
+  author: Florian Roth (Nextron Systems), Brian Ingram (update)
+  created: 2026-07-31T22:31:34.291605577+00:00
+  modified: 2026-07-31T22:31:34.291605577+00:00
+  enabled: true
+  category: command-and-control
+  subcategory: null
+  mitre:
+  - technique: '1071.001'
+    name: Technique 1071.001
+    tactic: Command and Control
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

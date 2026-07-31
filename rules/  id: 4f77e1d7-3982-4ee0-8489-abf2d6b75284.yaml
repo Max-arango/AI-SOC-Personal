@@ -1,0 +1,27 @@
+rule:
+  id: sigma-4f77e1d7-3982-4ee0-8489-abf2d6b75284
+  version: 1
+  name: Sign-ins from Non-Compliant Devices
+  description: Monitor and alert for sign-ins where the device was non-compliant.
+  author: Michael Epping, '@mepples21'
+  created: 2026-07-31T22:31:34.366003852+00:00
+  modified: 2026-07-31T22:31:34.366003852+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078.004'
+    name: Technique 1078.004
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

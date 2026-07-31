@@ -1,0 +1,29 @@
+rule:
+  id: sigma-32438676-1dba-4ac7-bf69-b86cba995e05
+  version: 1
+  name: GCP Access Policy Deleted
+  description: |
+    Detects when an access policy that is applied to a GCP cloud resource is deleted.
+    An adversary would be able to remove access policies to gain access to a GCP cloud resource.
+  author: Bryan Lim
+  created: 2026-07-31T22:31:34.370275680+00:00
+  modified: 2026-07-31T22:31:34.370275680+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1098'
+    name: Technique 1098
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

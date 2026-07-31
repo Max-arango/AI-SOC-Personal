@@ -1,0 +1,29 @@
+rule:
+  id: sigma-d3adb3ef-b7e7-4003-9092-1924c797db35
+  version: 1
+  name: AWS Identity Center Identity Provider Change
+  description: |
+    Detects a change in the AWS Identity Center (FKA AWS SSO) identity provider.
+    A change in identity provider allows an attacker to establish persistent access or escalate privileges via user impersonation.
+  author: Michael McIntyre @wtfender
+  created: 2026-07-31T22:31:34.317506079+00:00
+  modified: 2026-07-31T22:31:34.317506079+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1556'
+    name: Technique 1556
+    tactic: ''
+  severity: Error
+  risk:
+    base_score: 75
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

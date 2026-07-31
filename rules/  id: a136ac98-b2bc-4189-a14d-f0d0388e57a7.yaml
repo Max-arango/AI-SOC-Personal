@@ -1,0 +1,27 @@
+rule:
+  id: sigma-a136ac98-b2bc-4189-a14d-f0d0388e57a7
+  version: 1
+  name: AWS S3 Bucket Versioning Disable
+  description: Detects when S3 bucket versioning is disabled. Threat actors use this technique during AWS ransomware incidents prior to deleting S3 objects.
+  author: Sean Johnstone | Unit 42
+  created: 2026-07-31T22:31:34.303527732+00:00
+  modified: 2026-07-31T22:31:34.303527732+00:00
+  enabled: true
+  category: impact
+  subcategory: null
+  mitre:
+  - technique: '1490'
+    name: Technique 1490
+    tactic: Impact
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

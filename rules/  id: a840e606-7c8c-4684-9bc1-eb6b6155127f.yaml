@@ -1,0 +1,32 @@
+rule:
+  id: sigma-a840e606-7c8c-4684-9bc1-eb6b6155127f
+  version: 1
+  name: PUA - AWS TruffleHog Execution
+  description: |
+    Detects the execution of TruffleHog, a popular open-source tool used for scanning repositories for secrets and sensitive information, within an AWS environment.
+    It has been reported to be used by threat actors for credential harvesting. All detections should be investigated to determine if the usage is authorized by security teams or potentially malicious.
+  author: Swachchhanda Shrawan Poudel (Nextron Systems)
+  created: 2026-07-31T22:31:34.300142625+00:00
+  modified: 2026-07-31T22:31:34.300142625+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1555'
+    name: Technique 1555
+    tactic: ''
+  - technique: '1003'
+    name: Technique 1003
+    tactic: Credential Access
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

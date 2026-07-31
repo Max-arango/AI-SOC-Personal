@@ -1,0 +1,24 @@
+rule:
+  id: sigma-6aef64e3-60c6-4782-8db3-8448759c714e
+  version: 1
+  name: Google Workspace Role Modified or Deleted
+  description: Detects when an a role is modified or deleted in Google Workspace.
+  author: Austin Songer
+  created: 2026-07-31T22:31:34.379247817+00:00
+  modified: 2026-07-31T22:31:34.379247817+00:00
+  enabled: true
+  category: general
+  subcategory: null
+  mitre: []
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

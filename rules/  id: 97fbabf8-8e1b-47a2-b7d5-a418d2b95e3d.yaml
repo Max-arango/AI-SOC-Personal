@@ -1,0 +1,27 @@
+rule:
+  id: sigma-97fbabf8-8e1b-47a2-b7d5-a418d2b95e3d
+  version: 1
+  name: AWS New Lambda Layer Attached
+  description: |
+    Detects when a user attached a Lambda layer to an existing Lambda function.
+    A malicious Lambda layer could execute arbitrary code in the context of the function's IAM role.
+    This would give an adversary access to resources that the function has access to.
+  author: Austin Songer
+  created: 2026-07-31T22:31:34.311954231+00:00
+  modified: 2026-07-31T22:31:34.311954231+00:00
+  enabled: true
+  category: general
+  subcategory: null
+  mitre: []
+  severity: Notice
+  risk:
+    base_score: 35
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

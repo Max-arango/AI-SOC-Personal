@@ -1,0 +1,27 @@
+rule:
+  id: sigma-04e2a23a-9b29-4a5c-be3a-3542e3f982ba
+  version: 1
+  name: Google Workspace Granted Domain API Access
+  description: Detects when an API access service account is granted domain authority.
+  author: Austin Songer
+  created: 2026-07-31T22:31:34.378349346+00:00
+  modified: 2026-07-31T22:31:34.378349346+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1098'
+    name: Technique 1098
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

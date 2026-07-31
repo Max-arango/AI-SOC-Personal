@@ -1,0 +1,33 @@
+rule:
+  id: sigma-25cb259b-bbdc-4b87-98b7-90d7c72f8743
+  version: 1
+  name: Azure Kubernetes RoleBinding/ClusterRoleBinding Modified and Deleted
+  description: Detects the creation or patching of potential malicious RoleBinding/ClusterRoleBinding.
+  author: Austin Songer @austinsonger
+  created: 2026-07-31T22:31:34.330100982+00:00
+  modified: 2026-07-31T22:31:34.330100982+00:00
+  enabled: true
+  category: impact
+  subcategory: null
+  mitre:
+  - technique: '1485'
+    name: Technique 1485
+    tactic: Impact
+  - technique: '1496'
+    name: Technique 1496
+    tactic: ''
+  - technique: '1489'
+    name: Technique 1489
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

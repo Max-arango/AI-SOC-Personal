@@ -1,0 +1,28 @@
+rule:
+  id: sigma-92f84194-8d9a-4ee0-8699-c30bfac59780
+  version: 1
+  name: AWS Key Pair Import Activity
+  description: |
+    Detects the import of SSH key pairs into AWS EC2, which may indicate an attacker attempting to gain unauthorized access to instances. This activity could lead to initial access, persistence, or privilege escalation, potentially compromising sensitive data and operations.
+  author: Ivan Saakov
+  created: 2026-07-31T22:31:34.304139679+00:00
+  modified: 2026-07-31T22:31:34.304139679+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078'
+    name: Technique 1078
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

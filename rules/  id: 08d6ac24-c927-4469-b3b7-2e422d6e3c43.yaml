@@ -1,0 +1,33 @@
+rule:
+  id: sigma-08d6ac24-c927-4469-b3b7-2e422d6e3c43
+  version: 1
+  name: Azure Kubernetes Network Policy Change
+  description: Identifies when a Azure Kubernetes network policy is modified or deleted.
+  author: Austin Songer @austinsonger
+  created: 2026-07-31T22:31:34.328232772+00:00
+  modified: 2026-07-31T22:31:34.328232772+00:00
+  enabled: true
+  category: impact
+  subcategory: null
+  mitre:
+  - technique: '1485'
+    name: Technique 1485
+    tactic: Impact
+  - technique: '1496'
+    name: Technique 1496
+    tactic: ''
+  - technique: '1489'
+    name: Technique 1489
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

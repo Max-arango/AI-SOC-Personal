@@ -1,0 +1,27 @@
+rule:
+  id: sigma-74298991-9fc4-460e-a92e-511aa60baec1
+  version: 1
+  name: Added Owner To Application
+  description: Detects when a new owner is added to an application. This gives that account privileges to make modifications and configuration changes to the application.
+  author: Mark Morowczynski '@markmorow', Bailey Bercik '@baileybercik'
+  created: 2026-07-31T22:31:34.341739056+00:00
+  modified: 2026-07-31T22:31:34.341739056+00:00
+  enabled: true
+  category: credential-access
+  subcategory: null
+  mitre:
+  - technique: '1552'
+    name: Technique 1552
+    tactic: Credential Access
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []

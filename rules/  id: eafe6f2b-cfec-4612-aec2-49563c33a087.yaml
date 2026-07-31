@@ -1,0 +1,27 @@
+rule:
+  id: sigma-eafe6f2b-cfec-4612-aec2-49563c33a087
+  version: 1
+  name: Google Workspace Government Attack Warning
+  description: Detects a login attempt in Google Workspace flagged as a potential attack by a government-backed threat actor
+  author: Tom Kluter
+  created: 2026-07-31T22:31:34.380590509+00:00
+  modified: 2026-07-31T22:31:34.380590509+00:00
+  enabled: true
+  category: ''
+  subcategory: null
+  mitre:
+  - technique: '1078'
+    name: Technique 1078
+    tactic: ''
+  severity: Warning
+  risk:
+    base_score: 55
+    confidence: 0.8
+    multipliers: []
+  condition: event.type == "sentinel.process.create"
+  and_conditions: []
+  or_conditions: []
+  not_conditions: []
+  actions: []
+  suppressions: []
+  tests: []
