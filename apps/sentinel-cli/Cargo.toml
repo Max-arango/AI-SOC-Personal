@@ -7,6 +7,12 @@ publish = false
 
 [dependencies]
 clap = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
 serde_yaml = "0.9"
+serde_json = { workspace = true }
 anyhow = { workspace = true }
+sqlx = { version = "0.7", features = ["runtime-tokio", "sqlite", "chrono"] }
+tokio = { workspace = true }
+chrono = { workspace = true }
 sentinel-sigma = { path = "../../crates/sentinel-sigma" }
+dirs = "5"
