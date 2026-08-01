@@ -100,3 +100,71 @@ pub async fn check_ip(ip: &str) -> Option<GreyNoiseReport> {
 
     Some(report)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_enabled_without_key() {
+        std::env::remove_var("SENTINEL_GREYNOISE_API_KEY");
+        assert!(!enabled());
+    }
+
+    #[test]
+    fn test_enabled_with_key() {
+        std::env::set_var("SENTINEL_GREYNOISE_API_KEY", "test-key-123");
+        assert!(enabled());
+        std::env::remove_var("SENTINEL_GREYNOISE_API_KEY");
+    }
+
+    #[test]
+    fn test_risk_modifier_malicious() {
+        let report = GreyNoiseReport {
+            ip: "10.0.0.1".into(),
+            classification: "malicious".into(),
+            name: "Mirai".into(),
+            is_noise: true,
+            is_riot: false,
+            risk_modifier: 25,
+        };
+        assert_eq!(report.risk_modifier, 25);
+        assert_eq!(report.classification, "malicious");
+        assert!(!report.name.is_empty());
+    }
+
+    #[test]
+    fn test_risk_modifier_benign() {
+        let report = GreyNoiseReport {
+            ip: "1.2.3.4".into(),
+            classification: "benign".into(),
+            name: "Shodan".into(),
+            is_noise: true,
+            is_riot: false,
+            risk_modifier: -20,
+        };
+        assert_eq!(report.risk_modifier, -20);
+        assert!(report.is_noise);
+    }
+
+    #[test]
+    fn test_risk_modifier_unknown() {
+        let report = GreyNoiseReport {
+            ip: "8.8.8.8".into(),
+            classification: "unknown".into(),
+            name: String::new(),
+            is_noise: false,
+            is_riot: false,
+            risk_modifier: 0,
+        };
+        assert_eq!(report.risk_modifier, 0);
+    }
+
+    #[test]
+    fn test_check_ip_no_key() {
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        std::env::remove_var("SENTINEL_GREYNOISE_API_KEY");
+        let result = rt.block_on(check_ip("8.8.8.8"));
+        assert!(result.is_none());
+    }
+}
