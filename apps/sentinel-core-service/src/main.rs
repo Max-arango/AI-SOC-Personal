@@ -330,7 +330,7 @@ async fn main() -> Result<()> {
                             if !ne.remote_addr.is_empty() {
                                 let ip = ne.remote_addr.clone();
 
-                                let (abuse_result, shodan_result, otx_result) = tokio::join!(
+                                let (abuse_result, shodan_result, otx_result, greynoise_result) = tokio::join!(
                                     async {
                                         if sentinel_plugin_abuseipdb::enabled() {
                                             sentinel_plugin_abuseipdb::check_ip(&ip).await
@@ -344,6 +344,11 @@ async fn main() -> Result<()> {
                                     async {
                                         if sentinel_plugin_otx::enabled() {
                                             sentinel_plugin_otx::check_ip(&ip).await
+                                        } else { None }
+                                    },
+                                    async {
+                                        if sentinel_plugin_greynoise::enabled() {
+                                            sentinel_plugin_greynoise::check_ip(&ip).await
                                         } else { None }
                                     }
                                 );
@@ -412,6 +417,20 @@ async fn main() -> Result<()> {
                                         "OTX enrichment: {} +{} risk (pulses={}, malware={:?})",
                                         ip, report.risk_score, report.pulse_count, report.malware_families
                                     );
+                                }
+
+                                if let Some(report) = greynoise_result {
+                                    if report.classification == "malicious" {
+                                        enriched_event.risk_score = enriched_event.risk_score.saturating_add(25);
+                                        enriched_event.tags.push("grey_noise:malicious".into());
+                                    } else if report.classification == "benign" {
+                                        enriched_event.risk_score = enriched_event.risk_score.saturating_sub(20);
+                                        enriched_event.tags.push("grey_noise:benign".into());
+                                    }
+                                    if !report.name.is_empty() {
+                                        enriched_event.tags.push(format!("grey_noise:{}", report.name.to_lowercase()));
+                                    }
+                                    info!("GreyNoise: {} → {} ({})", ip, report.classification, report.name);
                                 }
 
                                 if sentinel_plugin_geoip::enabled() {
