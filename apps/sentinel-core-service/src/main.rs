@@ -17,7 +17,7 @@ use sentinel_config::ConfigManager;
 use sentinel_core::{ChannelConfig, EventBus};
 use sentinel_correlation::{CorrelationConfig, CorrelationEngine};
 use sentinel_event_bus::EventBusImpl;
-use sentinel_events::{Event, ProcessContext, UserContext};
+use sentinel_events::Event;
 use sentinel_privacy::PrivacyEngine;
 use sentinel_privacy::config::PrivacyConfig;
 use sentinel_risk::{RiskConfig, RiskEngine};
@@ -188,121 +188,9 @@ async fn main() -> Result<()> {
         });
     }
 
-    // ── Linux process watcher (M1 — real process events) ───────
-    #[cfg(target_os = "linux")]
-    {
-        let watcher_bus = bus.clone();
-        tokio::spawn(async move {
-            use std::collections::HashSet;
-            let mut sys = sysinfo::System::new();
-            sys.refresh_all();
-            let mut known: HashSet<sysinfo::Pid> = sys.processes().keys().copied().collect();
-            let mut tick = tokio::time::interval(std::time::Duration::from_secs(5));
-            tick.tick().await; // skip first immediate tick
-            loop {
-                tick.tick().await;
-                sys.refresh_all();
-                let current: HashSet<sysinfo::Pid> = sys.processes().keys().copied().collect();
-
-                for pid in current.difference(&known) {
-                    if let Some(proc) = sys.process(*pid) {
-                        let event = Arc::new(Event {
-                            id: sentinel_core::Ulid::new().to_string(),
-                            r#type: "sentinel.process.create".into(),
-                            source: "process".into(),
-                            severity: 2,
-                            risk_score: 10,
-                            host_id: String::new(),
-                            schema_version: 1,
-                            process: Some(ProcessContext {
-                                pid: pid.as_u32(),
-                                ppid: proc.parent().map(|p| p.as_u32()).unwrap_or(0),
-                                name: proc.name().to_string_lossy().into_owned(),
-                                path: proc
-                                    .exe()
-                                    .map(|p| p.to_string_lossy().into_owned())
-                                    .unwrap_or_default(),
-                                command_line: proc
-                                    .cmd()
-                                    .iter()
-                                    .map(|s| s.to_string_lossy())
-                                    .collect::<Vec<_>>()
-                                    .join(" "),
-                                user: Some(UserContext {
-                                    sid: proc.user_id().map(|u| u.to_string()).unwrap_or_default(),
-                                    username: proc
-                                        .user_id()
-                                        .map(|u| u.to_string())
-                                        .unwrap_or_default(),
-                                    domain: String::new(),
-                                    is_elevated: false,
-                                    is_system: false,
-                                }),
-                                ..Default::default()
-                            }),
-                            ..Default::default()
-                        });
-                        if let Err(e) = watcher_bus.publish(event).await {
-                            warn!("Process collector publish failed: {e}");
-                        }
-                    }
-                }
-                known = current;
-            }
-        });
-        info!("Linux process watcher started (5s interval)");
-    }
-
-    #[cfg(not(target_os = "linux"))]
-    {
-        let bus_clone = bus.clone();
-        tokio::spawn(async move {
-            use std::collections::HashSet;
-            let mut sys = sysinfo::System::new();
-            sys.refresh_all();
-            let mut known: HashSet<sysinfo::Pid> = sys.processes().keys().copied().collect();
-            let mut tick = tokio::time::interval(std::time::Duration::from_secs(5));
-            tick.tick().await;
-            loop {
-                tick.tick().await;
-                sys.refresh_all();
-                let current: HashSet<sysinfo::Pid> = sys.processes().keys().copied().collect();
-                for pid in current.difference(&known) {
-                    if let Some(proc) = sys.process(*pid) {
-                        let event = Arc::new(Event {
-                            id: sentinel_core::Ulid::new().to_string(),
-                            r#type: "sentinel.process.create".into(),
-                            source: "process".into(),
-                            severity: 2,
-                            risk_score: 10,
-                            host_id: String::new(),
-                            schema_version: 1,
-                            process: Some(ProcessContext {
-                                pid: pid.as_u32(),
-                                ppid: proc.parent().map(|p| p.as_u32()).unwrap_or(0),
-                                name: proc.name().to_string_lossy().into_owned(),
-                                path: proc
-                                    .exe()
-                                    .map(|p| p.to_string_lossy().into_owned())
-                                    .unwrap_or_default(),
-                                command_line: proc
-                                    .cmd()
-                                    .iter()
-                                    .map(|s| s.to_string_lossy())
-                                    .collect::<Vec<_>>()
-                                    .join(" "),
-                                ..Default::default()
-                            }),
-                            ..Default::default()
-                        });
-                        let _ = bus_clone.publish(event).await;
-                    }
-                }
-                known = current;
-            }
-        });
-        info!("Process watcher started (5s interval, sysinfo)");
-    }
+    // ── Linux process collector (CN_PROC netlink) ───────────
+    sentinel_collectors::process::start_process_monitor(bus.clone()).await;
+    info!("Process collector started (netlink CN_PROC)");
 
     sentinel_collectors::network::start_network_monitor(bus.clone()).await;
     info!("Network collector started");

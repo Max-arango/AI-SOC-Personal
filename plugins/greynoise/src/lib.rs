@@ -115,7 +115,6 @@ mod tests {
     fn test_enabled_with_key() {
         std::env::set_var("SENTINEL_GREYNOISE_API_KEY", "test-key-123");
         assert!(enabled());
-        std::env::remove_var("SENTINEL_GREYNOISE_API_KEY");
     }
 
     #[test]
