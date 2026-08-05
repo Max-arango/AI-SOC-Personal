@@ -11,7 +11,7 @@ use sentinel_config::ProcessCollectorConfig;
 use sentinel_core::traits::EventBus;
 use sentinel_events::{Event, ProcessContext, UserContext};
 use tokio::sync::mpsc;
-use tracing::{error, info, warn};
+use tracing::{info, warn};
 
 use netlink_monitor::NetlinkMonitor;
 

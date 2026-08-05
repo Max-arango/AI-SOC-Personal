@@ -4,7 +4,7 @@
 //! behaviour via the Linux Netlink Connector (CN_PROC) interface.
 //!
 //! Architecture:
-//! ```
+//! ```text
 //! Kernel CN_PROC socket ──► NetlinkMonitor (async fd loop)
 //!                                 │
 //!                    mpsc::UnboundedSender<ProcNetlinkEvent>
@@ -288,7 +288,7 @@ pub fn netlink_to_sentinel_event_inner(
     config: &ProcessCollectorConfig,
 ) -> Option<Event> {
     match nl {
-        ProcNetlinkEvent::Fork { child_pid, child_tgid, parent_pid, parent_tgid, timestamp_ns } => {
+        ProcNetlinkEvent::Fork { child_pid: _, child_tgid, parent_pid, parent_tgid, timestamp_ns: _ } => {
             let pid = *child_tgid as u32;
             let info = proc_reader::gather_pid_info(pid);
             Some(build_event(
