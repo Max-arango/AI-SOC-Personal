@@ -275,6 +275,7 @@ message BrowserEvent {
     SAFARI = 4;
     BRAVE = 5;
     VIVALDI = 6;
+    OPERA = 7;
   }
   enum Action {
     ACTION_UNSPECIFIED = 0;
