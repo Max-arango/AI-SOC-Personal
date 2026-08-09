@@ -238,10 +238,7 @@ fn parse_events(buf: &[u8]) -> Vec<FileEvent> {
         let path = resolve_path(meta);
         let action = classify_action(meta.mask);
 
-        if action != FileAction::Open || path.ends_with('/') {
-            // Skip bare OPEN events on directories (noisy).
-            // Still emit OPEN for files (potential EXEC detection).
-        } else {
+        if action == FileAction::Open {
             offset += meta.event_len as usize;
             continue;
         }

@@ -321,11 +321,6 @@ impl ShutdownSignal {
     }
 }
 
-impl Default for ShutdownSignal {
-    fn default() -> Self {
-        Self::new().0
-    }
-}
 
 /// Module context provided to each subsystem
 #[derive(Clone)]

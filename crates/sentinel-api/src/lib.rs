@@ -730,6 +730,10 @@ impl Sentinel for SentinelService {
             enabled: s.state != "stopped",
             state: match s.state.as_str() {
                 "running" => api::CollectorState::CollectorRunning as i32,
+                "stopped" => api::CollectorState::CollectorStopped as i32,
+                "starting" => api::CollectorState::CollectorStarting as i32,
+                "degraded" => api::CollectorState::CollectorDegraded as i32,
+                "error" => api::CollectorState::CollectorError as i32,
                 _ => api::CollectorState::Unspecified as i32,
             },
             stats: Some(api::CollectorStats {

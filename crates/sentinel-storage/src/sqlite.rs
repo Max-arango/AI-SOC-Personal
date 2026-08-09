@@ -312,8 +312,10 @@ impl EventRepository for SqliteEventRepository {
         }
 
         let sort_by = query.sort_by.as_deref().unwrap_or("timestamp");
+        let valid_sort = ["timestamp", "severity", "risk_score", "type", "source", "host_id"];
+        let sort_col = valid_sort.iter().find(|&&c| c == sort_by).unwrap_or(&"timestamp");
         let sort_order = if query.sort_desc { "DESC" } else { "ASC" };
-        sql.push_str(&format!(" ORDER BY {} {}", sort_by, sort_order));
+        sql.push_str(&format!(" ORDER BY {} {}", sort_col, sort_order));
         sql.push_str(" LIMIT ? OFFSET ?");
         params.push(format!("{}", limit));
         params.push(format!("{}", offset));
@@ -386,7 +388,7 @@ impl EventRepository for SqliteEventRepository {
     }
 
     async fn aggregate(&self, agg: AggregationQuery) -> CoreResult<AggregationResult> {
-        let valid_columns = ["event_type", "source", "severity", "host_id"];
+        let valid_columns = ["type", "source", "severity", "host_id"];
         let column = valid_columns
             .iter()
             .find(|&&c| c == agg.group_by)
@@ -786,8 +788,9 @@ impl AlertRepository for SqliteAlertRepository {
         }
         sql.push_str(" ORDER BY created_at DESC");
 
-        sql.push_str(" LIMIT ?");
+        sql.push_str(" LIMIT ? OFFSET ?");
         params.push(format!("{}", query.limit));
+        params.push(format!("{}", query.offset));
 
         let mut q = sqlx::query(&sql);
         for p in &params {
@@ -856,9 +859,24 @@ fn row_to_alert(row: &sqlx::sqlite::SqliteRow) -> sentinel_core::traits::Alert {
             s.parse().unwrap_or_default()
         },
         acknowledged_by: row.get("acknowledged_by"),
-        acknowledged_at: None,
-        events: vec![],
-        context: serde_json::Value::Null,
+        acknowledged_at: {
+            let s: Option<String> = row.get("acknowledged_at");
+            s.and_then(|s| s.parse().ok())
+        },
+        events: {
+            let s: String = row.get("events");
+            if s.is_empty() {
+                vec![]
+            } else {
+                s.split(',')
+                    .filter_map(|id| Ulid::from_string(id.trim()).ok())
+                    .collect()
+            }
+        },
+        context: {
+            let s: String = row.get("context");
+            serde_json::from_str(&s).unwrap_or(serde_json::Value::Null)
+        },
         ai_summary: row.get("ai_summary"),
     }
 }

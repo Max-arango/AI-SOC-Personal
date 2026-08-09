@@ -328,15 +328,12 @@ fn scan_dir(dir: &Path, known: &mut HashMap<String, (u64, u64)>) -> Vec<Event> {
     }
 
     // Detect deleted files (in known but not on disk)
-    let current_paths: std::collections::HashSet<String> = events
-        .iter()
-        .filter_map(|e| {
-            if let Some(sentinel_events::event::Payload::FileEvent(ref fe)) = e.payload {
-                Some(fe.path.clone())
-            } else {
-                None
-            }
-        })
+    let current_paths: std::collections::HashSet<String> = std::fs::read_dir(dir)
+        .into_iter()
+        .flatten()
+        .filter_map(|e| e.ok())
+        .filter(|e| e.path().is_file())
+        .map(|e| e.path().to_string_lossy().to_string())
         .collect();
 
     let deleted: Vec<String> = known
