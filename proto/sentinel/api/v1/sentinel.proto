@@ -210,7 +210,13 @@ message ListAlertsRequest {
 message ListAlertsResponse { repeated Alert alerts = 1; int64 total_count = 2; }
 message GetAlertRequest { string alert_id = 1; }
 message UpdateAlertStateRequest { string alert_id = 1; AlertState new_state = 2; string comment = 3; }
+message UpdateAlertStateResponse { Alert alert = 1; }
 message StreamAlertsRequest {}
+message AlertStreamEvent {
+  Alert alert = 1;
+  enum EventType { CREATED = 0; UPDATED = 1; }
+  EventType event_type = 2;
+}
 enum AlertState { ALERT_STATE_UNSPECIFIED = 0; NEW = 1; ACKNOWLEDGED = 2; INVESTIGATING = 3; RESOLVED_TRUE_POSITIVE = 4; RESOLVED_FALSE_POSITIVE = 5; SUPPRESSED = 6; }
 message Alert {
   string id = 1;
@@ -426,6 +432,8 @@ service Sentinel {
 
   rpc ListAlerts(ListAlertsRequest) returns (ListAlertsResponse);
   rpc GetAlert(GetAlertRequest) returns (Alert);
+  rpc UpdateAlertState(UpdateAlertStateRequest) returns (UpdateAlertStateResponse);
+  rpc StreamAlerts(StreamAlertsRequest) returns (stream AlertStreamEvent);
 
   rpc ListRules(ListRulesRequest) returns (ListRulesResponse);
   rpc CreateRule(CreateRuleRequest) returns (Rule);

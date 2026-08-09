@@ -205,7 +205,7 @@ pub struct RetentionPolicy {
 /// Rule repository trait
 #[async_trait]
 pub trait RuleRepository: Send + Sync {
-    async fn load_all(&self) -> Result<Vec<Rule>>;
+    async fn load_all(&self, enabled_only: bool) -> Result<Vec<Rule>>;
     async fn get(&self, id: &str) -> Result<Option<Rule>>;
     async fn upsert(&self, rule: &Rule) -> Result<()>;
     async fn delete(&self, id: &str) -> Result<()>;
@@ -723,6 +723,46 @@ pub struct UsbEvent {
     pub device: UsbDeviceInfo,
     pub action: UsbAction,
     pub timestamp: chrono::DateTime<chrono::Utc>,
+}
+
+/// Chain repository trait
+#[async_trait]
+pub trait ChainRepository: Send + Sync {
+    async fn save_chain(&self, chain: &AttackChain) -> Result<()>;
+    async fn get_chain(&self, id: &str) -> Result<Option<AttackChain>>;
+    async fn query_chains(&self, query: ChainQuery) -> Result<Vec<AttackChain>>;
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct AttackChain {
+    pub id: String,
+    pub start_time: chrono::DateTime<chrono::Utc>,
+    pub end_time: chrono::DateTime<chrono::Utc>,
+    pub risk_score: u32,
+    pub tactics: Vec<String>,
+    pub techniques: Vec<String>,
+    pub event_count: u32,
+    pub status: ChainStatus,
+    pub kill_chain_coverage: f64,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum ChainStatus {
+    #[default]
+    Unspecified,
+    ActiveAttack,
+    SuspiciousChain,
+    Resolved,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ChainQuery {
+    pub start_time: Option<chrono::DateTime<chrono::Utc>>,
+    pub end_time: Option<chrono::DateTime<chrono::Utc>>,
+    pub status: Option<ChainStatus>,
+    pub min_risk: Option<u32>,
+    pub limit: usize,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

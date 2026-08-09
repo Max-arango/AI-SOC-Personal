@@ -6,15 +6,18 @@
 use chrono::Utc;
 use sentinel_core::traits::{Alert, AlertQuery, AlertRepository, AlertState};
 use sentinel_core::{AlertId, Result as CoreResult, Ulid};
+use sentinel_events::sentinel::api::v1::{AlertStreamEvent, alert_stream_event::EventType};
 use std::sync::Arc;
+use tokio::sync::broadcast;
 
 pub struct AlertManager {
     repo: Arc<dyn AlertRepository>,
+    tx: broadcast::Sender<AlertStreamEvent>,
 }
 
 impl AlertManager {
-    pub fn new(repo: Arc<dyn AlertRepository>) -> Self {
-        Self { repo }
+    pub fn new(repo: Arc<dyn AlertRepository>, tx: broadcast::Sender<AlertStreamEvent>) -> Self {
+        Self { repo, tx }
     }
 
     pub async fn create(
@@ -44,6 +47,9 @@ impl AlertManager {
             ai_summary: None,
         };
         self.repo.create(&alert).await?;
+
+        let _ = self.tx.send(alert_to_stream_event(&alert, EventType::Created));
+
         Ok(alert)
     }
 
@@ -51,7 +57,13 @@ impl AlertManager {
         let comment = Some(username.to_string());
         self.repo
             .update_state(alert_id, AlertState::Acknowledged, comment)
-            .await
+            .await?;
+
+        if let Ok(Some(updated)) = self.repo.get(alert_id).await {
+            let _ = self.tx.send(alert_to_stream_event(&updated, EventType::Updated));
+        }
+
+        Ok(())
     }
 
     pub async fn resolve(&self, alert_id: &AlertId, is_true_positive: bool) -> CoreResult<()> {
@@ -60,7 +72,28 @@ impl AlertManager {
         } else {
             AlertState::ResolvedFalsePositive
         };
-        self.repo.update_state(alert_id, state, None).await
+        self.repo.update_state(alert_id, state, None).await?;
+
+        if let Ok(Some(updated)) = self.repo.get(alert_id).await {
+            let _ = self.tx.send(alert_to_stream_event(&updated, EventType::Updated));
+        }
+
+        Ok(())
+    }
+
+    pub async fn update_state(
+        &self,
+        alert_id: &AlertId,
+        state: AlertState,
+        username: Option<String>,
+    ) -> CoreResult<()> {
+        self.repo.update_state(alert_id, state, username).await?;
+
+        if let Ok(Some(updated)) = self.repo.get(alert_id).await {
+            let _ = self.tx.send(alert_to_stream_event(&updated, EventType::Updated));
+        }
+
+        Ok(())
     }
 
     pub async fn get(&self, id: &AlertId) -> CoreResult<Option<Alert>> {
@@ -91,5 +124,32 @@ impl AlertManager {
                 offset: 0,
             })
             .await
+    }
+}
+
+fn alert_to_stream_event(alert: &Alert, event_type: EventType) -> AlertStreamEvent {
+    use sentinel_events::sentinel::api::v1;
+
+    AlertStreamEvent {
+        alert: Some(v1::Alert {
+            id: alert.id.to_string(),
+            rule_id: alert.rule_id.clone(),
+            risk_score: alert.risk_score,
+            severity: alert.severity as i32,
+            state: core_alert_state_to_proto(alert.state),
+            ..Default::default()
+        }),
+        event_type: event_type as i32,
+    }
+}
+
+fn core_alert_state_to_proto(state: AlertState) -> i32 {
+    match state {
+        AlertState::New => 1,
+        AlertState::Acknowledged => 2,
+        AlertState::Investigating => 3,
+        AlertState::ResolvedTruePositive => 4,
+        AlertState::ResolvedFalsePositive => 5,
+        AlertState::Suppressed => 6,
     }
 }

@@ -828,6 +828,28 @@ fn preprocess_cel(expr: &str) -> String {
     expr.replace(".lowerAscii()", "")
 }
 
+pub fn evaluate_rule_condition(rule: &Rule, event: &Event) -> anyhow::Result<bool> {
+    let condition = preprocess_cel(&rule.condition);
+    let program = cel::Program::compile(&condition)
+        .map_err(|e| anyhow::anyhow!("Failed to compile CEL expression: {:?}", e))?;
+    let mut ctx = cel::Context::default();
+    ctx.add_variable_from_value("event", event_to_cel_value(event));
+    ctx.add_variable_from_value("severity", i64::from(event.severity));
+    ctx.add_variable_from_value("event_type", event.r#type.clone());
+    ctx.add_variable_from_value("SEVERITY_DEBUG", 1i64);
+    ctx.add_variable_from_value("SEVERITY_INFO", 2i64);
+    ctx.add_variable_from_value("SEVERITY_NOTICE", 3i64);
+    ctx.add_variable_from_value("SEVERITY_WARNING", 4i64);
+    ctx.add_variable_from_value("SEVERITY_ERROR", 5i64);
+    ctx.add_variable_from_value("SEVERITY_CRITICAL", 6i64);
+    ctx.add_variable_from_value("SEVERITY_ALERT", 7i64);
+    ctx.add_variable_from_value("SEVERITY_EMERGENCY", 8i64);
+    let result = program
+        .execute(&ctx)
+        .map_err(|e| anyhow::anyhow!("CEL evaluation error: {}", e))?;
+    Ok(matches!(result, cel::Value::Bool(true)))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

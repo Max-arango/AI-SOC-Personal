@@ -14,15 +14,16 @@ pub use errors::{CollectorError, ConfigError, EventBusError, SentinelError, Stor
 pub use health::{ComponentHealth, ComponentMetrics, HealthCheck, HealthStatus, SystemHealth};
 pub use metrics::{MetricsRegistry, MetricsSnapshot};
 pub use traits::{
-    Alert, AlertQuery, AlertRepository, AlertState, BrowserData, BrowserDownload, BrowserExtension,
-    BrowserHistoryEntry, BrowserType, Collector, CollectorContext, CollectorHealth,
-    CollectorMetrics, CollectorState, ConfigProvider, ConfigRepository, ConfigSchema,
-    ConfigWatcher, ConnectionInfo, EventBus, EventBusStats, EventCursor, EventFilter, EventQuery,
-    EventRepository, EventSubscription, FileAction, FileEvent, FileWatcher, MitreMapping, Module,
-    OsAbstraction, PluginInfo, PluginManager, PluginState, ProcessInfo, RegistryAction,
-    RegistryEvent, RegistryWatcher, RetentionPolicy, RiskConfig, RiskMultiplier, Rule, RuleAction,
-    RuleActionType, RuleRepository, RuleTest, StartupItem, StartupLocation, SuppressionRule,
-    UsbAction, UsbDeviceInfo, UsbEvent, UsbWatcher, UserInfo,
+    Alert, AlertQuery, AlertRepository, AlertState, AttackChain, BrowserData, BrowserDownload,
+    BrowserExtension, BrowserHistoryEntry, BrowserType, ChainQuery, ChainRepository, ChainStatus,
+    Collector, CollectorContext, CollectorHealth, CollectorMetrics, CollectorState, ConfigProvider,
+    ConfigRepository, ConfigSchema, ConfigWatcher, ConnectionInfo, EventBus, EventBusStats,
+    EventCursor, EventFilter, EventQuery, EventRepository, EventSubscription, FileAction,
+    FileEvent, FileWatcher, MitreMapping, Module, OsAbstraction, PluginInfo, PluginManager,
+    PluginState, ProcessInfo, RegistryAction, RegistryEvent, RegistryWatcher, RetentionPolicy,
+    RiskConfig, RiskMultiplier, Rule, RuleAction, RuleActionType, RuleRepository, RuleTest,
+    StartupItem, StartupLocation, SuppressionRule, UsbAction, UsbDeviceInfo, UsbEvent, UsbWatcher,
+    UserInfo,
 };
 
 use chrono::{DateTime, Utc};

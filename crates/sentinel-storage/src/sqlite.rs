@@ -10,8 +10,9 @@ use tracing::info;
 
 use sentinel_core::{
     traits::{
-        AggregationBucket, AggregationQuery, AggregationResult, AlertRepository, ConfigRepository,
-        EventCursor, EventQuery, EventRepository, RetentionPolicy, RuleRepository,
+        AggregationBucket, AggregationQuery, AggregationResult, AlertRepository, ChainRepository,
+        ConfigRepository, EventCursor, EventQuery, EventRepository, RetentionPolicy, RuleRepository,
+        AttackChain, ChainQuery, ChainStatus,
     },
     AlertId, ConfigValue, EventId, Result as CoreResult, SentinelError,
 };
@@ -44,6 +45,7 @@ pub struct SqliteStorage {
     rule_repo: Arc<RwLock<Option<Arc<SqliteRuleRepository>>>>,
     alert_repo: Arc<RwLock<Option<Arc<SqliteAlertRepository>>>>,
     config_repo: Arc<RwLock<Option<Arc<SqliteConfigRepository>>>>,
+    chain_repo: Arc<RwLock<Option<Arc<SqliteChainRepository>>>>,
 }
 
 impl SqliteStorage {
@@ -85,6 +87,7 @@ impl SqliteStorage {
             rule_repo: Arc::new(RwLock::new(None)),
             alert_repo: Arc::new(RwLock::new(None)),
             config_repo: Arc::new(RwLock::new(None)),
+            chain_repo: Arc::new(RwLock::new(None)),
         })
     }
 
@@ -133,6 +136,15 @@ impl SqliteStorage {
             *repo = Some(Arc::new(SqliteConfigRepository::new(self.pool.clone())));
         }
         repo.clone().expect("config repo must be initialized")
+    }
+
+    /// Get or create chain repository
+    pub async fn chains(&self) -> Arc<dyn ChainRepository> {
+        let mut repo = self.chain_repo.write().await;
+        if repo.is_none() {
+            *repo = Some(Arc::new(SqliteChainRepository::new(self.pool.clone())));
+        }
+        repo.clone().expect("chain repo must be initialized")
     }
 }
 
@@ -552,8 +564,13 @@ impl SqliteRuleRepository {
 
 #[async_trait::async_trait]
 impl RuleRepository for SqliteRuleRepository {
-    async fn load_all(&self) -> CoreResult<Vec<sentinel_core::traits::Rule>> {
-        let rows = sqlx::query("SELECT * FROM rules WHERE enabled = 1")
+    async fn load_all(&self, enabled_only: bool) -> CoreResult<Vec<sentinel_core::traits::Rule>> {
+        let query = if enabled_only {
+            "SELECT * FROM rules WHERE enabled = 1"
+        } else {
+            "SELECT * FROM rules"
+        };
+        let rows = sqlx::query(query)
             .fetch_all(&self.pool)
             .await
             .map_err(|e| {
@@ -723,11 +740,15 @@ impl AlertRepository for SqliteAlertRepository {
         let now = Utc::now().to_rfc3339();
         let id_str = id.to_string();
         let state_i = state as i32;
-        let ack_at = if comment.is_some() { Some(now.clone()) } else { None };
+        let (ack_by, ack_at) = if matches!(state, sentinel_core::traits::AlertState::Acknowledged) {
+            (comment, Some(now.clone()))
+        } else {
+            (None, None)
+        };
         sqlx::query("UPDATE alerts SET state = ?, updated_at = ?, acknowledged_by = ?, acknowledged_at = ? WHERE id = ?")
             .bind(state_i)
             .bind(&now)
-            .bind(&comment)
+            .bind(&ack_by)
             .bind(&ack_at)
             .bind(&id_str)
             .execute(&self.pool)
@@ -811,6 +832,8 @@ fn row_to_alert(row: &sqlx::sqlite::SqliteRow) -> sentinel_core::traits::Alert {
             1 => AlertState::Acknowledged,
             2 => AlertState::Investigating,
             3 => AlertState::ResolvedTruePositive,
+            4 => AlertState::ResolvedFalsePositive,
+            5 => AlertState::Suppressed,
             _ => AlertState::New,
         },
         created_at: {
@@ -923,6 +946,129 @@ impl ConfigRepository for SqliteConfigRepository {
                 Some((key, ConfigValue::from(v)))
             })
             .collect())
+    }
+}
+
+pub struct SqliteChainRepository {
+    pool: SqlitePool,
+}
+
+impl SqliteChainRepository {
+    pub fn new(pool: SqlitePool) -> Self {
+        Self { pool }
+    }
+}
+
+#[async_trait::async_trait]
+impl ChainRepository for SqliteChainRepository {
+    async fn save_chain(&self, chain: &AttackChain) -> CoreResult<()> {
+        let tactics_json = serde_json::to_string(&chain.tactics)
+            .map_err(|e| SentinelError::Serialization(e.into()))?;
+        let techniques_json = serde_json::to_string(&chain.techniques)
+            .map_err(|e| SentinelError::Serialization(e.into()))?;
+        let status = chain.status as i32;
+
+        sqlx::query(
+            r#"
+            INSERT INTO correlation_chains (id, start_time, end_time, risk_score, tactics, techniques, event_count, state, kill_chain_coverage)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+                end_time = excluded.end_time,
+                risk_score = excluded.risk_score,
+                tactics = excluded.tactics,
+                techniques = excluded.techniques,
+                event_count = excluded.event_count,
+                state = excluded.state,
+                kill_chain_coverage = excluded.kill_chain_coverage,
+                updated_at = datetime('now')
+            "#,
+        )
+        .bind(&chain.id)
+        .bind(chain.start_time.to_rfc3339())
+        .bind(chain.end_time.to_rfc3339())
+        .bind(chain.risk_score as i64)
+        .bind(&tactics_json)
+        .bind(&techniques_json)
+        .bind(chain.event_count as i64)
+        .bind(status)
+        .bind(chain.kill_chain_coverage)
+        .execute(&self.pool)
+        .await
+        .map_err(|e| SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string())))?;
+
+        Ok(())
+    }
+
+    async fn get_chain(&self, id: &str) -> CoreResult<Option<AttackChain>> {
+        let row = sqlx::query("SELECT * FROM correlation_chains WHERE id = ?")
+            .bind(id)
+            .fetch_optional(&self.pool)
+            .await
+            .map_err(|e| {
+                SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string()))
+            })?;
+
+        Ok(row.map(|r| row_to_chain(&r)))
+    }
+
+    async fn query_chains(&self, query: ChainQuery) -> CoreResult<Vec<AttackChain>> {
+        let mut sql = String::from("SELECT * FROM correlation_chains WHERE 1=1");
+        let mut params: Vec<String> = Vec::new();
+
+        if let Some(ref start) = query.start_time {
+            sql.push_str(" AND start_time >= ?");
+            params.push(start.to_rfc3339());
+        }
+        if let Some(ref end) = query.end_time {
+            sql.push_str(" AND end_time <= ?");
+            params.push(end.to_rfc3339());
+        }
+        if let Some(status) = query.status {
+            sql.push_str(" AND state = ?");
+            params.push(format!("{}", status as i32));
+        }
+        if let Some(min_risk) = query.min_risk {
+            sql.push_str(" AND risk_score >= ?");
+            params.push(format!("{}", min_risk));
+        }
+
+        sql.push_str(" ORDER BY risk_score DESC LIMIT ?");
+        params.push(format!("{}", query.limit));
+
+        let mut q = sqlx::query(&sql);
+        for p in &params {
+            q = q.bind(p);
+        }
+
+        let rows = q.fetch_all(&self.pool).await.map_err(|e| {
+            SentinelError::Storage(sentinel_core::StorageError::Query(e.to_string()))
+        })?;
+
+        Ok(rows.iter().map(|r| row_to_chain(r)).collect())
+    }
+}
+
+fn row_to_chain(row: &sqlx::sqlite::SqliteRow) -> AttackChain {
+    let tactics_str: String = row.get("tactics");
+    let techniques_str: String = row.get("techniques");
+    let start_time_str: String = row.get("start_time");
+    let end_time_str: String = row.get("end_time");
+
+    AttackChain {
+        id: row.get("id"),
+        start_time: start_time_str.parse().unwrap_or_default(),
+        end_time: end_time_str.parse().unwrap_or_default(),
+        risk_score: row.get::<i32, _>("risk_score") as u32,
+        tactics: serde_json::from_str(&tactics_str).unwrap_or_default(),
+        techniques: serde_json::from_str(&techniques_str).unwrap_or_default(),
+        event_count: row.get::<i32, _>("event_count") as u32,
+        status: match row.get::<i32, _>("state") {
+            1 => ChainStatus::ActiveAttack,
+            2 => ChainStatus::SuspiciousChain,
+            3 => ChainStatus::Resolved,
+            _ => ChainStatus::Unspecified,
+        },
+        kill_chain_coverage: row.get::<f64, _>("kill_chain_coverage"),
     }
 }
 #[cfg(test)]

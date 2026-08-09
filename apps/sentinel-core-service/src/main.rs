@@ -7,7 +7,7 @@ use std::sync::Arc;
 use anyhow::{Context, Result};
 use clap::Parser;
 use tokio::signal;
-use tokio::sync::watch;
+use tokio::sync::{broadcast, watch};
 use tracing::{error, info};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -142,7 +142,8 @@ async fn main() -> Result<()> {
     // ── M2: Correlation + Risk + Alerts ─────────────────────────
     let correlation = Arc::new(CorrelationEngine::new(CorrelationConfig::default()));
     let risk = Arc::new(RiskEngine::new(RiskConfig::default()));
-    let alert_mgr = Arc::new(AlertManager::new(sqlite.alerts().await));
+    let (alert_broadcast_tx, _alert_broadcast_rx) = broadcast::channel::<sentinel_events::sentinel::api::v1::AlertStreamEvent>(256);
+    let alert_mgr = Arc::new(AlertManager::new(sqlite.alerts().await, alert_broadcast_tx.clone()));
 
     // ── M3: AI Engine ──────────────────────────────────────────
     let ai_config = AiConfig::default();

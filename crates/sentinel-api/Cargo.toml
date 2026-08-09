@@ -20,6 +20,8 @@ chrono = { workspace = true }
 async-trait = "0.1"
 arc-swap = { workspace = true }
 sysinfo = { workspace = true }
+async-stream = "0.3"
+tokio-stream = "0.1"
 
 sentinel-core = { path = "../sentinel-core" }
 sentinel-events = { path = "../sentinel-events" }
@@ -27,3 +29,4 @@ sentinel-storage = { path = "../sentinel-storage" }
 sentinel-config = { path = "../sentinel-config" }
 sentinel-event-bus = { path = "../sentinel-event-bus" }
 sentinel-ai = { path = "../sentinel-ai" }
+sentinel-rule-engine = { path = "../sentinel-rule-engine" }

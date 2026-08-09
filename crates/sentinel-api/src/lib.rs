@@ -1,19 +1,31 @@
+use std::pin::Pin;
 use std::sync::Arc;
 
-use sentinel_core::traits::{EventQuery, EventRepository};
+use sentinel_core::traits::{AlertState as CoreAlertState, EventQuery};
+use sentinel_core::{Severity, Ulid};
 use sentinel_storage::sqlite::SqliteStorage;
+use tokio::sync::broadcast;
+use tokio_stream::Stream;
 use tonic::{Request, Response, Status};
 
 use api::sentinel_server::{Sentinel, SentinelServer};
 use sentinel_events::sentinel::api::v1 as api;
+use sentinel_events::Event;
 
 pub struct SentinelService {
     storage: Arc<SqliteStorage>,
+    alert_broadcast: broadcast::Sender<api::AlertStreamEvent>,
 }
 
 impl SentinelService {
-    pub fn new(storage: Arc<SqliteStorage>) -> Self {
-        Self { storage }
+    pub fn new(
+        storage: Arc<SqliteStorage>,
+        alert_broadcast: broadcast::Sender<api::AlertStreamEvent>,
+    ) -> Self {
+        Self {
+            storage,
+            alert_broadcast,
+        }
     }
 }
 
@@ -79,7 +91,7 @@ impl Sentinel for SentinelService {
 
         let mut cursor = repo.query(event_query).await.map_err(map_err)?;
         let total = cursor.total_count();
-        let events: Vec<sentinel_events::Event> = if let Some(c) = Arc::get_mut(&mut cursor) {
+        let events: Vec<Event> = if let Some(c) = Arc::get_mut(&mut cursor) {
             c.collect(1000)
                 .await
                 .map_err(map_err)?
@@ -100,9 +112,9 @@ impl Sentinel for SentinelService {
     async fn get_event(
         &self,
         req: Request<api::GetEventRequest>,
-    ) -> Result<Response<sentinel_events::Event>, Status> {
+    ) -> Result<Response<Event>, Status> {
         let repo = self.storage.events().await;
-        let id = sentinel_core::Ulid::from_string(&req.into_inner().event_id)
+        let id = Ulid::from_string(&req.into_inner().event_id)
             .map_err(|e| Status::invalid_argument(e.to_string()))?;
         let evt = repo
             .get(&id)
@@ -156,8 +168,16 @@ impl Sentinel for SentinelService {
                 pid: p.as_u32(),
                 ppid: proc.parent().map(|pp| pp.as_u32()).unwrap_or(0),
                 name: proc.name().to_string_lossy().into_owned(),
-                path: proc.exe().map(|e| e.to_string_lossy().into_owned()).unwrap_or_default(),
-                command_line: proc.cmd().iter().map(|s| s.to_string_lossy()).collect::<Vec<_>>().join(" "),
+                path: proc
+                    .exe()
+                    .map(|e| e.to_string_lossy().into_owned())
+                    .unwrap_or_default(),
+                command_line: proc
+                    .cmd()
+                    .iter()
+                    .map(|s| s.to_string_lossy())
+                    .collect::<Vec<_>>()
+                    .join(" "),
                 ..Default::default()
             })
             .ok_or_else(|| Status::not_found(format!("PID {} not found", pid)))?;
@@ -213,7 +233,12 @@ impl Sentinel for SentinelService {
         let repo = self.storage.alerts().await;
         let limit = if q.limit > 0 { q.limit as usize } else { 100 };
         let offset = 0usize;
-        let alert_query = sentinel_core::traits::AlertQuery { limit, offset, ..Default::default() };
+        let alert_query =
+            sentinel_core::traits::AlertQuery {
+                limit,
+                offset,
+                ..Default::default()
+            };
         let alerts = repo.query(alert_query).await.map_err(map_err)?;
         let api_alerts: Vec<api::Alert> = alerts
             .into_iter()
@@ -225,7 +250,10 @@ impl Sentinel for SentinelService {
                 ..Default::default()
             })
             .collect();
-        Ok(Response::new(api::ListAlertsResponse { alerts: api_alerts, ..Default::default() }))
+        Ok(Response::new(api::ListAlertsResponse {
+            alerts: api_alerts,
+            ..Default::default()
+        }))
     }
 
     async fn get_alert(
@@ -233,7 +261,7 @@ impl Sentinel for SentinelService {
         req: Request<api::GetAlertRequest>,
     ) -> Result<Response<api::Alert>, Status> {
         let repo = self.storage.alerts().await;
-        let id = sentinel_core::Ulid::from_string(&req.into_inner().alert_id)
+        let id = Ulid::from_string(&req.into_inner().alert_id)
             .map_err(|e| Status::invalid_argument(e.to_string()))?;
 
         let alert = repo
@@ -251,46 +279,172 @@ impl Sentinel for SentinelService {
         }))
     }
 
+    async fn update_alert_state(
+        &self,
+        req: Request<api::UpdateAlertStateRequest>,
+    ) -> Result<Response<api::UpdateAlertStateResponse>, Status> {
+        let q = req.into_inner();
+        let repo = self.storage.alerts().await;
+        let id = Ulid::from_string(&q.alert_id)
+            .map_err(|e| Status::invalid_argument(e.to_string()))?;
+        let state = proto_alert_state_to_core(q.new_state);
+
+        repo.update_state(&id, state, Some(q.comment))
+            .await
+            .map_err(map_err)?;
+
+        let alert = repo
+            .get(&id)
+            .await
+            .map_err(map_err)?
+            .ok_or_else(|| Status::not_found("alert not found"))?;
+
+        let _ = self.alert_broadcast.send(api::AlertStreamEvent {
+            alert: Some(api::Alert {
+                id: alert.id.to_string(),
+                rule_id: alert.rule_id.clone(),
+                risk_score: alert.risk_score,
+                severity: alert.severity as i32,
+                state: core_alert_state_to_proto(alert.state),
+                ..Default::default()
+            }),
+            event_type: api::alert_stream_event::EventType::Updated as i32,
+        });
+
+        Ok(Response::new(api::UpdateAlertStateResponse {
+            alert: Some(api::Alert {
+                id: alert.id.to_string(),
+                rule_id: alert.rule_id,
+                correlation_id: alert.correlation_id.to_string(),
+                risk_score: alert.risk_score,
+                severity: alert.severity as i32,
+                state: core_alert_state_to_proto(alert.state),
+                created_at: sentinel_core::chrono_to_proto_ts(alert.created_at),
+                updated_at: sentinel_core::chrono_to_proto_ts(alert.updated_at),
+                acknowledged_by: alert.acknowledged_by.unwrap_or_default(),
+                acknowledged_at: alert
+                    .acknowledged_at
+                    .and_then(sentinel_core::chrono_to_proto_ts),
+                events: alert.events.iter().map(|e| e.to_string()).collect(),
+                ..Default::default()
+            }),
+        }))
+    }
+
+    type StreamAlertsStream =
+        Pin<Box<dyn Stream<Item = Result<api::AlertStreamEvent, Status>> + Send>>;
+
+    async fn stream_alerts(
+        &self,
+        _: Request<api::StreamAlertsRequest>,
+    ) -> Result<Response<Self::StreamAlertsStream>, Status> {
+        let mut rx = self.alert_broadcast.subscribe();
+
+        let stream = async_stream::stream! {
+            loop {
+                match rx.recv().await {
+                    Ok(event) => yield Ok(event),
+                    Err(broadcast::error::RecvError::Lagged(_)) => continue,
+                    Err(broadcast::error::RecvError::Closed) => break,
+                }
+            }
+        };
+
+        Ok(Response::new(Box::pin(stream) as Self::StreamAlertsStream))
+    }
+
     async fn list_rules(
         &self,
         _: Request<api::ListRulesRequest>,
     ) -> Result<Response<api::ListRulesResponse>, Status> {
-        Ok(Response::new(api::ListRulesResponse::default()))
+        let repo = self.storage.rules().await;
+        let rules = repo.load_all(false).await.map_err(map_err)?;
+        let api_rules: Vec<api::Rule> = rules.into_iter().map(|r| core_rule_to_proto(&r)).collect();
+        Ok(Response::new(api::ListRulesResponse { rules: api_rules }))
     }
 
     async fn create_rule(
         &self,
-        _: Request<api::CreateRuleRequest>,
+        req: Request<api::CreateRuleRequest>,
     ) -> Result<Response<api::Rule>, Status> {
-        Err(Status::unimplemented("not yet"))
+        let proto_rule = req
+            .into_inner()
+            .rule
+            .ok_or_else(|| Status::invalid_argument("rule is required"))?;
+        let core_rule = proto_to_core_rule(&proto_rule)?;
+        let repo = self.storage.rules().await;
+        repo.upsert(&core_rule).await.map_err(map_err)?;
+        Ok(Response::new(core_rule_to_proto(&core_rule)))
     }
 
     async fn get_rule(
         &self,
-        _: Request<api::GetRuleRequest>,
+        req: Request<api::GetRuleRequest>,
     ) -> Result<Response<api::Rule>, Status> {
-        Err(Status::unimplemented("not yet"))
+        let id = req.into_inner().id;
+        let repo = self.storage.rules().await;
+        let rule = repo
+            .get(&id)
+            .await
+            .map_err(map_err)?
+            .ok_or_else(|| Status::not_found(format!("rule not found: {id}")))?;
+        Ok(Response::new(core_rule_to_proto(&rule)))
     }
 
     async fn update_rule(
         &self,
-        _: Request<api::UpdateRuleRequest>,
+        req: Request<api::UpdateRuleRequest>,
     ) -> Result<Response<api::Rule>, Status> {
-        Err(Status::unimplemented("not yet"))
+        let q = req.into_inner();
+        let proto_rule = q
+            .rule
+            .ok_or_else(|| Status::invalid_argument("rule is required"))?;
+        let mut core_rule = proto_to_core_rule(&proto_rule)?;
+        core_rule.id = q.id;
+
+        let repo = self.storage.rules().await;
+        repo.upsert(&core_rule).await.map_err(map_err)?;
+        Ok(Response::new(core_rule_to_proto(&core_rule)))
     }
 
     async fn delete_rule(
         &self,
-        _: Request<api::DeleteRuleRequest>,
+        req: Request<api::DeleteRuleRequest>,
     ) -> Result<Response<()>, Status> {
-        Err(Status::unimplemented("not yet"))
+        let id = req.into_inner().id;
+        let repo = self.storage.rules().await;
+        repo.delete(&id).await.map_err(map_err)?;
+        Ok(Response::new(()))
     }
 
     async fn test_rule(
         &self,
-        _: Request<api::TestRuleRequest>,
+        req: Request<api::TestRuleRequest>,
     ) -> Result<Response<api::TestRuleResponse>, Status> {
-        Err(Status::unimplemented("not yet"))
+        let q = req.into_inner();
+        let proto_rule = q
+            .rule
+            .ok_or_else(|| Status::invalid_argument("rule is required"))?;
+        let core_rule = proto_to_core_rule(&proto_rule)?;
+
+        let mut results = Vec::new();
+
+        for test_event in &q.test_events {
+            let matched = sentinel_rule_engine::evaluate_rule_condition(&core_rule, test_event)
+                .unwrap_or(false);
+            results.push(api::TestResult {
+                event_id: test_event.id.clone(),
+                matched,
+                expected_match: matched,
+                ..Default::default()
+            });
+        }
+
+        let all_passed = !results.is_empty() && results.iter().all(|r| r.matched);
+        Ok(Response::new(api::TestRuleResponse {
+            results,
+            all_passed,
+        }))
     }
 
     async fn risk_summary(
@@ -316,16 +470,74 @@ impl Sentinel for SentinelService {
 
     async fn attack_chains(
         &self,
-        _: Request<api::AttackChainsRequest>,
+        req: Request<api::AttackChainsRequest>,
     ) -> Result<Response<api::AttackChainsResponse>, Status> {
-        Err(Status::unimplemented("not yet"))
+        let q = req.into_inner();
+        let repo = self.storage.chains().await;
+
+        let query = sentinel_core::traits::ChainQuery {
+            start_time: q.start_time.and_then(|ts| {
+                std::time::SystemTime::try_from(ts).ok().map(chrono::DateTime::from)
+            }),
+            end_time: q.end_time.and_then(|ts| {
+                std::time::SystemTime::try_from(ts).ok().map(chrono::DateTime::from)
+            }),
+            status: match q.status {
+                1 => Some(sentinel_core::traits::ChainStatus::ActiveAttack),
+                2 => Some(sentinel_core::traits::ChainStatus::SuspiciousChain),
+                3 => Some(sentinel_core::traits::ChainStatus::Resolved),
+                _ => None,
+            },
+            min_risk: if q.min_risk > 0 { Some(q.min_risk as u32) } else { None },
+            limit: if q.limit > 0 { q.limit as usize } else { 100 },
+        };
+
+        let chains = repo.query_chains(query).await.map_err(map_err)?;
+        let summaries: Vec<api::AttackChainSummary> =
+            chains.into_iter().map(|c| api::AttackChainSummary {
+                id: c.id,
+                start_time: sentinel_core::chrono_to_proto_ts(c.start_time),
+                end_time: sentinel_core::chrono_to_proto_ts(c.end_time),
+                risk_score: c.risk_score,
+                tactics: c.tactics,
+                techniques: c.techniques,
+                event_count: c.event_count as i32,
+                status: chain_status_to_proto(c.status),
+                kill_chain_coverage: c.kill_chain_coverage,
+            }).collect();
+
+        Ok(Response::new(api::AttackChainsResponse { chains: summaries }))
     }
 
     async fn chain_detail(
         &self,
-        _: Request<api::ChainDetailRequest>,
+        req: Request<api::ChainDetailRequest>,
     ) -> Result<Response<api::AttackChainDetail>, Status> {
-        Err(Status::unimplemented("not yet"))
+        let chain_id = req.into_inner().chain_id;
+        let repo = self.storage.chains().await;
+
+        let chain = repo
+            .get_chain(&chain_id)
+            .await
+            .map_err(map_err)?
+            .ok_or_else(|| Status::not_found(format!("chain not found: {chain_id}")))?;
+
+        let summary = api::AttackChainSummary {
+            id: chain.id.clone(),
+            start_time: sentinel_core::chrono_to_proto_ts(chain.start_time),
+            end_time: sentinel_core::chrono_to_proto_ts(chain.end_time),
+            risk_score: chain.risk_score,
+            tactics: chain.tactics.clone(),
+            techniques: chain.techniques.clone(),
+            event_count: chain.event_count as i32,
+            status: chain_status_to_proto(chain.status),
+            kill_chain_coverage: chain.kill_chain_coverage,
+        };
+
+        Ok(Response::new(api::AttackChainDetail {
+            summary: Some(summary),
+            ..Default::default()
+        }))
     }
 
     async fn explain_alert(
@@ -399,11 +611,299 @@ impl Sentinel for SentinelService {
     }
 }
 
-pub async fn serve(addr: &str, storage: Arc<SqliteStorage>) -> anyhow::Result<()> {
+fn core_alert_state_to_proto(state: CoreAlertState) -> i32 {
+    match state {
+        CoreAlertState::New => 1,
+        CoreAlertState::Acknowledged => 2,
+        CoreAlertState::Investigating => 3,
+        CoreAlertState::ResolvedTruePositive => 4,
+        CoreAlertState::ResolvedFalsePositive => 5,
+        CoreAlertState::Suppressed => 6,
+    }
+}
+
+fn proto_severity_to_core(s: i32) -> Severity {
+    match s {
+        1 => Severity::Debug,
+        2 => Severity::Info,
+        3 => Severity::Notice,
+        4 => Severity::Warning,
+        5 => Severity::Error,
+        6 => Severity::Critical,
+        7 => Severity::Alert,
+        8 => Severity::Emergency,
+        _ => Severity::default(),
+    }
+}
+
+fn proto_alert_state_to_core(state: i32) -> CoreAlertState {
+    match state {
+        1 => CoreAlertState::New,
+        2 => CoreAlertState::Acknowledged,
+        3 => CoreAlertState::Investigating,
+        4 => CoreAlertState::ResolvedTruePositive,
+        5 => CoreAlertState::ResolvedFalsePositive,
+        6 => CoreAlertState::Suppressed,
+        _ => CoreAlertState::New,
+    }
+}
+
+fn chain_status_to_proto(status: sentinel_core::traits::ChainStatus) -> i32 {
+    match status {
+        sentinel_core::traits::ChainStatus::ActiveAttack => 1,
+        sentinel_core::traits::ChainStatus::SuspiciousChain => 2,
+        sentinel_core::traits::ChainStatus::Resolved => 3,
+        sentinel_core::traits::ChainStatus::Unspecified => 0,
+    }
+}
+
+fn core_rule_to_proto(rule: &sentinel_core::traits::Rule) -> api::Rule {
+    api::Rule {
+        id: rule.id.clone(),
+        version: rule.version,
+        name: rule.name.clone(),
+        description: rule.description.clone(),
+        author: rule.author.clone(),
+        created: sentinel_core::chrono_to_proto_ts(rule.created),
+        modified: sentinel_core::chrono_to_proto_ts(rule.modified),
+        enabled: rule.enabled,
+        category: rule.category.clone(),
+        subcategory: rule.subcategory.clone().unwrap_or_default(),
+        mitre: rule
+            .mitre
+            .iter()
+            .map(|m| api::MitreMapping {
+                technique: m.technique.clone(),
+                name: m.name.clone(),
+                tactic: m.tactic.clone(),
+            })
+            .collect(),
+        severity: rule.severity as i32,
+        risk: Some(api::RiskConfig {
+            base_score: rule.risk.base_score,
+            confidence: rule.risk.confidence,
+            multipliers: rule
+                .risk
+                .multipliers
+                .iter()
+                .map(|m| api::RiskMultiplier {
+                    condition: m.condition.clone(),
+                    factor: m.factor,
+                })
+                .collect(),
+        }),
+        condition: rule.condition.clone(),
+        and_conditions: rule.and_conditions.clone(),
+        or_conditions: rule.or_conditions.clone(),
+        not_conditions: rule.not_conditions.clone(),
+        actions: rule
+            .actions
+            .iter()
+            .map(|a| api::RuleAction {
+                r#type: match a.action_type {
+                    sentinel_core::RuleActionType::Alert => 1,
+                    sentinel_core::RuleActionType::Enrich => 2,
+                    sentinel_core::RuleActionType::Correlate => 3,
+                    sentinel_core::RuleActionType::Snapshot => 4,
+                },
+                config: Some(prost_types::Struct {
+                    fields: a
+                        .config
+                        .as_object()
+                        .map(|o| {
+                            o.iter()
+                                .map(|(k, v)| {
+                                    (k.clone(), serde_json_to_proto_value(v))
+                                })
+                                .collect()
+                        })
+                        .unwrap_or_default(),
+                }),
+            })
+            .collect(),
+        suppressions: rule
+            .suppressions
+            .iter()
+            .map(|s| api::SuppressionRule {
+                id: s.id.clone(),
+                condition: s.condition.clone(),
+                reason: s.reason.clone(),
+            })
+            .collect(),
+    }
+}
+
+fn proto_to_core_rule(proto: &api::Rule) -> Result<sentinel_core::traits::Rule, Status> {
+    let now = chrono::Utc::now();
+    Ok(sentinel_core::traits::Rule {
+        id: if proto.id.is_empty() {
+            Ulid::new().to_string()
+        } else {
+            proto.id.clone()
+        },
+        version: proto.version,
+        name: proto.name.clone(),
+        description: proto.description.clone(),
+        author: proto.author.clone(),
+        created: if let Some(ref ts) = proto.created {
+            chrono::DateTime::from(std::time::SystemTime::try_from(ts.clone()).map_err(|e| {
+                Status::invalid_argument(format!("invalid timestamp: {e}"))
+            })?)
+        } else {
+            now
+        },
+        modified: now,
+        enabled: proto.enabled,
+        category: proto.category.clone(),
+        subcategory: if proto.subcategory.is_empty() {
+            None
+        } else {
+            Some(proto.subcategory.clone())
+        },
+        mitre: proto
+            .mitre
+            .iter()
+            .map(|m| sentinel_core::traits::MitreMapping {
+                technique: m.technique.clone(),
+                name: m.name.clone(),
+                tactic: m.tactic.clone(),
+            })
+            .collect(),
+        severity: proto_severity_to_core(proto.severity),
+        risk: proto
+            .risk
+            .as_ref()
+            .map(|r| sentinel_core::traits::RiskConfig {
+                base_score: r.base_score,
+                confidence: r.confidence,
+                multipliers: r
+                    .multipliers
+                    .iter()
+                    .map(|m| sentinel_core::traits::RiskMultiplier {
+                        condition: m.condition.clone(),
+                        factor: m.factor,
+                    })
+                    .collect(),
+            })
+            .unwrap_or_default(),
+        condition: proto.condition.clone(),
+        and_conditions: proto.and_conditions.clone(),
+        or_conditions: proto.or_conditions.clone(),
+        not_conditions: proto.not_conditions.clone(),
+        actions: proto
+            .actions
+            .iter()
+            .map(|a| sentinel_core::traits::RuleAction {
+                action_type: match a.r#type {
+                    1 => sentinel_core::RuleActionType::Alert,
+                    2 => sentinel_core::RuleActionType::Enrich,
+                    3 => sentinel_core::RuleActionType::Correlate,
+                    4 => sentinel_core::RuleActionType::Snapshot,
+                    _ => sentinel_core::RuleActionType::Alert,
+                },
+                config: a
+                    .config
+                    .as_ref()
+                    .map(|s| {
+                        let mut map = serde_json::Map::new();
+                        for (k, v) in &s.fields {
+                            map.insert(k.clone(), prost_value_to_serde_json(v));
+                        }
+                        serde_json::Value::Object(map)
+                    })
+                    .unwrap_or(serde_json::Value::Null),
+            })
+            .collect(),
+        suppressions: proto
+            .suppressions
+            .iter()
+            .map(|s| sentinel_core::traits::SuppressionRule {
+                id: s.id.clone(),
+                condition: s.condition.clone(),
+                reason: s.reason.clone(),
+            })
+            .collect(),
+        tests: vec![],
+    })
+}
+
+fn serde_json_to_proto_value(v: &serde_json::Value) -> prost_types::Value {
+    match v {
+        serde_json::Value::Null => prost_types::Value {
+            kind: Some(prost_types::value::Kind::NullValue(0)),
+        },
+        serde_json::Value::Bool(b) => prost_types::Value {
+            kind: Some(prost_types::value::Kind::BoolValue(*b)),
+        },
+        serde_json::Value::Number(n) => {
+            if let Some(i) = n.as_i64() {
+                prost_types::Value {
+                    kind: Some(prost_types::value::Kind::NumberValue(i as f64)),
+                }
+            } else {
+                prost_types::Value {
+                    kind: Some(prost_types::value::Kind::NumberValue(n.as_f64().unwrap_or(0.0))),
+                }
+            }
+        }
+        serde_json::Value::String(s) => prost_types::Value {
+            kind: Some(prost_types::value::Kind::StringValue(s.clone())),
+        },
+        serde_json::Value::Array(arr) => {
+            let values = arr.iter().map(serde_json_to_proto_value).collect();
+            prost_types::Value {
+                kind: Some(prost_types::value::Kind::ListValue(prost_types::ListValue {
+                    values,
+                })),
+            }
+        }
+        serde_json::Value::Object(obj) => {
+            let fields = obj
+                .iter()
+                .map(|(k, v)| (k.clone(), serde_json_to_proto_value(v)))
+                .collect();
+            prost_types::Value {
+                kind: Some(prost_types::value::Kind::StructValue(prost_types::Struct {
+                    fields,
+                })),
+            }
+        }
+    }
+}
+
+fn prost_value_to_serde_json(v: &prost_types::Value) -> serde_json::Value {
+    match &v.kind {
+        Some(prost_types::value::Kind::NullValue(_)) => serde_json::Value::Null,
+        Some(prost_types::value::Kind::BoolValue(b)) => serde_json::Value::Bool(*b),
+        Some(prost_types::value::Kind::NumberValue(n)) => {
+            serde_json::Value::Number(serde_json::Number::from_f64(*n).unwrap_or_else(|| {
+                serde_json::Number::from(*n as i64)
+            }))
+        }
+        Some(prost_types::value::Kind::StringValue(s)) => serde_json::Value::String(s.clone()),
+        Some(prost_types::value::Kind::ListValue(arr)) => {
+            serde_json::Value::Array(arr.values.iter().map(prost_value_to_serde_json).collect())
+        }
+        Some(prost_types::value::Kind::StructValue(s)) => {
+            let mut map = serde_json::Map::new();
+            for (k, v) in &s.fields {
+                map.insert(k.clone(), prost_value_to_serde_json(v));
+            }
+            serde_json::Value::Object(map)
+        }
+        None => serde_json::Value::Null,
+    }
+}
+
+pub async fn serve(
+    addr: &str,
+    storage: Arc<SqliteStorage>,
+    alert_broadcast: broadcast::Sender<api::AlertStreamEvent>,
+) -> anyhow::Result<()> {
     use tonic::transport::Server;
     tracing::info!("gRPC server starting on {addr}");
 
-    let svc = SentinelService::new(storage);
+    let svc = SentinelService::new(storage, alert_broadcast);
 
     let (mut reporter, health_svc) = tonic_health::server::health_reporter();
     reporter
