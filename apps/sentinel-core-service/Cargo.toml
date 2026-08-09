@@ -63,6 +63,7 @@ sentinel-privacy = { path = "../../crates/sentinel-privacy" }
 
 [dev-dependencies]
 criterion = { workspace = true }
+tempfile = "3"
 
 [[bench]]
 name = "core_benchmarks"
