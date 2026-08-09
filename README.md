@@ -1,5 +1,7 @@
 # Sentinel AI
 
+[![CI](https://github.com/Max-arango/AI-SOC-Personal/actions/workflows/ci.yml/badge.svg)](https://github.com/Max-arango/AI-SOC-Personal/actions/workflows/ci.yml)
+
 A local-first, privacy-preserving AI Security Assistant for personal computers.
 
 ## Architecture

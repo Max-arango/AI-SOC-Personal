@@ -11,8 +11,12 @@ env:
 
 jobs:
   core:
-    name: Core (fmt, clippy, build, test)
-    runs-on: ubuntu-latest
+    name: Core (${{ matrix.os }})
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - name: Install Rust stable
@@ -30,8 +34,12 @@ jobs:
         run: cargo clippy --workspace -- -D warnings
 
   security:
-    name: Security Audit
-    runs-on: ubuntu-latest
+    name: Security Audit (${{ matrix.os }})
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
