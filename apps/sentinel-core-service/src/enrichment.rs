@@ -102,7 +102,7 @@ pub async fn enrich(event: &mut sentinel_events::Event) {
                             event.risk_score = event.risk_score.saturating_add(25);
                             event.tags.push("grey_noise:malicious".into());
                         } else if report.classification == "benign" {
-                            event.risk_score = event.risk_score.saturating_sub(20);
+                            event.risk_score = event.risk_score.saturating_sub(5);
                             event.tags.push("grey_noise:benign".into());
                         }
                         if !report.name.is_empty() {

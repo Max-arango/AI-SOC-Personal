@@ -171,15 +171,18 @@ impl Sentinel for SentinelService {
 
         let mut cursor = repo.query(event_query).await.map_err(map_err)?;
         let total = cursor.total_count();
-        let events: Vec<Event> = if let Some(c) = Arc::get_mut(&mut cursor) {
-            c.collect(1000)
+        let events: Vec<Event> = match Arc::get_mut(&mut cursor) {
+            Some(c) => c
+                .collect(1000)
                 .await
                 .map_err(map_err)?
                 .into_iter()
                 .map(|e| (*e).clone())
-                .collect()
-        } else {
-            vec![]
+                .collect(),
+            None => {
+                tracing::warn!("EventCursor has multiple references — returning empty");
+                vec![]
+            }
         };
 
         Ok(Response::new(api::QueryEventsResponse {
@@ -532,6 +535,7 @@ impl Sentinel for SentinelService {
             results.push(api::TestResult {
                 event_id: test_event.id.clone(),
                 matched,
+                // expected_match = matched until rule YAML supports test.expectation field
                 expected_match: matched,
                 ..Default::default()
             });
@@ -832,6 +836,10 @@ impl Sentinel for SentinelService {
             .ok_or_else(|| Status::not_found(format!("collector not found: {}", id)))?;
 
         self.collector_registry.update_state(&id, "restarting");
+        tracing::warn!(
+            "Collector restart requested for '{}' (full restart requires service-level lifecycle management)",
+            id
+        );
         Ok(Response::new(()))
     }
 }

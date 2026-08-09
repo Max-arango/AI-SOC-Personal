@@ -102,6 +102,9 @@ pub fn read_exe_path(pid: u32) -> String {
 /// kernel thread, short-lived process).
 pub fn hash_exe_sha256(pid: u32) -> String {
     let exe = format!("/proc/{}/exe", pid);
+    if std::fs::metadata(&exe).map(|m| m.len()).unwrap_or(0) > 50 * 1024 * 1024 {
+        return String::new();
+    }
     match std::fs::read(&exe) {
         Ok(data) => {
             let mut hasher = Sha256::new();
@@ -147,7 +150,7 @@ pub fn read_start_time_ticks(pid: u32) -> u64 {
         Ok(data) => {
             // Field 22 is after the comm field (which is in parens)
             let after_paren = data
-                .find(')')
+                .rfind(')')
                 .map(|i| &data[i + 2..])
                 .unwrap_or("");
             after_paren
@@ -186,4 +189,23 @@ pub fn gather_pid_info(pid: u32) -> ProcPidInfo {
         sha256,
         start_time_ticks: read_start_time_ticks(pid),
     }
+}
+
+/// Async wrapper: gather all proc info without blocking the runtime.
+pub async fn gather_pid_info_async(pid: u32) -> ProcPidInfo {
+    tokio::task::spawn_blocking(move || gather_pid_info(pid))
+        .await
+        .unwrap_or_else(|_| ProcPidInfo {
+            pid,
+            ppid: 0,
+            tgid: 0,
+            name: "?".into(),
+            exe_path: String::new(),
+            cmdline: String::new(),
+            uid: 0,
+            username: String::new(),
+            cwd: String::new(),
+            sha256: String::new(),
+            start_time_ticks: 0,
+        })
 }

@@ -65,6 +65,23 @@ pub async fn start_process_monitor(bus: Arc<dyn EventBus>) {
             let mut tick = tokio::time::interval(tokio::time::Duration::from_secs(5));
             tick.tick().await;
 
+            // First tick: seed known set silently (no flood of events for
+            // pre-existing processes).
+            let entries = match std::fs::read_dir("/proc") {
+                Ok(d) => d,
+                Err(_) => {
+                    warn!("Cannot read /proc — process fallback failed");
+                    return;
+                }
+            };
+            for entry in entries.filter_map(|e| e.ok()) {
+                if let Some(pid_str) = entry.file_name().to_str() {
+                    if let Ok(pid) = pid_str.parse::<u32>() {
+                        known.insert(pid);
+                    }
+                }
+            }
+
             loop {
                 tick.tick().await;
                 let entries = match std::fs::read_dir("/proc") {
