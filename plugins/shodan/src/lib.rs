@@ -62,6 +62,11 @@ fn calculate_risk(host: &ShodanHost) -> u32 {
     score.min(100)
 }
 
+fn base_url() -> String {
+    std::env::var("SENTINEL_SHODAN_TEST_URL")
+        .unwrap_or_else(|_| "https://api.shodan.io".to_string())
+}
+
 pub fn enabled() -> bool {
     std::env::var("SENTINEL_SHODAN_API_KEY").is_ok()
 }
@@ -75,7 +80,7 @@ pub async fn lookup_host(ip: &str) -> Option<HostReport> {
         },
     };
 
-    let url = format!("https://api.shodan.io/shodan/host/{}?key={}", ip, api_key);
+    let url = format!("{}/shodan/host/{}?key={}", base_url(), ip, api_key);
 
     let client = reqwest::Client::new();
     let resp = match client.get(&url).send().await {
@@ -145,7 +150,8 @@ pub async fn search(query: &str) -> Option<Vec<String>> {
     };
 
     let url = format!(
-        "https://api.shodan.io/shodan/host/search?key={}&query={}&minify=true",
+        "{}/shodan/host/search?key={}&query={}&minify=true",
+        base_url(),
         api_key,
         urlencoding(query),
     );

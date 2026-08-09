@@ -1,0 +1,17 @@
+{
+  "data": {
+    "id": "d41d8cd98f00b204e9800998ecf8427ebadcafe",
+    "attributes": {
+      "last_analysis_stats": {
+        "malicious": 45,
+        "suspicious": 5,
+        "harmless": 20,
+        "undetected": 10,
+        "timeout": 2
+      },
+      "meaningful_name": "trojan.exe",
+      "size": 102400,
+      "type_description": "Win32 EXE"
+    }
+  }
+}

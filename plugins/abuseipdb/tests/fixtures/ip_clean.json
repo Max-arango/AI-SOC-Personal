@@ -1,0 +1,15 @@
+{
+  "data": {
+    "ipAddress": "8.8.8.8",
+    "abuseConfidenceScore": 0,
+    "countryCode": "US",
+    "countryName": "United States",
+    "isp": "Google LLC",
+    "domain": "google.com",
+    "totalReports": 0,
+    "lastReportedAt": null,
+    "usageType": "Data Center/Web Hosting/Transit",
+    "isPublic": true,
+    "isWhitelisted": true
+  }
+}

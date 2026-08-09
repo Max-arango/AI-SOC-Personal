@@ -28,12 +28,17 @@ pub struct UrlReport {
     pub risk_score: u32,
 }
 
+fn base_url() -> String {
+    std::env::var("SENTINEL_URLHAUS_TEST_URL")
+        .unwrap_or_else(|_| "https://urlhaus-api.abuse.ch".to_string())
+}
+
 pub fn enabled() -> bool {
     true
 }
 
 pub async fn check_url(url: &str) -> Option<UrlReport> {
-    let api_url = "https://urlhaus-api.abuse.ch/v1/url/";
+    let api_url = format!("{}/v1/url/", base_url());
 
     let client = reqwest::Client::new();
     let resp = match client

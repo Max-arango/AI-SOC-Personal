@@ -1,0 +1,11 @@
+{
+  "query_status": "ok",
+  "url_status": "online",
+  "threat": "malware_download",
+  "tags": ["exe", "trojan", "emotet"],
+  "urlhaus_reference": "https://urlhaus.abuse.ch/url/12345/",
+  "blacklists": {
+    "spamhaus_dbl": "listed",
+    "surbl": "listed"
+  }
+}

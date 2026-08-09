@@ -1,0 +1,25 @@
+{
+  "reputation": -5,
+  "pulse_info": {
+    "count": 120,
+    "pulses": [
+      {
+        "name": "Emotet C2 Infrastructure",
+        "description": "List of Emotet C2 IPs",
+        "tags": ["malware", "emotet", "c2", "trojan"],
+        "adversary": "TA542",
+        "targeted_countries": ["US", "DE", "UK"]
+      }
+    ]
+  },
+  "validation": [
+    {
+      "source": "AlienVault",
+      "name": "Emotet"
+    },
+    {
+      "source": "AlienVault",
+      "name": "Trojan"
+    }
+  ]
+}

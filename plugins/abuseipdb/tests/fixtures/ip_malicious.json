@@ -1,0 +1,15 @@
+{
+  "data": {
+    "ipAddress": "1.2.3.4",
+    "abuseConfidenceScore": 95,
+    "countryCode": "RU",
+    "countryName": "Russia",
+    "isp": "SomeHostingProvider",
+    "domain": "evil.example.com",
+    "totalReports": 42,
+    "lastReportedAt": "2025-06-15T12:00:00+00:00",
+    "usageType": "Data Center/Web Hosting/Transit",
+    "isPublic": false,
+    "isWhitelisted": false
+  }
+}

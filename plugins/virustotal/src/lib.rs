@@ -51,6 +51,11 @@ pub struct FileReport {
     pub type_desc: String,
 }
 
+fn base_url() -> String {
+    std::env::var("SENTINEL_VIRUSTOTAL_TEST_URL")
+        .unwrap_or_else(|_| "https://www.virustotal.com".to_string())
+}
+
 pub fn enabled() -> bool {
     std::env::var("SENTINEL_VIRUSTOTAL_API_KEY").is_ok()
 }
@@ -64,7 +69,7 @@ pub async fn lookup_hash(sha256: &str) -> Option<FileReport> {
         },
     };
 
-    let url = format!("https://www.virustotal.com/api/v3/files/{}", sha256);
+    let url = format!("{}/api/v3/files/{}", base_url(), sha256);
 
     let client = reqwest::Client::new();
     let resp = match client
@@ -147,7 +152,7 @@ pub async fn lookup_url(url: &str) -> Option<String> {
     };
 
     let encoded = url::encoding(url, url::ENCODING).unwrap_or_default();
-    let vt_url = format!("https://www.virustotal.com/api/v3/urls/{}", base64_url_safe(&encoded));
+    let vt_url = format!("{}/api/v3/urls/{}", base_url(), base64_url_safe(&encoded));
 
     let client = reqwest::Client::new();
     let resp = match client

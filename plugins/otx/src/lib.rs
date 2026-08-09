@@ -41,6 +41,11 @@ pub struct OtxReport {
     pub risk_score: u32,
 }
 
+fn base_url() -> String {
+    std::env::var("SENTINEL_OTX_TEST_URL")
+        .unwrap_or_else(|_| "https://otx.alienvault.com".to_string())
+}
+
 pub fn enabled() -> bool {
     std::env::var("SENTINEL_OTX_API_KEY").is_ok()
 }
@@ -52,8 +57,8 @@ fn api_key() -> Option<String> {
 async fn query_otx(indicator: &str, indicator_type: &str) -> Option<OtxReport> {
     let key = api_key()?;
     let url = format!(
-        "https://otx.alienvault.com/api/v1/indicators/{}/{}/general",
-        indicator_type, indicator
+        "{}/api/v1/indicators/{}/{}/general",
+        base_url(), indicator_type, indicator
     );
 
     let resp = reqwest::Client::new()

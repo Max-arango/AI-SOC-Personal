@@ -1,0 +1,11 @@
+{
+  "query_status": "ok",
+  "url_status": "offline",
+  "threat": null,
+  "tags": [],
+  "urlhaus_reference": null,
+  "blacklists": {
+    "spamhaus_dbl": null,
+    "surbl": null
+  }
+}

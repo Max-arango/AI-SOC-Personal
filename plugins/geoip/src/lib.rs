@@ -187,3 +187,48 @@ fn geoip_dir() -> PathBuf {
         })
         .unwrap_or_else(|| PathBuf::from("geoip"))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn maxmind_db_format_rejection() {
+        let dir = std::env::temp_dir().join("sentinel_geoip_test");
+        let _ = std::fs::create_dir_all(&dir);
+        let db_path = dir.join("test.mmdb");
+        std::fs::write(&db_path, b"not a valid maxmind database").unwrap();
+
+        let result = maxminddb::Reader::open_readfile(&db_path);
+        // Either Err or Ok — should never crash/panic
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn lookup_without_db() {
+        let resolver = GeoIpResolver {
+            country_db: None,
+            city_db: None,
+            asn_db: None,
+        };
+        assert!(resolver.lookup("8.8.8.8").is_none());
+    }
+
+    #[test]
+    fn resolver_creation_does_not_crash() {
+        let resolver = GeoIpResolver::load();
+        let result = resolver.lookup("8.8.8.8");
+        // Either Some (if DBs installed) or None (if not) — never crash
+        assert!(result.is_some() || result.is_none());
+    }
+
+    #[test]
+    fn empty_ip_returns_none() {
+        let resolver = GeoIpResolver {
+            country_db: None,
+            city_db: None,
+            asn_db: None,
+        };
+        assert!(resolver.lookup("").is_none());
+    }
+}

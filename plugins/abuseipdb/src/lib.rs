@@ -84,6 +84,11 @@ impl RiskLevel {
     }
 }
 
+fn base_url() -> String {
+    std::env::var("SENTINEL_ABUSEIPDB_TEST_URL")
+        .unwrap_or_else(|_| "https://api.abuseipdb.com".to_string())
+}
+
 pub fn enabled() -> bool {
     std::env::var("SENTINEL_ABUSEIPDB_API_KEY").is_ok()
 }
@@ -103,7 +108,7 @@ pub async fn check_ip(ip: &str) -> Option<IpReport> {
         .unwrap_or(90);
 
     let url =
-        format!("https://api.abuseipdb.com/api/v2/check?ipAddress={}&maxAgeInDays={}", ip, max_age);
+        format!("{}/api/v2/check?ipAddress={}&maxAgeInDays={}", base_url(), ip, max_age);
 
     let client = reqwest::Client::new();
     let resp = match client

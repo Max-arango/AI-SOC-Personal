@@ -1,0 +1,14 @@
+{
+  "ip_str": "192.168.1.100",
+  "org": "Example Corp",
+  "isp": "Example ISP",
+  "os": "Linux 3.x",
+  "country_name": "United States",
+  "city": "New York",
+  "ports": [22, 80, 3389, 8080],
+  "hostnames": ["server1.example.com"],
+  "domains": ["example.com"],
+  "vulns": ["CVE-2021-34527", "CVE-2019-0708"],
+  "tags": ["vpn", "database"],
+  "last_update": "2025-06-15T10:00:00+00:00"
+}

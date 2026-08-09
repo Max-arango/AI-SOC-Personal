@@ -1,0 +1,17 @@
+{
+  "data": {
+    "id": "aabbccdd11223344556677889900aabbccddeeff",
+    "attributes": {
+      "last_analysis_stats": {
+        "malicious": 0,
+        "suspicious": 0,
+        "harmless": 70,
+        "undetected": 5,
+        "timeout": 0
+      },
+      "meaningful_name": "clean-app.exe",
+      "size": 204800,
+      "type_description": "Win32 EXE"
+    }
+  }
+}
