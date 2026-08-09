@@ -13,7 +13,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use sentinel_ai::{AiConfig, AiEngine};
 use sentinel_config::ConfigManager;
-use sentinel_core::{ChannelConfig, EventBus};
+use sentinel_core::{ChannelConfig, CollectorRegistry, EventBus};
 use sentinel_correlation::{CorrelationConfig, CorrelationEngine};
 use sentinel_event_bus::EventBusImpl;
 use sentinel_events::Event;
@@ -156,6 +156,29 @@ async fn main() -> Result<()> {
         privacy.config().mode, privacy.config().sharing.command_lines
     );
 
+    // ── Collector Registry ──────────────────────────────────────
+    let collector_registry = Arc::new(CollectorRegistry::new());
+
+    // ── gRPC API server ────────────────────────────────────────
+    let grpc_addr = "127.0.0.1:50051";
+    let grpc_shutdown = shutdown_rx.clone();
+    let grpc_storage = sqlite.clone();
+    let grpc_broadcast = alert_broadcast_tx.clone();
+    let grpc_registry = collector_registry.clone();
+    let grpc_handle = tokio::spawn(async move {
+        if let Err(e) = sentinel_api::serve(
+            grpc_addr,
+            grpc_storage,
+            grpc_broadcast,
+            grpc_registry,
+            grpc_shutdown,
+        )
+        .await
+        {
+            error!("gRPC server error: {e}");
+        }
+    });
+
     // Subscribe rule engine to ALL events ("*")
     let mut rule_sub = bus
         .subscribe_type("*")
@@ -284,6 +307,9 @@ async fn main() -> Result<()> {
     }
 
     bus_impl.shutdown();
+
+    info!("Waiting for gRPC server to drain...");
+    let _ = grpc_handle.await;
 
     info!("Sentinel AI Core Service stopped");
     Ok(())

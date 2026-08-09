@@ -1062,6 +1062,7 @@ pub async fn serve(
     storage: Arc<SqliteStorage>,
     alert_broadcast: broadcast::Sender<api::AlertStreamEvent>,
     collector_registry: Arc<sentinel_core::CollectorRegistry>,
+    mut shutdown: tokio::sync::watch::Receiver<bool>,
 ) -> anyhow::Result<()> {
     use tonic::transport::Server;
     tracing::info!("gRPC server starting on {addr}");
@@ -1082,7 +1083,9 @@ pub async fn serve(
         .add_service(health_svc)
         .add_service(reflection)
         .add_service(SentinelServer::new(svc))
-        .serve(addr.parse()?)
+        .serve_with_shutdown(addr.parse()?, async move {
+            let _ = shutdown.changed().await;
+        })
         .await?;
 
     Ok(())

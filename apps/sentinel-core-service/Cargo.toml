@@ -39,7 +39,7 @@ sentinel-storage = { path = "../../crates/sentinel-storage" }
 sentinel-event-bus = { path = "../../crates/sentinel-event-bus" }
 sentinel-rule-engine = { path = "../../crates/sentinel-rule-engine" }
 sentinel-collectors = { path = "../../collectors" }
-sentinel-plugins = { path = "../../crates/sentinel-plugins" }
+sentinel-api = { path = "../../crates/sentinel-api" }
 
 sysinfo = { workspace = true }
 sentinel-risk = { path = "../../crates/sentinel-risk" }
