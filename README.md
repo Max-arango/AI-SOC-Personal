@@ -90,7 +90,7 @@ Sentinel AI follows a modular, event-driven architecture with clear separation o
 ### Build
 ```bash
 # Clone
-git clone https://github.com/sentinel-ai/sentinel-ai
+git clone https://github.com/Max-arango/AI-SOC-Personal
 cd sentinel-ai
 
 # Build core (Rust)
@@ -123,7 +123,7 @@ instance_name = "Sentinel AI"
 
 [grpc]
 enabled = true
-address = "127.0.0.1:7777"
+address = "127.0.0.1:50051"
 
 [ai_engine]
 enabled = true
@@ -162,7 +162,20 @@ plugin:
       format: "password"
 ```
 
-Built-in plugins: VirusTotal, AbuseIPDB, Shodan, Discord, Telegram, Slack, Email, Home Assistant.
+Built-in plugins: VirusTotal, AbuseIPDB, Shodan, OTX, GreyNoise, URLhaus,
+GeoIP, IOC, Discord, Telegram, Slack, Email, Home Assistant.
+
+## API
+
+gRPC API on `127.0.0.1:50051` with 35 endpoints:
+- Health, version, status
+- Events: query, get, list processes
+- Alerts: list, get, update state, stream
+- Rules: CRUD + test
+- Attack chains: list, detail
+- Configuration: get, update
+- Plugins: list, get, configure
+- Collectors: list, status, restart
 
 ## Security
 

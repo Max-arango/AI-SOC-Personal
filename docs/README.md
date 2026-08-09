@@ -7,10 +7,10 @@
 - [Getting Started](getting-started.md) — Install, run, first alerts
 - [Architecture](architecture.md) — Full system design and data flow
 - [Configuration](configuration.md) — All config options (TOML + env vars)
-- [Collectors](collectors.md) — Process, network, file, browser, startup, registry, USB
-- [Rules](rules.md) — Rule engine, CEL expressions, 50 built-in rules
-- [Plugins](plugins.md) — Discord, Telegram, Email, Slack, VirusTotal, AbuseIPDB, Shodan, OTX, GeoIP, IOC, Home Assistant
-- [API](api.md) — gRPC API reference (30+ RPCs)
+- [Collectors](collectors.md) — 7 collectors: process, network, file, browser, startup, registry, USB
+- [Rules](rules.md) — Rule engine, CEL expressions, 613 built-in SigmaHQ rules
+- [Plugins](plugins.md) — 14 plugins: Discord, Telegram, Email, Slack, VirusTotal, AbuseIPDB, Shodan, OTX, GreyNoise, URLhaus, GeoIP, IOC, Home Assistant
+- [API](api.md) — gRPC API reference (35 RPCs, complete)
 - [Development](development.md) — Build, test, contribute, project structure
 - [Security](security.md) — Security model, privacy, threat model
 
@@ -36,8 +36,8 @@ Sentinel AI monitors your computer in real-time, detects suspicious behavior, co
 | Framework | Tauri v2 |
 | Min Rust | 1.75+ |
 | Min Node | 20+ |
-| Rules | 50 YAML (12 MITRE ATT&CK tactics, 38+ techniques) |
-| Plugins | 12 (notifications + threat intel + automation) |
-| Collectors | 5 implemented (process, network, file, startup, browser) |
-| Tests | 41+ (unit + integration) |
-| Binary size | ~15 MB (release, with DuckDB embedded) |
+| Rules | 613 SigmaHQ YAML (14 MITRE ATT&CK tactics) |
+| Plugins | 14 (8 threat intel + 5 notifications + 1 automation) |
+| Collectors | 7 (process, network, file, browser, startup, registry, USB) |
+| Tests | 48+ (unit + integration + plugin mock tests) |
+| gRPC API | 35/35 endpoints implemented |
