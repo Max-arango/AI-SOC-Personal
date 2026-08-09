@@ -16,6 +16,9 @@ pub struct SentinelService {
     storage: Arc<SqliteStorage>,
     alert_broadcast: broadcast::Sender<api::AlertStreamEvent>,
     collector_registry: Arc<sentinel_core::CollectorRegistry>,
+    rule_engine: Arc<sentinel_rule_engine::RuleEngine>,
+    ai_engine: Arc<sentinel_ai::AiEngine>,
+    started_at: std::time::Instant,
 }
 
 impl SentinelService {
@@ -23,11 +26,16 @@ impl SentinelService {
         storage: Arc<SqliteStorage>,
         alert_broadcast: broadcast::Sender<api::AlertStreamEvent>,
         collector_registry: Arc<sentinel_core::CollectorRegistry>,
+        rule_engine: Arc<sentinel_rule_engine::RuleEngine>,
+        ai_engine: Arc<sentinel_ai::AiEngine>,
     ) -> Self {
         Self {
             storage,
             alert_broadcast,
             collector_registry,
+            rule_engine,
+            ai_engine,
+            started_at: std::time::Instant::now(),
         }
     }
 }
@@ -71,9 +79,67 @@ impl Sentinel for SentinelService {
         &self,
         _: Request<api::StatusRequest>,
     ) -> Result<Response<api::StatusResponse>, Status> {
+        let metrics = self.rule_engine.metrics();
+        let uptime_secs = self.started_at.elapsed().as_secs() as i64;
+
+        let collectors: std::collections::HashMap<String, api::CollectorStatus> = self
+            .collector_registry
+            .list()
+            .into_iter()
+            .map(|s| {
+                (
+                    s.id.clone(),
+                    api::CollectorStatus {
+                        id: s.id.clone(),
+                        name: s.name.clone(),
+                        state: match s.state.as_str() {
+                            "running" => api::collector_status::State::CsRunning as i32,
+                            "stopped" => api::collector_status::State::CsStopped as i32,
+                            "starting" => api::collector_status::State::CsStarting as i32,
+                            "degraded" => api::collector_status::State::CsDegraded as i32,
+                            "error" => api::collector_status::State::CsError as i32,
+                            _ => api::collector_status::State::CsUnknown as i32,
+                        },
+                        stats: Some(api::CollectorStats {
+                            events_produced: s.events_produced,
+                            errors: s.errors,
+                            ..Default::default()
+                        }),
+                        last_event: s.last_event_at.map(|t| prost_types::Timestamp {
+                            seconds: t.timestamp(),
+                            nanos: t.timestamp_subsec_nanos() as i32,
+                        }),
+                    },
+                )
+            })
+            .collect();
+
+        let cpu_pct = cpu_percent();
+        let mem_bytes = memory_bytes();
+
         Ok(Response::new(api::StatusResponse {
             state: api::SystemState::SysRunning as i32,
-            ..Default::default()
+            uptime: Some(prost_types::Timestamp { seconds: uptime_secs, nanos: 0 }),
+            resources: Some(api::ResourceUsage {
+                cpu_percent: cpu_pct,
+                memory_bytes: mem_bytes,
+                event_queue_depth: 0,
+            }),
+            collectors,
+            rules: Some(api::RuleEngineStatus {
+                loaded_rules: metrics.rules_loaded as u32,
+                enabled_rules: metrics.rules_enabled as u32,
+                evaluations_total: metrics.evaluations_total,
+                matches_total: metrics.matches_total,
+                avg_eval_time_ms: metrics.avg_eval_time_ms as f64,
+            }),
+            ai: Some(api::AiEngineStatus {
+                enabled: self.ai_engine.config().enabled,
+                model: self.ai_engine.config().model.clone(),
+                provider: self.ai_engine.config().provider.clone(),
+                requests_total: self.ai_engine.requests_total(),
+                avg_latency_ms: self.ai_engine.avg_latency_ms(),
+            }),
         }))
     }
 
@@ -1057,17 +1123,45 @@ fn prost_value_to_serde_json(v: &prost_types::Value) -> serde_json::Value {
     }
 }
 
+fn cpu_percent() -> f64 {
+    let mut sys = sysinfo::System::new();
+    sys.refresh_processes_specifics(
+        sysinfo::ProcessesToUpdate::All,
+        sysinfo::ProcessRefreshKind::new(),
+    );
+    let pid = sysinfo::Pid::from_u32(std::process::id());
+    sys.process(pid).map(|p| p.cpu_usage() as f64).unwrap_or(0.0)
+}
+
+fn memory_bytes() -> u64 {
+    let mut sys = sysinfo::System::new();
+    sys.refresh_processes_specifics(
+        sysinfo::ProcessesToUpdate::All,
+        sysinfo::ProcessRefreshKind::new(),
+    );
+    let pid = sysinfo::Pid::from_u32(std::process::id());
+    sys.process(pid).map(|p| p.memory()).unwrap_or(0)
+}
+
 pub async fn serve(
     addr: &str,
     storage: Arc<SqliteStorage>,
     alert_broadcast: broadcast::Sender<api::AlertStreamEvent>,
     collector_registry: Arc<sentinel_core::CollectorRegistry>,
+    rule_engine: Arc<sentinel_rule_engine::RuleEngine>,
+    ai_engine: Arc<sentinel_ai::AiEngine>,
     mut shutdown: tokio::sync::watch::Receiver<bool>,
 ) -> anyhow::Result<()> {
     use tonic::transport::Server;
     tracing::info!("gRPC server starting on {addr}");
 
-    let svc = SentinelService::new(storage, alert_broadcast, collector_registry);
+    let svc = SentinelService::new(
+        storage,
+        alert_broadcast,
+        collector_registry,
+        rule_engine,
+        ai_engine,
+    );
 
     let (mut reporter, health_svc) = tonic_health::server::health_reporter();
     reporter

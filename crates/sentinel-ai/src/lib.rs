@@ -134,6 +134,8 @@ pub struct AiEngine {
     provider: Box<dyn AiProvider>,
     config: AiConfig,
     cache: Mutex<HashMap<String, String>>,
+    requests_total: std::sync::atomic::AtomicU64,
+    total_latency_ns: std::sync::atomic::AtomicU64,
 }
 
 impl AiEngine {
@@ -142,7 +144,26 @@ impl AiEngine {
             provider,
             config,
             cache: Mutex::new(HashMap::new()),
+            requests_total: std::sync::atomic::AtomicU64::new(0),
+            total_latency_ns: std::sync::atomic::AtomicU64::new(0),
         }
+    }
+
+    pub fn config(&self) -> &AiConfig {
+        &self.config
+    }
+
+    pub fn requests_total(&self) -> u64 {
+        self.requests_total.load(std::sync::atomic::Ordering::Relaxed)
+    }
+
+    pub fn avg_latency_ms(&self) -> f64 {
+        let total = self.requests_total.load(std::sync::atomic::Ordering::Relaxed);
+        if total == 0 {
+            return 0.0;
+        }
+        let latency_ns = self.total_latency_ns.load(std::sync::atomic::Ordering::Relaxed);
+        (latency_ns as f64 / total as f64) / 1_000_000.0
     }
 
     pub async fn explain_alert(&self, alert: &Alert, events: &[Arc<Event>]) -> String {
@@ -179,8 +200,16 @@ impl AiEngine {
             }
         }
 
+        self.requests_total
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let start = std::time::Instant::now();
+
         match self.provider.generate(prompt).await {
             Ok(response) => {
+                let elapsed_ns = start.elapsed().as_nanos() as u64;
+                self.total_latency_ns
+                    .fetch_add(elapsed_ns, std::sync::atomic::Ordering::Relaxed);
+
                 let cleaned = sanitise(&response);
                 let mut cache = self.cache.lock().await;
                 if cache.len() >= max_cache {

@@ -165,12 +165,16 @@ async fn main() -> Result<()> {
     let grpc_storage = sqlite.clone();
     let grpc_broadcast = alert_broadcast_tx.clone();
     let grpc_registry = collector_registry.clone();
+    let grpc_rule_engine = rule_engine.clone();
+    let grpc_ai = ai.clone();
     let grpc_handle = tokio::spawn(async move {
         if let Err(e) = sentinel_api::serve(
             grpc_addr,
             grpc_storage,
             grpc_broadcast,
             grpc_registry,
+            grpc_rule_engine,
+            grpc_ai,
             grpc_shutdown,
         )
         .await
