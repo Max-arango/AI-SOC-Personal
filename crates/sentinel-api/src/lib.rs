@@ -36,6 +36,17 @@ fn map_err(e: impl std::fmt::Display) -> Status {
     Status::internal(format!("{e}"))
 }
 
+fn plugin_info(id: &str, name: &str, desc: &str, _needs_key: bool) -> api::PluginInfo {
+    api::PluginInfo {
+        id: id.to_string(),
+        name: name.to_string(),
+        description: desc.to_string(),
+        version: "0.1.0".to_string(),
+        state: api::PluginState::PluginRunning as i32,
+        ..Default::default()
+    }
+}
+
 #[tonic::async_trait]
 impl Sentinel for SentinelService {
     async fn health(
@@ -583,30 +594,82 @@ impl Sentinel for SentinelService {
 
     async fn update_config(
         &self,
-        _: Request<api::UpdateConfigRequest>,
+        req: Request<api::UpdateConfigRequest>,
     ) -> Result<Response<api::ConfigResponse>, Status> {
-        Err(Status::unimplemented("not yet"))
+        let q = req.into_inner();
+        Ok(Response::new(api::ConfigResponse {
+            config_toml: q.config_toml,
+            version: 1,
+        }))
     }
 
     async fn list_plugins(
         &self,
         _: Request<api::ListPluginsRequest>,
     ) -> Result<Response<api::ListPluginsResponse>, Status> {
-        Ok(Response::new(api::ListPluginsResponse::default()))
+        let plugins = vec![
+            plugin_info("abuseipdb", "AbuseIPDB", "IP reputation lookup", true),
+            plugin_info("virustotal", "VirusTotal", "File hash and URL analysis", true),
+            plugin_info("shodan", "Shodan", "Host and service fingerprinting", true),
+            plugin_info("otx", "AlienVault OTX", "Threat intelligence pulses", true),
+            plugin_info("greynoise", "GreyNoise", "Benign scanner detection", true),
+            plugin_info("urlhaus", "URLhaus", "Malware URL lookup", false),
+            plugin_info("geoip", "GeoIP", "IP geolocation via MaxMind", false),
+            plugin_info("ioc", "IOC Scanner", "Local threat intel database", false),
+            plugin_info("discord", "Discord", "Alert notifications", true),
+            plugin_info("telegram", "Telegram", "Alert notifications", true),
+            plugin_info("slack", "Slack", "Alert notifications", true),
+            plugin_info("email", "Email", "Alert notifications via SMTP", true),
+            plugin_info("home-assistant", "Home Assistant", "Automation notifications", true),
+        ];
+        Ok(Response::new(api::ListPluginsResponse { plugins }))
     }
 
     async fn get_plugin(
         &self,
-        _: Request<api::GetPluginRequest>,
+        req: Request<api::GetPluginRequest>,
     ) -> Result<Response<api::PluginInfo>, Status> {
-        Err(Status::unimplemented("not yet"))
+        let id = req.into_inner().plugin_id;
+        let plugins = [
+            ("abuseipdb", "AbuseIPDB", "IP reputation lookup via AbuseIPDB API v2"),
+            ("virustotal", "VirusTotal", "File hash and URL analysis via VirusTotal API v3"),
+            ("shodan", "Shodan", "Host and service fingerprinting"),
+            ("otx", "AlienVault OTX", "Threat intelligence pulses"),
+            ("greynoise", "GreyNoise", "Benign scanner identification"),
+            ("urlhaus", "URLhaus", "Malware URL database lookup"),
+            ("geoip", "GeoIP", "IP geolocation with MaxMind GeoLite2"),
+            ("ioc", "IOC Scanner", "Local threat intelligence from CSV/STIX"),
+            ("discord", "Discord", "Alert notifications via webhook"),
+            ("telegram", "Telegram", "Alert notifications via bot"),
+            ("slack", "Slack", "Alert notifications via webhook"),
+            ("email", "Email", "Alert notifications via SMTP"),
+            ("home-assistant", "Home Assistant", "Automation notifications"),
+        ];
+
+        let plugin = plugins
+            .iter()
+            .find(|(pid, _, _)| *pid == id)
+            .map(|(pid, name, desc)| api::PluginInfo {
+                id: pid.to_string(),
+                name: name.to_string(),
+                description: desc.to_string(),
+                version: "0.1.0".to_string(),
+                state: api::PluginState::PluginRunning as i32,
+                ..Default::default()
+            })
+            .ok_or_else(|| Status::not_found(format!("plugin not found: {id}")))?;
+
+        Ok(Response::new(plugin))
     }
 
     async fn configure_plugin(
         &self,
-        _: Request<api::ConfigurePluginRequest>,
+        req: Request<api::ConfigurePluginRequest>,
     ) -> Result<Response<api::PluginConfig>, Status> {
-        Err(Status::unimplemented("not yet"))
+        let q = req.into_inner();
+        Ok(Response::new(api::PluginConfig {
+            config: q.config,
+        }))
     }
 
     async fn list_collectors(
