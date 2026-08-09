@@ -232,13 +232,30 @@ impl Sentinel for SentinelService {
         let q = req.into_inner();
         let repo = self.storage.alerts().await;
         let limit = if q.limit > 0 { q.limit as usize } else { 100 };
-        let offset = 0usize;
-        let alert_query =
-            sentinel_core::traits::AlertQuery {
-                limit,
-                offset,
-                ..Default::default()
-            };
+        let offset = q.offset.max(0) as usize;
+
+        let alert_query = sentinel_core::traits::AlertQuery {
+            state: if q.state != 0 {
+                Some(proto_alert_state_to_core(q.state).map_err(|_| {
+                    Status::invalid_argument(format!("invalid alert state: {}", q.state))
+                })?)
+            } else {
+                None
+            },
+            min_severity: if q.min_severity != 0 {
+                Some(proto_severity_to_core(q.min_severity))
+            } else {
+                None
+            },
+            start_time: q.start_time.and_then(|ts| {
+                chrono::DateTime::from_timestamp(ts.seconds, ts.nanos as u32)
+            }),
+            end_time: q.end_time.and_then(|ts| {
+                chrono::DateTime::from_timestamp(ts.seconds, ts.nanos as u32)
+            }),
+            limit,
+            offset,
+        };
         let alerts = repo.query(alert_query).await.map_err(map_err)?;
         let api_alerts: Vec<api::Alert> = alerts
             .into_iter()
@@ -287,7 +304,7 @@ impl Sentinel for SentinelService {
         let repo = self.storage.alerts().await;
         let id = Ulid::from_string(&q.alert_id)
             .map_err(|e| Status::invalid_argument(e.to_string()))?;
-        let state = proto_alert_state_to_core(q.new_state);
+        let state = proto_alert_state_to_core(q.new_state).map_err(|e| e)?;
 
         repo.update_state(&id, state, Some(q.comment))
             .await
@@ -636,15 +653,18 @@ fn proto_severity_to_core(s: i32) -> Severity {
     }
 }
 
-fn proto_alert_state_to_core(state: i32) -> CoreAlertState {
+fn proto_alert_state_to_core(state: i32) -> Result<CoreAlertState, Status> {
     match state {
-        1 => CoreAlertState::New,
-        2 => CoreAlertState::Acknowledged,
-        3 => CoreAlertState::Investigating,
-        4 => CoreAlertState::ResolvedTruePositive,
-        5 => CoreAlertState::ResolvedFalsePositive,
-        6 => CoreAlertState::Suppressed,
-        _ => CoreAlertState::New,
+        1 => Ok(CoreAlertState::New),
+        2 => Ok(CoreAlertState::Acknowledged),
+        3 => Ok(CoreAlertState::Investigating),
+        4 => Ok(CoreAlertState::ResolvedTruePositive),
+        5 => Ok(CoreAlertState::ResolvedFalsePositive),
+        6 => Ok(CoreAlertState::Suppressed),
+        _ => Err(Status::invalid_argument(format!(
+            "invalid alert state: {}. Valid: 1-6",
+            state
+        ))),
     }
 }
 

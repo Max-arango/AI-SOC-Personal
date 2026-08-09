@@ -386,12 +386,23 @@ impl EventRepository for SqliteEventRepository {
     }
 
     async fn aggregate(&self, agg: AggregationQuery) -> CoreResult<AggregationResult> {
+        let valid_columns = ["event_type", "source", "severity", "host_id"];
+        let column = valid_columns
+            .iter()
+            .find(|&&c| c == agg.group_by)
+            .ok_or_else(|| {
+                SentinelError::Storage(sentinel_core::StorageError::Query(format!(
+                    "invalid group_by column: {}. Valid: {:?}",
+                    agg.group_by, valid_columns
+                )))
+            })?;
+
         let sql = format!(
-            "SELECT {}, COUNT(*) as count, AVG(risk_score) as avg_risk, MIN(risk_score) as min_risk, MAX(risk_score) as max_risk 
+            "SELECT {} as group_key, COUNT(*) as count, AVG(risk_score) as avg_risk, MIN(risk_score) as min_risk, MAX(risk_score) as max_risk 
              FROM events 
              WHERE timestamp >= ? AND timestamp <= ?
              GROUP BY {}",
-            agg.group_by, agg.group_by
+            column, column
         );
 
         let rows = sqlx::query(&sql)
