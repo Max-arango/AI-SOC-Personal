@@ -15,16 +15,19 @@ use sentinel_events::Event;
 pub struct SentinelService {
     storage: Arc<SqliteStorage>,
     alert_broadcast: broadcast::Sender<api::AlertStreamEvent>,
+    collector_registry: Arc<sentinel_core::CollectorRegistry>,
 }
 
 impl SentinelService {
     pub fn new(
         storage: Arc<SqliteStorage>,
         alert_broadcast: broadcast::Sender<api::AlertStreamEvent>,
+        collector_registry: Arc<sentinel_core::CollectorRegistry>,
     ) -> Self {
         Self {
             storage,
             alert_broadcast,
+            collector_registry,
         }
     }
 }
@@ -610,21 +613,93 @@ impl Sentinel for SentinelService {
         &self,
         _: Request<api::ListCollectorsRequest>,
     ) -> Result<Response<api::ListCollectorsResponse>, Status> {
-        Ok(Response::new(api::ListCollectorsResponse::default()))
+        let collectors: Vec<api::CollectorInfo> = self
+            .collector_registry
+            .list()
+            .into_iter()
+            .map(|s| {
+                let state = match s.state.as_str() {
+                    "running" => api::CollectorState::CollectorRunning as i32,
+                    "stopped" => api::CollectorState::CollectorStopped as i32,
+                    "starting" => api::CollectorState::CollectorStarting as i32,
+                    "degraded" => api::CollectorState::CollectorDegraded as i32,
+                    "error" => api::CollectorState::CollectorError as i32,
+                    _ => api::CollectorState::Unspecified as i32,
+                };
+                api::CollectorInfo {
+                    id: s.id.clone(),
+                    name: s.name.clone(),
+                    description: s.description.clone(),
+                    enabled: s.state != "stopped",
+                    state,
+                    stats: Some(api::CollectorStats {
+                        events_produced: s.events_produced,
+                        errors: s.errors,
+                        ..Default::default()
+                    }),
+                    last_event: s.last_event_at.map(|t| {
+                        prost_types::Timestamp {
+                            seconds: t.timestamp(),
+                            nanos: t.timestamp_subsec_nanos() as i32,
+                        }
+                    }),
+                }
+            })
+            .collect();
+
+        Ok(Response::new(api::ListCollectorsResponse { collectors }))
     }
 
     async fn collector_status(
         &self,
-        _: Request<api::CollectorStatusRequest>,
+        req: Request<api::CollectorStatusRequest>,
     ) -> Result<Response<api::CollectorStatusResponse>, Status> {
-        Err(Status::unimplemented("not yet"))
+        let id = req.into_inner().collector_id;
+        let s = self
+            .collector_registry
+            .get(&id)
+            .ok_or_else(|| Status::not_found(format!("collector not found: {}", id)))?;
+
+        let info = Some(api::CollectorInfo {
+            id: s.id.clone(),
+            name: s.name.clone(),
+            description: s.description.clone(),
+            enabled: s.state != "stopped",
+            state: match s.state.as_str() {
+                "running" => api::CollectorState::CollectorRunning as i32,
+                _ => api::CollectorState::Unspecified as i32,
+            },
+            stats: Some(api::CollectorStats {
+                events_produced: s.events_produced,
+                errors: s.errors,
+                ..Default::default()
+            }),
+            last_event: s.last_event_at.map(|t| {
+                prost_types::Timestamp {
+                    seconds: t.timestamp(),
+                    nanos: t.timestamp_subsec_nanos() as i32,
+                }
+            }),
+        });
+
+        Ok(Response::new(api::CollectorStatusResponse {
+            info,
+            ..Default::default()
+        }))
     }
 
     async fn restart_collector(
         &self,
-        _: Request<api::RestartCollectorRequest>,
+        req: Request<api::RestartCollectorRequest>,
     ) -> Result<Response<()>, Status> {
-        Err(Status::unimplemented("not yet"))
+        let id = req.into_inner().collector_id;
+        let _ = self
+            .collector_registry
+            .get(&id)
+            .ok_or_else(|| Status::not_found(format!("collector not found: {}", id)))?;
+
+        self.collector_registry.update_state(&id, "restarting");
+        Ok(Response::new(()))
     }
 }
 
@@ -919,11 +994,12 @@ pub async fn serve(
     addr: &str,
     storage: Arc<SqliteStorage>,
     alert_broadcast: broadcast::Sender<api::AlertStreamEvent>,
+    collector_registry: Arc<sentinel_core::CollectorRegistry>,
 ) -> anyhow::Result<()> {
     use tonic::transport::Server;
     tracing::info!("gRPC server starting on {addr}");
 
-    let svc = SentinelService::new(storage, alert_broadcast);
+    let svc = SentinelService::new(storage, alert_broadcast, collector_registry);
 
     let (mut reporter, health_svc) = tonic_health::server::health_reporter();
     reporter

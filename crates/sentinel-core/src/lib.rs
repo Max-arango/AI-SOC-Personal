@@ -338,6 +338,83 @@ pub struct ModuleContext {
     pub shutdown: ShutdownSignal,
 }
 
+use std::sync::atomic::{AtomicU64, Ordering};
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct CollectorStatus {
+    pub id: String,
+    pub name: String,
+    pub description: String,
+    pub state: String,
+    pub events_produced: u64,
+    pub errors: u64,
+    pub started_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub last_event_at: Option<chrono::DateTime<chrono::Utc>>,
+}
+
+impl CollectorStatus {
+    pub fn new(id: &str, name: &str, description: &str) -> Self {
+        Self {
+            id: id.to_string(),
+            name: name.to_string(),
+            description: description.to_string(),
+            state: "running".to_string(),
+            events_produced: 0,
+            errors: 0,
+            started_at: Some(chrono::Utc::now()),
+            last_event_at: None,
+        }
+    }
+}
+
+pub struct CollectorRegistry {
+    collectors: std::sync::RwLock<std::collections::HashMap<String, CollectorStatus>>,
+}
+
+impl CollectorRegistry {
+    pub fn new() -> Self {
+        Self {
+            collectors: std::sync::RwLock::new(std::collections::HashMap::new()),
+        }
+    }
+
+    pub fn register(&self, status: CollectorStatus) {
+        let mut c = self.collectors.write().unwrap();
+        c.insert(status.id.clone(), status);
+    }
+
+    pub fn list(&self) -> Vec<CollectorStatus> {
+        let c = self.collectors.read().unwrap();
+        c.values().cloned().collect()
+    }
+
+    pub fn get(&self, id: &str) -> Option<CollectorStatus> {
+        let c = self.collectors.read().unwrap();
+        c.get(id).cloned()
+    }
+
+    pub fn update_state(&self, id: &str, state: &str) {
+        let mut c = self.collectors.write().unwrap();
+        if let Some(s) = c.get_mut(id) {
+            s.state = state.to_string();
+        }
+    }
+
+    pub fn increment_events(&self, id: &str, count: u64) {
+        let mut c = self.collectors.write().unwrap();
+        if let Some(s) = c.get_mut(id) {
+            s.events_produced += count;
+            s.last_event_at = Some(chrono::Utc::now());
+        }
+    }
+}
+
+impl Default for CollectorRegistry {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ModuleContext {
     pub fn new(
         event_bus: Arc<dyn traits::EventBus>,

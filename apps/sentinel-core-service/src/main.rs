@@ -173,6 +173,10 @@ async fn main() -> Result<()> {
     info!("Startup collector started");
     sentinel_collectors::browser::start_browser_monitor(bus.clone()).await;
     info!("Browser collector started");
+    sentinel_collectors::usb::start_usb_monitor(bus.clone()).await;
+    info!("USB collector started");
+    sentinel_collectors::registry::start_registry_monitor(bus.clone()).await;
+    info!("Registry collector started");
     info!("All core components started");
 
     // ── Main event loop: route events + wait for shutdown ─────────

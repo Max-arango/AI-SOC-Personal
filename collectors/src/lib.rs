@@ -10,3 +10,5 @@ pub mod file;
 pub mod network;
 pub mod startup;
 pub mod browser;
+pub mod usb;
+pub mod registry;
