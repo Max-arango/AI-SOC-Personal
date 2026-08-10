@@ -370,9 +370,53 @@ impl EventRepository for SqliteEventRepository {
             sql.push_str(&format!(" AND type IN ({})", placeholders.join(",")));
             params.extend(query.event_types.iter().cloned());
         }
+        if !query.sources.is_empty() {
+            let placeholders: Vec<&str> = vec!["?"; query.sources.len()];
+            sql.push_str(&format!(" AND source IN ({})", placeholders.join(",")));
+            params.extend(query.sources.iter().cloned());
+        }
+        if !query.severities.is_empty() {
+            let placeholders: Vec<&str> = vec!["?"; query.severities.len()];
+            sql.push_str(&format!(" AND severity IN ({})", placeholders.join(",")));
+            for sev in &query.severities {
+                params.push(format!("{}", *sev as i32));
+            }
+        }
         if let Some(min_risk) = query.min_risk_score {
             sql.push_str(" AND risk_score >= ?");
             params.push(format!("{}", min_risk));
+        }
+        if !query.process_names.is_empty() {
+            for pn in &query.process_names {
+                sql.push_str(" AND process LIKE ?");
+                params.push(format!("%\"name\":\"{}\"%", pn));
+            }
+        }
+        if !query.pids.is_empty() {
+            for pid in &query.pids {
+                sql.push_str(" AND process LIKE ?");
+                params.push(format!("%\"pid\":{}%", pid));
+            }
+        }
+        if let Some(ref cid) = query.correlation_id {
+            sql.push_str(" AND correlation LIKE ?");
+            params.push(format!("%\"correlation_id\":\"{}\"%", cid));
+        }
+        if let Some(ref fid) = query.flow_id {
+            sql.push_str(" AND correlation LIKE ?");
+            params.push(format!("%\"flow_id\":\"{}\"%", fid));
+        }
+        if !query.tags.is_empty() {
+            for tag in &query.tags {
+                sql.push_str(" AND tags LIKE ?");
+                params.push(format!("%{}%", tag));
+            }
+        }
+        if let Some(ref text) = query.free_text {
+            sql.push_str(" AND (payload LIKE ? OR process LIKE ?)");
+            let p = format!("%{}%", text);
+            params.push(p.clone());
+            params.push(p);
         }
 
         let mut q = sqlx::query(&sql);
@@ -785,6 +829,14 @@ impl AlertRepository for SqliteAlertRepository {
         if let Some(min_sev) = query.min_severity {
             sql.push_str(" AND severity >= ?");
             params.push(format!("{}", min_sev as u8));
+        }
+        if let Some(ref start) = query.start_time {
+            sql.push_str(" AND created_at >= ?");
+            params.push(start.to_rfc3339());
+        }
+        if let Some(ref end) = query.end_time {
+            sql.push_str(" AND created_at <= ?");
+            params.push(end.to_rfc3339());
         }
         sql.push_str(" ORDER BY created_at DESC");
 
