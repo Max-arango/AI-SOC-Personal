@@ -576,8 +576,10 @@ impl SuspiciousDownloadTracker {
 
 // ── Main monitor loop ─────────────────────────────────────────────
 
-pub async fn start_browser_monitor(bus: Arc<dyn EventBus>) {
+pub async fn start_browser_monitor(bus: Arc<dyn EventBus>, registry: Arc<sentinel_core::CollectorRegistry>) {
     tokio::spawn(async move {
+        registry.register(sentinel_core::CollectorStatus::new("browser", "Browser Monitor", "Browser collector"));
+        let reg = registry.clone();
         let mut tick = tokio::time::interval(POLL_INTERVAL);
         tick.tick().await;
 
@@ -622,6 +624,7 @@ pub async fn start_browser_monitor(bus: Arc<dyn EventBus>) {
                         let event = Arc::new(navigation_to_event(&entry, profile.browser));
                         if let Err(e) = bus.publish(event).await {
                             warn!("Browser nav publish failed: {e}");
+                        reg.increment_events("browser", 1);
                         }
                     }
                     total += count;
@@ -652,6 +655,7 @@ pub async fn start_browser_monitor(bus: Arc<dyn EventBus>) {
                         }
 
                         let _ = bus.publish(Arc::new(event)).await;
+                    reg.increment_events("browser", 1);
                     }
                     total += count;
                     dl_ts = profile.last_downloads_ts;
@@ -663,6 +667,7 @@ pub async fn start_browser_monitor(bus: Arc<dyn EventBus>) {
                     for entry in exts {
                         let event = Arc::new(extension_to_event(&entry, profile.browser));
                         let _ = bus.publish(event).await;
+                    reg.increment_events("browser", 1);
                     }
                     total += count;
                 }

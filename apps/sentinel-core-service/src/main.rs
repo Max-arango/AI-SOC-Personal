@@ -190,19 +190,19 @@ async fn main() -> Result<()> {
         .map_err(|e| anyhow::anyhow!("Failed to subscribe: {e}"))?;
 
     // ── Linux process collector (CN_PROC netlink) ───────────
-    sentinel_collectors::process::start_process_monitor(bus.clone()).await;
+    sentinel_collectors::process::start_process_monitor(bus.clone(), collector_registry.clone()).await;
     info!("Process collector started (netlink CN_PROC)");
-    sentinel_collectors::network::start_network_monitor(bus.clone()).await;
+    sentinel_collectors::network::start_network_monitor(bus.clone(), collector_registry.clone()).await;
     info!("Network collector started");
-    sentinel_collectors::file::start_file_monitor(bus.clone()).await;
+    sentinel_collectors::file::start_file_monitor(bus.clone(), collector_registry.clone()).await;
     info!("File collector started");
-    sentinel_collectors::startup::start_startup_monitor(bus.clone()).await;
+    sentinel_collectors::startup::start_startup_monitor(bus.clone(), collector_registry.clone()).await;
     info!("Startup collector started");
-    sentinel_collectors::browser::start_browser_monitor(bus.clone()).await;
+    sentinel_collectors::browser::start_browser_monitor(bus.clone(), collector_registry.clone()).await;
     info!("Browser collector started");
-    sentinel_collectors::usb::start_usb_monitor(bus.clone()).await;
+    sentinel_collectors::usb::start_usb_monitor(bus.clone(), collector_registry.clone()).await;
     info!("USB collector started");
-    sentinel_collectors::registry::start_registry_monitor(bus.clone()).await;
+    sentinel_collectors::registry::start_registry_monitor(bus.clone(), collector_registry.clone()).await;
     info!("Registry collector started");
     info!("All core components started");
 

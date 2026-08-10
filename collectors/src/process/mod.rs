@@ -19,7 +19,9 @@ use netlink_monitor::NetlinkMonitor;
 ///
 /// If netlink is unavailable (permissions, kernel config), falls back
 /// to `/proc` polling every 5 seconds.
-pub async fn start_process_monitor(bus: Arc<dyn EventBus>) {
+pub async fn start_process_monitor(bus: Arc<dyn EventBus>, registry: Arc<sentinel_core::CollectorRegistry>) {
+    registry.register(sentinel_core::CollectorStatus::new("process", "Process Monitor", "CN_PROC netlink real-time process events"));
+    let reg = registry.clone();
     let (netlink_tx, mut netlink_rx) = mpsc::unbounded_channel();
     let config = ProcessCollectorConfig::default();
 
@@ -56,6 +58,7 @@ pub async fn start_process_monitor(bus: Arc<dyn EventBus>) {
                     if bus.publish(Arc::new(event)).await.is_err() {
                         break;
                     }
+                    reg.increment_events("process", 1);
                 }
             }
         } else {
@@ -123,6 +126,7 @@ pub async fn start_process_monitor(bus: Arc<dyn EventBus>) {
                                         ..Default::default()
                                     });
                                     let _ = bus.publish(ev).await;
+                                    reg.increment_events("process", 1);
                                 }
                             }
                         }

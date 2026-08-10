@@ -102,8 +102,10 @@ fn device_to_event(d: &UsbDevice, action: Action) -> Event {
     }
 }
 
-pub async fn start_usb_monitor(bus: Arc<dyn EventBus>) {
+pub async fn start_usb_monitor(bus: Arc<dyn EventBus>, registry: Arc<sentinel_core::CollectorRegistry>) {
     tokio::spawn(async move {
+        registry.register(sentinel_core::CollectorStatus::new("usb", "Usb Monitor", "Usb collector"));
+        let reg = registry.clone();
         let mut known: HashSet<String> = HashSet::new();
         let mut tick = tokio::time::interval(POLL_INTERVAL);
         tick.tick().await;
@@ -128,6 +130,7 @@ pub async fn start_usb_monitor(bus: Arc<dyn EventBus>) {
                         d.vendor_id, d.product_id, d.product_name
                     );
                     let _ = bus.publish(event).await;
+                reg.increment_events("usb", 1);
                 }
             }
 
@@ -142,6 +145,7 @@ pub async fn start_usb_monitor(bus: Arc<dyn EventBus>) {
                 let event = Arc::new(device_to_event(&d, Action::DeviceDisconnect));
                 debug!("USB removed: {}", key);
                 let _ = bus.publish(event).await;
+                reg.increment_events("usb", 1);
             }
 
             known = current_keys;

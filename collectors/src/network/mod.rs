@@ -170,8 +170,10 @@ fn read_process_name(pid: u32) -> String {
 // ── Main monitor ──────────────────────────────────────────────────
 
 #[cfg(target_os = "linux")]
-pub async fn start_network_monitor(bus: Arc<dyn EventBus>) {
+pub async fn start_network_monitor(bus: Arc<dyn EventBus>, registry: Arc<sentinel_core::CollectorRegistry>) {
+    registry.register(sentinel_core::CollectorStatus::new("network", "Network Monitor", "/proc/net polling + DNS + scan detection"));
     tokio::spawn(async move {
+        let reg = registry;
         // Initial scan: populate tracker with existing connections
         // without emitting NEW events (only track them).
         let mut tracker = ConnTracker::new();
@@ -307,6 +309,7 @@ pub async fn start_network_monitor(bus: Arc<dyn EventBus>) {
                         if let Err(e) = bus.publish(net_event).await {
                             warn!("Network collector publish failed: {e}");
                         } else {
+                            reg.increment_events("network", 1);
                             debug!(
                                 "New connection: {} (pid={}, {})",
                                 key.display(),
@@ -361,6 +364,7 @@ pub async fn start_network_monitor(bus: Arc<dyn EventBus>) {
                         });
 
                         let _ = bus.publish(net_event).await;
+                        reg.increment_events("network", 1);
                     }
                 }
             }

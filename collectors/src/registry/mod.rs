@@ -11,8 +11,10 @@ use sentinel_events::RegistryEvent;
 use tracing::info;
 
 #[cfg(target_os = "linux")]
-pub async fn start_registry_monitor(bus: Arc<dyn EventBus>) {
+pub async fn start_registry_monitor(bus: Arc<dyn EventBus>, registry: Arc<sentinel_core::CollectorRegistry>) {
     tokio::spawn(async move {
+        registry.register(sentinel_core::CollectorStatus::new("registry", "Registry Monitor", "Registry collector"));
+        let reg = registry.clone();
         let mut tick = tokio::time::interval(std::time::Duration::from_secs(3600));
         tick.tick().await;
 
@@ -66,6 +68,7 @@ pub async fn start_registry_monitor(bus: Arc<dyn EventBus>) {
                                 ..Default::default()
                             };
                             let _ = bus.publish(Arc::new(event)).await;
+                        reg.increment_events("registry", 1);
                         }
                     }
                 }

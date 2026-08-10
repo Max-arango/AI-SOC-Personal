@@ -41,8 +41,10 @@ struct EntropyRecord {
     timestamp: Instant,
 }
 
-pub async fn start_file_monitor(bus: Arc<dyn EventBus>) {
+pub async fn start_file_monitor(bus: Arc<dyn EventBus>, registry: Arc<sentinel_core::CollectorRegistry>) {
     tokio::spawn(async move {
+        registry.register(sentinel_core::CollectorStatus::new("file", "File Monitor", "File collector"));
+        let reg = registry.clone();
         let watch_paths: Vec<PathBuf> = DEFAULT_WATCH_PATHS
             .iter()
             .map(PathBuf::from)
@@ -74,10 +76,10 @@ pub async fn start_file_monitor(bus: Arc<dyn EventBus>) {
                 }
             });
 
-            run_event_loop(&bus, &mut async_rx, true).await;
+            run_event_loop(&bus, &mut async_rx, true, reg).await;
         } else {
             warn!("Fanotify unavailable — falling back to directory polling (30s)");
-            run_polling_loop(&bus, &watch_paths).await;
+            run_polling_loop(&bus, &watch_paths, reg).await;
         }
     });
 }
@@ -88,6 +90,7 @@ async fn run_event_loop(
     bus: &Arc<dyn EventBus>,
     rx: &mut tokio::sync::mpsc::UnboundedReceiver<RawFileEvent>,
     _fanotify_mode: bool,
+    reg: Arc<sentinel_core::CollectorRegistry>,
 ) {
     let mut entropy_window: VecDeque<EntropyRecord> = VecDeque::new();
 
@@ -143,6 +146,7 @@ async fn run_event_loop(
                     entropy_window.iter().map(|r| r.path.clone()).collect();
                 let alert = build_ransomware_alert(&paths, entropy_window.len());
                 let _ = bus.publish(Arc::new(alert)).await;
+            reg.increment_events("file", 1);
                 entropy_window.clear();
             }
         }
@@ -242,6 +246,7 @@ async fn run_event_loop(
         });
 
         if bus.publish(event).await.is_err() {
+            reg.increment_events("file", 1);
             break;
         }
     }
@@ -249,7 +254,7 @@ async fn run_event_loop(
 
 // ── Polling fallback ──────────────────────────────────────────────
 
-async fn run_polling_loop(bus: &Arc<dyn EventBus>, watch_paths: &[PathBuf]) {
+async fn run_polling_loop(bus: &Arc<dyn EventBus>, watch_paths: &[PathBuf], reg: Arc<sentinel_core::CollectorRegistry>) {
     let mut known: HashMap<String, (u64, u64)> = HashMap::new(); // path → (mtime, size)
     let mut tick = tokio::time::interval(Duration::from_secs(30));
     tick.tick().await;
@@ -272,6 +277,7 @@ async fn run_polling_loop(bus: &Arc<dyn EventBus>, watch_paths: &[PathBuf]) {
             total += events.len() as u64;
             for event in events {
                 let _ = bus.publish(Arc::new(event)).await;
+                    reg.increment_events("file", 1);
             }
         }
 
