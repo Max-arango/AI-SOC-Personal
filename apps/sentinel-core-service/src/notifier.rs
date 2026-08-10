@@ -6,6 +6,9 @@ pub async fn notify_alerts(
     source: &str,
     event_count: usize,
 ) {
+    // NOTE: tokio::spawn without awaiting JoinHandle.
+    // On graceful shutdown, in-flight notifications may be dropped.
+    // For v0.2: collect handles and flush before service stops.
     if sentinel_plugin_discord::enabled() {
         if let Some(url) = sentinel_plugin_discord::webhook_url() {
             let eid = rule_id.to_string();

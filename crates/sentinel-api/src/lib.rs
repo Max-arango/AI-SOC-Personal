@@ -455,7 +455,10 @@ impl Sentinel for SentinelService {
             loop {
                 match rx.recv().await {
                     Ok(event) => yield Ok(event),
-                    Err(broadcast::error::RecvError::Lagged(_)) => continue,
+                    Err(broadcast::error::RecvError::Lagged(n)) => {
+                        tracing::warn!("StreamAlerts lagged by {} messages", n);
+                        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+                    }
                     Err(broadcast::error::RecvError::Closed) => break,
                 }
             }
