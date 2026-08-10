@@ -45,7 +45,10 @@ fn scan_usb_devices() -> Vec<UsbDevice> {
         let path = entry.path();
         let name = entry.file_name().to_string_lossy().to_string();
 
-        if name.contains('-') || name.contains(':') {
+            // Filter out interface/endpoint sub-entries (format: N-M, N-M:1.0, etc.)
+            // USB device entries in sysfs are flat directories like "1-1", "2-0:1.0".
+            // We only want root device entries — skip sub-devices and interfaces.
+            if name.contains('-') || name.contains(':') {
             continue;
         }
 
@@ -135,7 +138,8 @@ pub async fn start_usb_monitor(bus: Arc<dyn EventBus>, registry: Arc<sentinel_co
             }
 
             for key in known.difference(&current_keys) {
-                let parts: Vec<&str> = key.split(':').collect();
+                // Reconstruct device from key format: "vendor:product:serial_rest..."
+                let parts: Vec<&str> = key.splitn(3, ':').collect();
                 let d = UsbDevice {
                     vendor_id: parts.first().unwrap_or(&"?").to_string(),
                     product_id: parts.get(1).unwrap_or(&"?").to_string(),

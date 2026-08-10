@@ -363,40 +363,37 @@ impl CollectorStatus {
 }
 
 pub struct CollectorRegistry {
-    collectors: std::sync::RwLock<std::collections::HashMap<String, CollectorStatus>>,
+    collectors: parking_lot::RwLock<std::collections::HashMap<String, CollectorStatus>>,
 }
 
 impl CollectorRegistry {
     pub fn new() -> Self {
         Self {
-            collectors: std::sync::RwLock::new(std::collections::HashMap::new()),
+            collectors: parking_lot::RwLock::new(std::collections::HashMap::new()),
         }
     }
 
     pub fn register(&self, status: CollectorStatus) {
-        let mut c = self.collectors.write().unwrap();
-        c.insert(status.id.clone(), status);
+        self.collectors.write().insert(status.id.clone(), status);
     }
 
     pub fn list(&self) -> Vec<CollectorStatus> {
-        let c = self.collectors.read().unwrap();
-        c.values().cloned().collect()
+        self.collectors.read().values().cloned().collect()
     }
 
     pub fn get(&self, id: &str) -> Option<CollectorStatus> {
-        let c = self.collectors.read().unwrap();
-        c.get(id).cloned()
+        self.collectors.read().get(id).cloned()
     }
 
     pub fn update_state(&self, id: &str, state: &str) {
-        let mut c = self.collectors.write().unwrap();
+        let mut c = self.collectors.write();
         if let Some(s) = c.get_mut(id) {
             s.state = state.to_string();
         }
     }
 
     pub fn increment_events(&self, id: &str, count: u64) {
-        let mut c = self.collectors.write().unwrap();
+        let mut c = self.collectors.write();
         if let Some(s) = c.get_mut(id) {
             s.events_produced += count;
             s.last_event_at = Some(chrono::Utc::now());
