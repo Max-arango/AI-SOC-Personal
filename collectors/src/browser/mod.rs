@@ -24,6 +24,14 @@ const SUSPICIOUS_DL_WINDOW: Duration = Duration::from_secs(300); // 5 min
 const SUSPICIOUS_DL_THRESHOLD: usize = 3;
 const MAX_DB_COPY_BYTES: u64 = 100 * 1024 * 1024; // 100 MB limit
 
+fn sqlite3_available() -> bool {
+    std::process::Command::new("sqlite3")
+        .arg("--version")
+        .output()
+        .map(|o| o.status.success())
+        .unwrap_or(false)
+}
+
 // ── Malicious extension IDs (known info-stealers, adware) ─────────
 
 const MALICIOUS_EXTENSIONS: &[&str] = &[
@@ -578,8 +586,14 @@ impl SuspiciousDownloadTracker {
 
 pub async fn start_browser_monitor(bus: Arc<dyn EventBus>, registry: Arc<sentinel_core::CollectorRegistry>) {
     tokio::spawn(async move {
-        registry.register(sentinel_core::CollectorStatus::new("browser", "Browser Monitor", "Browser collector"));
+        registry.register(sentinel_core::CollectorStatus::new("browser", "Browser Monitor", "Browser history + downloads + extensions"));
         let reg = registry.clone();
+
+        if !sqlite3_available() {
+            warn!("sqlite3 binary not found in PATH — browser collector will not function. Install sqlite3 package.");
+            reg.update_state("browser", "error");
+            return;
+        }
         let mut tick = tokio::time::interval(POLL_INTERVAL);
         tick.tick().await;
 
