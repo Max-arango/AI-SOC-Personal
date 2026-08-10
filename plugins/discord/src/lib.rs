@@ -127,3 +127,14 @@ pub fn webhook_url() -> Option<String> {
 fn chrono_now() -> String {
     chrono::Utc::now().to_rfc3339()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn disabled_without_webhook_url() {
+        std::env::remove_var("SENTINEL_DISCORD_WEBHOOK_URL");
+        assert!(!enabled());
+    }
+}

@@ -257,3 +257,46 @@ pub fn engine() -> &'static IocEngine {
 pub fn enabled() -> bool {
     engine().is_loaded()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn ioc_entry_fields() {
+        let entry = IocEntry {
+            indicator: "192.168.1.1".into(),
+            ioc_type: IocType::Ip,
+            risk_score: 75,
+            description: "C2 server".into(),
+            source: "test".into(),
+        };
+        assert_eq!(entry.indicator, "192.168.1.1");
+        assert_eq!(entry.risk_score, 75);
+    }
+
+    #[test]
+    fn ioc_type_equality() {
+        assert_eq!(IocType::Ip, IocType::Ip);
+        assert_ne!(IocType::Ip, IocType::Domain);
+    }
+
+    #[test]
+    fn engine_new_has_paths() {
+        let engine = IocEngine::new();
+        assert!(!engine.paths.is_empty());
+    }
+
+    #[test]
+    fn engine_not_loaded_initially() {
+        let engine = IocEngine::new();
+        assert!(!engine.is_loaded());
+    }
+
+    #[test]
+    fn enabled_without_db_returns_false() {
+        std::env::remove_var("SENTINEL_IOC_DIR");
+        let engine = IocEngine::new();
+        assert!(!engine.is_loaded());
+    }
+}

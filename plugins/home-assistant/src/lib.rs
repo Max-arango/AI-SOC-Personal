@@ -157,3 +157,15 @@ pub async fn send_alert(
 fn chrono_now() -> String {
     chrono::Utc::now().timestamp().to_string()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn disabled_without_token() {
+        std::env::remove_var("SENTINEL_HOME_ASSISTANT_TOKEN");
+        std::env::remove_var("SENTINEL_HOME_ASSISTANT_URL");
+        assert!(!enabled());
+    }
+}

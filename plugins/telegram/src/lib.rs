@@ -68,3 +68,15 @@ pub fn bot_token() -> Option<String> {
 pub fn chat_id() -> Option<String> {
     std::env::var("SENTINEL_TELEGRAM_CHAT_ID").ok()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn disabled_without_token_and_chat_id() {
+        std::env::remove_var("SENTINEL_TELEGRAM_BOT_TOKEN");
+        std::env::remove_var("SENTINEL_TELEGRAM_CHAT_ID");
+        assert!(!enabled());
+    }
+}

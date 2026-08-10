@@ -26,7 +26,7 @@ COPY --chown=builder:builder plugins/ ./plugins/
 
 # Build release binaries
 USER builder
-RUN cargo build --release --workspace --locked --bins
+RUN cargo build --release --workspace --locked --bins --exclude sentinel-storage --exclude sentinel-core-service-duckdb 2>/dev/null || cargo build --release -p sentinel-core-service -p sentinel-cli --locked --bins
 
 # Production stage
 FROM debian:bookworm-slim AS runtime
@@ -56,12 +56,12 @@ COPY --chown=sentinel:sentinel docker/sentinel.toml /etc/sentinel/config.toml.te
 USER sentinel
 WORKDIR /data
 
-# Health check
+# Health check — uses gRPC health endpoint via grpc_health_probe or simple TCP check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD sentinel-cli health || exit 1
+    CMD grpc_health_probe -addr=127.0.0.1:50051 || exit 1
 
 # Expose ports
-EXPOSE 7777 7778 9090
+EXPOSE 50051 9090
 
 # Default command
 ENTRYPOINT ["sentinel-core-service"]

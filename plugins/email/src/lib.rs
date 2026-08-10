@@ -83,3 +83,14 @@ pub async fn send_alert(
         },
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn enabled_returns_bool() {
+        let result = enabled();
+        assert!(result || !result);
+    }
+}

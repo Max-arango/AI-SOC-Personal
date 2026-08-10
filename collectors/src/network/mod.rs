@@ -18,7 +18,7 @@
 //!                                    EventBus.publish()
 //! ```
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -113,51 +113,69 @@ fn parse_proc_net(path: &str, protocol: Protocol) -> Vec<RawConn> {
     connections
 }
 
-// ── Inode → PID resolver ─────────────────────────────────────────
+// ── Inode → PID resolver (cached) ──────────────────────────────
 
-/// Scan `/proc/<pid>/fd/` to build an inode → PID lookup map.
+/// Build or update the inode→PID map incrementally.
 ///
-/// Each fd is a symlink like `socket:[12345]`. We parse the inode
-/// number and map it back to the owning PID and process name.
-fn build_inode_pid_map() -> HashMap<u64, (u32, String)> {
-    let mut map = HashMap::new();
+/// Only scans FDs for new PIDs since the last call. Fully rebuilds
+/// every 6th cycle (~30s) as a safety net for missed FDs.
+fn build_inode_pid_map(
+    cached_map: &mut HashMap<u64, (u32, String)>,
+    cached_pids: &mut HashSet<u32>,
+    cycle_count: &mut u32,
+) {
+    *cycle_count += 1;
 
     let proc_dir = match std::fs::read_dir("/proc") {
         Ok(d) => d,
-        Err(_) => return map,
+        Err(_) => return,
     };
 
+    let mut current_pids = HashSet::new();
+
     for entry in proc_dir.filter_map(|e| e.ok()) {
-        let name = entry.file_name();
-        let pid_str = name.to_string_lossy();
-        let pid = match pid_str.parse::<u32>() {
+        let pid = match entry.file_name().to_string_lossy().parse::<u32>() {
             Ok(p) => p,
             Err(_) => continue,
         };
+        current_pids.insert(pid);
 
-        let fd_dir = match std::fs::read_dir(format!("/proc/{}/fd", pid)) {
-            Ok(d) => d,
-            Err(_) => continue,
-        };
-
-        for fd_entry in fd_dir.filter_map(|e| e.ok()) {
-            let link = match std::fs::read_link(fd_entry.path()) {
-                Ok(l) => l,
-                Err(_) => continue,
-            };
-
-            let target = link.to_string_lossy();
-            if target.starts_with("socket:[") && target.ends_with(']') {
-                let inode_str = &target[8..target.len() - 1];
-                if let Ok(inode) = inode_str.parse::<u64>() {
-                    let proc_name = read_process_name(pid);
-                    map.insert(inode, (pid, proc_name));
-                }
-            }
+        // Full rebuild every 6 cycles or for new PIDs
+        if *cycle_count % 6 == 0 || !cached_pids.contains(&pid) {
+            scan_pid_fds(pid, cached_map);
         }
     }
 
-    map
+    // Remove dead PIDs from cache
+    let dead: Vec<u32> = cached_pids.difference(&current_pids).copied().collect();
+    if !dead.is_empty() {
+        cached_map.retain(|_, (pid, _)| !dead.contains(pid));
+    }
+
+    *cached_pids = current_pids;
+}
+
+fn scan_pid_fds(pid: u32, map: &mut HashMap<u64, (u32, String)>) {
+    let fd_dir = match std::fs::read_dir(format!("/proc/{}/fd", pid)) {
+        Ok(d) => d,
+        Err(_) => return,
+    };
+
+    for fd_entry in fd_dir.filter_map(|e| e.ok()) {
+        let link = match std::fs::read_link(fd_entry.path()) {
+            Ok(l) => l,
+            Err(_) => continue,
+        };
+
+        let target = link.to_string_lossy();
+        if target.starts_with("socket:[") && target.ends_with(']') {
+            let inode_str = &target[8..target.len() - 1];
+            if let Ok(inode) = inode_str.parse::<u64>() {
+                let proc_name = read_process_name(pid);
+                map.insert(inode, (pid, proc_name));
+            }
+        }
+    }
 }
 
 fn read_process_name(pid: u32) -> String {
@@ -177,9 +195,15 @@ pub async fn start_network_monitor(bus: Arc<dyn EventBus>, registry: Arc<sentine
         // Initial scan: populate tracker with existing connections
         // without emitting NEW events (only track them).
         let mut tracker = ConnTracker::new();
+        let mut inode_map: HashMap<u64, (u32, String)> = HashMap::new();
+        let mut known_pids: HashSet<u32> = HashSet::new();
+        let mut cycle_count: u32 = 0;
+
         {
             let raw_conns = poll_all_connections();
-            let inode_map = build_inode_pid_map();
+            // Full build on first cycle
+            for _ in 0..6 { cycle_count += 1; } // Force full rebuild
+            build_inode_pid_map(&mut inode_map, &mut known_pids, &mut cycle_count);
             let enriched: Vec<(ConnectionKey, ConnectionMeta)> = raw_conns
                 .into_iter()
                 .filter_map(|rc| {
@@ -211,7 +235,7 @@ pub async fn start_network_monitor(bus: Arc<dyn EventBus>, registry: Arc<sentine
             tick.tick().await;
 
             let raw_conns = poll_all_connections();
-            let inode_map = build_inode_pid_map();
+            build_inode_pid_map(&mut inode_map, &mut known_pids, &mut cycle_count);
 
             let enriched: Vec<(ConnectionKey, ConnectionMeta)> = raw_conns
                 .into_iter()

@@ -17,9 +17,8 @@ services:
       - sentinel-data:/data
       - sentinel-logs:/var/log/sentinel
     ports:
-      - "7777:7777"  # gRPC
-      - "7778:7778"  # REST Gateway
-      - "9090:9090"  # Prometheus metrics
+      - "50051:50051"  # gRPC API
+      - "9090:9090"    # Prometheus metrics
     depends_on:
       - ollama
     networks:

@@ -121,3 +121,14 @@ pub async fn send_alert(
         },
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn disabled_without_webhook_url() {
+        std::env::remove_var("SENTINEL_SLACK_WEBHOOK_URL");
+        assert!(!enabled());
+    }
+}
