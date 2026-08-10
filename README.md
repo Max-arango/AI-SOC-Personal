@@ -4,6 +4,17 @@
 
 A local-first, privacy-preserving AI Security Assistant for personal computers.
 
+## Demo
+
+[![asciicast](https://asciinema.org/a/EdR50d7JtGf2lmtM.svg)](https://asciinema.org/a/EdR50d7JtGf2lmtM)
+
+> Watch: architecture walkthrough, collectors, plugins, tests, and quick start in 30 seconds.
+
+Or replay locally:
+```bash
+asciinema play docs/demo.cast
+```
+
 ## Architecture
 
 Sentinel AI follows a modular, event-driven architecture with clear separation of concerns:
