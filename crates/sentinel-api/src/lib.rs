@@ -63,7 +63,11 @@ impl Sentinel for SentinelService {
     ) -> Result<Response<api::HealthResponse>, Status> {
         let ok = self.storage.health().await.is_ok();
         Ok(Response::new(api::HealthResponse {
-            status: if ok { 1 } else { 3 },
+            status: if ok {
+                tonic_health::ServingStatus::Serving as i32
+            } else {
+                tonic_health::ServingStatus::NotServing as i32
+            },
             ..Default::default()
         }))
     }
@@ -72,7 +76,13 @@ impl Sentinel for SentinelService {
         &self,
         _: Request<api::VersionRequest>,
     ) -> Result<Response<api::VersionResponse>, Status> {
-        Ok(Response::new(api::VersionResponse::default()))
+        Ok(Response::new(api::VersionResponse {
+            version: env!("CARGO_PKG_VERSION").to_string(),
+            git_commit: option_env!("GIT_HASH").unwrap_or("dev").to_string(),
+            build_date: option_env!("BUILD_DATE").unwrap_or("unknown").to_string(),
+            rust_version: option_env!("RUSTC_VERSION").unwrap_or("stable").to_string(),
+            ..Default::default()
+        }))
     }
 
     async fn status(
@@ -217,14 +227,15 @@ impl Sentinel for SentinelService {
 
     async fn list_processes(
         &self,
-        _: Request<api::ListProcessesRequest>,
+        req: Request<api::ListProcessesRequest>,
     ) -> Result<Response<api::ListProcessesResponse>, Status> {
+        let limit = req.into_inner().limit.max(1).min(1000) as usize;
         let mut sys = sysinfo::System::new();
         sys.refresh_all();
         let processes: Vec<api::ProcessSummary> = sys
             .processes()
             .iter()
-            .take(200)
+            .take(limit)
             .map(|(pid, proc)| api::ProcessSummary {
                 pid: pid.as_u32(),
                 ppid: proc.parent().map(|p| p.as_u32()).unwrap_or(0),

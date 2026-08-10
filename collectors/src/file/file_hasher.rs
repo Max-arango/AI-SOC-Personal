@@ -23,9 +23,13 @@ pub struct FileHashResult {
 /// Files larger than `max_bytes` are skipped (returns empty result).
 pub async fn hash_file(path: &str, max_bytes: u64) -> FileHashResult {
     let path_owned = path.to_string();
+    let path_for_err = path_owned.clone();
     tokio::task::spawn_blocking(move || hash_file_sync(&path_owned, max_bytes))
         .await
-        .unwrap_or_else(|_| FileHashResult::empty())
+        .unwrap_or_else(|e| {
+            tracing::warn!("File hasher task panicked for {}: {e:?}", path_for_err);
+            FileHashResult::empty()
+        })
 }
 
 fn hash_file_sync(path: &str, max_bytes: u64) -> FileHashResult {

@@ -333,7 +333,7 @@ pub struct ModuleContext {
     pub shutdown: ShutdownSignal,
 }
 
-use std::sync::atomic::{AtomicU64, Ordering};
+
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct CollectorStatus {
