@@ -32,6 +32,9 @@ mod dns_resolver;
 mod scan_detector;
 mod sock_diag;
 
+#[cfg(feature = "ebpf")]
+mod ebpf_monitor;
+
 use conn_tracker::{ConnTracker, ConnectionEvent, ConnectionKey, ConnectionMeta};
 use dns_resolver::DnsResolver;
 use scan_detector::ScanDetector;

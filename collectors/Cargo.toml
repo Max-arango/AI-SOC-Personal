@@ -34,6 +34,11 @@ dirs = "5"
 sha2 = { workspace = true }
 
 libc = "0.2"
+aya = { workspace = true, optional = true }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 inotify = "0.10"
+
+[features]
+ebpf = ["aya"]
+ebpf-embedded = ["ebpf"]
