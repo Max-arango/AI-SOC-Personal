@@ -79,13 +79,45 @@ impl AppState {
         let hours = uptime.num_hours();
         let mins = uptime.num_minutes() % 60;
 
+        let mut sys = sysinfo::System::new();
+        sys.refresh_processes_specifics(
+            sysinfo::ProcessesToUpdate::All,
+            sysinfo::ProcessRefreshKind::new(),
+        );
+        let pid = sysinfo::Pid::from_u32(std::process::id());
+        let cpu = sys.process(pid).map(|p| p.cpu_usage() as f64).unwrap_or(0.0);
+        let mem = sys.process(pid).map(|p| p.memory()).unwrap_or(0);
+
+        // Count events in storage
+        let event_repo = self.storage.events().await;
+        let total_events = event_repo
+            .query(EventQuery {
+                limit: 1,
+                ..Default::default()
+            })
+            .await
+            .map(|c| c.total_count())
+            .unwrap_or(0);
+
+        // Count alerts
+        let alert_repo = self.storage.alerts().await;
+        let total_alerts = alert_repo
+            .query(sentinel_core::traits::AlertQuery {
+                limit: 1,
+                ..Default::default()
+            })
+            .await
+            .map(|a| a.len() as u64)
+            .unwrap_or(0);
+
         Ok(StatusResponse {
             state: "running".to_string(),
             uptime: format!("{}h {}m", hours, mins),
             resources: serde_json::json!({
-                "cpu_percent": 0.0,
-                "memory_bytes": 0,
-                "event_queue_depth": 0,
+                "cpu_percent": cpu,
+                "memory_bytes": mem,
+                "event_queue_depth": total_events,
+                "total_alerts": total_alerts,
             }),
         })
     }
@@ -218,9 +250,45 @@ impl AppState {
         &self,
         _q: NetworkQuery,
     ) -> Result<NetworkResponse, String> {
-        Ok(NetworkResponse {
-            connections: vec![],
-        })
+        let repo = self.storage.events().await;
+        let query = EventQuery {
+            event_types: vec!["sentinel.network.connect".into()],
+            limit: 200,
+            sort_by: Some("timestamp".into()),
+            sort_desc: true,
+            ..Default::default()
+        };
+
+        let mut cursor = repo.query(query).await.map_err(|e| format!("{e}"))?;
+        let connections: Vec<serde_json::Value> = if let Some(c) = Arc::get_mut(&mut cursor) {
+            c.collect(200)
+                .await
+                .map_err(|e| format!("{e}"))?
+                .iter()
+                .filter_map(|e| {
+                    if let Some(sentinel_events::event::Payload::NetworkEvent(ref ne)) = e.payload {
+                        let ts = e.timestamp.as_ref().map(|t| t.seconds).unwrap_or(0);
+                        Some(serde_json::json!({
+                            "local_addr": ne.local_addr,
+                            "local_port": ne.local_port,
+                            "remote_addr": ne.remote_addr,
+                            "remote_port": ne.remote_port,
+                            "protocol": if ne.protocol == 1 { "tcp" } else { "udp" },
+                            "hostname": ne.hostname,
+                            "timestamp": ts,
+                            "pid": e.process.as_ref().map(|p| p.pid).unwrap_or(0),
+                            "process_name": e.process.as_ref().map(|p| p.name.clone()).unwrap_or_default(),
+                        }))
+                    } else {
+                        None
+                    }
+                })
+                .collect()
+        } else {
+            vec![]
+        };
+
+        Ok(NetworkResponse { connections })
     }
 
     pub async fn explain_alert(&self, alert_id: String) -> Result<ExplanationResponse, String> {
@@ -271,20 +339,75 @@ impl AppState {
         message: String,
         cid: Option<String>,
     ) -> Result<ChatResponse, String> {
+        let provider = std::env::var("SENTINEL_AI_PROVIDER").unwrap_or_else(|_| "ollama".into());
+        let model = std::env::var("SENTINEL_AI_MODEL").unwrap_or_else(|_| "llama3.2:3b".into());
+        let enabled = std::env::var("SENTINEL_AI_ENABLED")
+            .map(|v| v == "1" || v == "true")
+            .unwrap_or(true);
+
+        if !enabled {
+            return Ok(ChatResponse {
+                response: "AI engine is disabled. Set SENTINEL_AI_ENABLED=1 to enable.".into(),
+                conversation_id: cid.unwrap_or_default(),
+            });
+        }
+
+        // Count AI-generated summaries in alerts
+        let repo = self.storage.alerts().await;
+        let ai_alerts = repo
+            .query(sentinel_core::traits::AlertQuery {
+                limit: 100,
+                ..Default::default()
+            })
+            .await
+            .map(|alerts| {
+                alerts
+                    .iter()
+                    .filter(|a| a.ai_summary.is_some())
+                    .count()
+            })
+            .unwrap_or(0);
+
         Ok(ChatResponse {
             response: format!(
-                "Sentinel AI is running locally. Your question was: \"{}\". AI integration coming soon.",
-                message
+                "Sentinel AI running locally with {provider}/{model}. {} alerts have AI summaries. Your question: \"{message}\"",
+                ai_alerts
             ),
             conversation_id: cid.unwrap_or_else(|| uuid::Uuid::new_v4().to_string()),
         })
     }
 
     pub async fn get_config(&self) -> Result<ConfigResponse, String> {
-        Ok(ConfigResponse {
-            config_toml: "# Sentinel AI Configuration\n# Edit at ~/.config/sentinel/config.toml\n".into(),
-            version: 1,
-        })
+        // Read from default config paths or return env-based defaults
+        let config_paths = [
+            dirs::config_dir()
+                .map(|p| p.join("sentinel").join("config.toml")),
+            Some(std::path::PathBuf::from("/etc/sentinel/config.toml")),
+        ];
+
+        let mut config_toml = String::new();
+        for path in config_paths.iter().flatten() {
+            if path.exists() {
+                config_toml = std::fs::read_to_string(path)
+                    .map_err(|e| format!("Cannot read config: {e}"))?;
+                break;
+            }
+        }
+
+        if config_toml.is_empty() {
+            config_toml = format!(
+                "# Sentinel AI — Runtime Configuration\n\
+                 # No config file found. Using environment defaults.\n\
+                 ai_enabled = {}\n\
+                 ai_provider = \"{}\"\n\
+                 ai_model = \"{}\"\n",
+                std::env::var("SENTINEL_AI_ENABLED").unwrap_or_else(|_| "true".into()),
+                std::env::var("SENTINEL_AI_PROVIDER").unwrap_or_else(|_| "ollama".into()),
+                std::env::var("SENTINEL_AI_MODEL").unwrap_or_else(|_| "llama3.2:3b".into()),
+            );
+        }
+
+        Ok(ConfigResponse { config_toml, version: 1 })
     }
 
     pub async fn update_config(&self, _cfg: serde_json::Value) -> Result<ConfigResponse, String> {
@@ -333,6 +456,9 @@ fn event_to_json(event: &sentinel_events::Event) -> serde_json::Value {
         "process": process,
         "correlation": correlation,
     })
+}
+
+impl AppState {
     pub async fn get_process_tree(&self) -> Result<ProcessTreeResponse, String> {
         let mut sys = sysinfo::System::new();
         sys.refresh_all();
