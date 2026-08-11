@@ -30,6 +30,7 @@ use tracing::{debug, info, warn};
 mod conn_tracker;
 mod dns_resolver;
 mod scan_detector;
+mod sock_diag;
 
 use conn_tracker::{ConnTracker, ConnectionEvent, ConnectionKey, ConnectionMeta};
 use dns_resolver::DnsResolver;
@@ -205,9 +206,18 @@ pub async fn start_network_monitor(
         let mut inode_map: HashMap<u64, (u32, String)> = HashMap::new();
         let mut known_pids: HashSet<u32> = HashSet::new();
         let mut cycle_count: u32 = 0;
+        let mut diag = sock_diag::SockDiagMonitor::new();
+        let use_sockdiag = diag.connect().is_ok();
+        if use_sockdiag {
+            reg.update_state("network", "running");
+            info!("Network collector using netlink sock_diag (fast path)");
+        }
+
+        let diag_opt: Option<sock_diag::SockDiagMonitor> =
+            if use_sockdiag { Some(diag) } else { None };
 
         {
-            let raw_conns = poll_all_connections();
+            let raw_conns = poll_all_connections(&diag_opt);
             // Full build on first cycle
             for _ in 0..6 {
                 cycle_count += 1;
@@ -248,7 +258,7 @@ pub async fn start_network_monitor(
         loop {
             tick.tick().await;
 
-            let raw_conns = poll_all_connections();
+            let raw_conns = poll_all_connections(&diag_opt);
             build_inode_pid_map(&mut inode_map, &mut known_pids, &mut cycle_count);
 
             let enriched: Vec<(ConnectionKey, ConnectionMeta)> = raw_conns
@@ -420,7 +430,40 @@ pub async fn start_network_monitor(_bus: Arc<dyn EventBus>) {
     tracing::info!("Network collector: not supported on this platform");
 }
 
-fn poll_all_connections() -> Vec<RawConn> {
+fn poll_all_connections(diag: &Option<sock_diag::SockDiagMonitor>) -> Vec<RawConn> {
+    // Try sock_diag (netlink) first — faster, native inode
+    if let Some(ref d) = diag {
+        if let Ok(tcp) = d.query_tcp() {
+            let mut conns: Vec<RawConn> = tcp
+                .into_iter()
+                .map(|s| RawConn {
+                    local_addr: s.local_addr.to_string(),
+                    local_port: s.local_port,
+                    remote_addr: s.remote_addr.to_string(),
+                    remote_port: s.remote_port,
+                    protocol: Protocol::Tcp,
+                    inode: s.inode as u64,
+                    uid: s.uid,
+                })
+                .collect();
+            if let Ok(udp) = d.query_udp() {
+                conns.extend(udp.into_iter().map(|s| RawConn {
+                    local_addr: s.local_addr.to_string(),
+                    local_port: s.local_port,
+                    remote_addr: s.remote_addr.to_string(),
+                    remote_port: s.remote_port,
+                    protocol: Protocol::Udp,
+                    inode: s.inode as u64,
+                    uid: s.uid,
+                }));
+            }
+            if !conns.is_empty() {
+                return conns;
+            }
+        }
+    }
+
+    // Fallback: /proc/net parsing
     let mut all = Vec::new();
     for (path, proto) in [
         ("/proc/net/tcp", Protocol::Tcp),
