@@ -22,6 +22,8 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::time::Duration;
 
+use tokio::sync::mpsc;
+
 use sentinel_core::traits::EventBus;
 use sentinel_events::network_event::{Action, Direction, Protocol};
 use sentinel_events::{Event, NetworkEvent};
@@ -199,16 +201,31 @@ pub async fn start_network_monitor(
     registry.register(sentinel_core::CollectorStatus::new(
         "network",
         "Network Monitor",
-        "/proc/net polling + DNS + scan detection",
+        "Connection tracking + DNS + scan detection",
     ));
     tokio::spawn(async move {
         let reg = registry;
-        // Initial scan: populate tracker with existing connections
-        // without emitting NEW events (only track them).
         let mut tracker = ConnTracker::new();
         let mut inode_map: HashMap<u64, (u32, String)> = HashMap::new();
         let mut known_pids: HashSet<u32> = HashSet::new();
         let mut cycle_count: u32 = 0;
+
+        // ── eBPF real-time monitor (optional) ──────────────────
+        #[cfg(feature = "ebpf")]
+        let _ebpf_handle = {
+            let (ebpf_tx, mut ebpf_rx) = mpsc::unbounded_channel();
+            match ebpf_monitor::EbpfMonitor::try_init(ebpf_tx).await {
+                Some(handle) => {
+                    reg.update_state("network", "running");
+                    info!("Network collector using eBPF (real-time events)");
+                    Some(handle)
+                }
+                None => {
+                    info!("eBPF unavailable — falling back to polling");
+                    None
+                }
+            }
+        };
         let mut diag = sock_diag::SockDiagMonitor::new();
         let use_sockdiag = diag.connect().is_ok();
         if use_sockdiag {

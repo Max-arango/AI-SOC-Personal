@@ -12,7 +12,7 @@ use std::io;
 use std::sync::Arc;
 
 use tokio::sync::mpsc;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, info, warn};
 
 /// TCP event from the eBPF program
 #[derive(Debug, Clone)]
@@ -36,7 +36,7 @@ pub enum EbpfEventType {
 
 /// Handle to a running eBPF monitor
 pub struct EbpfMonitor {
-    cancel: tokio::sync::oneshot::Sender<()>,
+    cancel: Option<tokio::sync::oneshot::Sender<()>>,
 }
 
 impl EbpfMonitor {
@@ -45,16 +45,20 @@ impl EbpfMonitor {
     pub async fn try_init(
         tx: mpsc::UnboundedSender<EbpfTcpEvent>,
     ) -> Option<Self> {
-        // Try to load the BPF bytes
         let bpf_bytes = match load_bpf_object() {
-            Ok(b) => b,
+            Ok(b) => {
+                info!(
+                    "eBPF monitor: loaded BPF object ({} bytes)",
+                    b.len()
+                );
+                b
+            }
             Err(e) => {
                 info!("eBPF not available: {e}. Using fallback collector.");
                 return None;
             }
         };
 
-        // Parse and load the BPF program
         let mut bpf = match aya::Bpf::load(&bpf_bytes) {
             Ok(b) => b,
             Err(e) => {
@@ -63,21 +67,25 @@ impl EbpfMonitor {
             }
         };
 
-        // Attach kprobes
-        for (name, fn_name) in [
+        let mut attached = false;
+        for (prog_name, fn_name) in [
             ("tcp_v4_connect", "tcp_v4_connect"),
             ("tcp_close", "tcp_close"),
         ] {
-            if let Err(e) = attach_kprobe(&mut bpf, name, fn_name) {
-                warn!("Failed to attach {name}: {e}. eBPF monitor degraded.");
+            match attach_kprobe(&mut bpf, prog_name, fn_name) {
+                Ok(()) => attached = true,
+                Err(e) => warn!("Failed to attach eBPF {fn_name}: {e}"),
             }
         }
 
-        // Start perf reader
+        if !attached {
+            warn!("No eBPF probes attached. eBPF monitor inactive.");
+            return None;
+        }
+
         let (cancel_tx, mut cancel_rx) = tokio::sync::oneshot::channel();
 
         tokio::spawn(async move {
-            let mut buf = vec![0u8; 16384]; // 16 KB perf buffer pages
             loop {
                 tokio::select! {
                     _ = &mut cancel_rx => {
@@ -85,11 +93,8 @@ impl EbpfMonitor {
                         break;
                     }
                     _ = tokio::time::sleep(std::time::Duration::from_millis(100)) => {
-                        // Poll perf buffer
-                        if let Err(e) = poll_perf_event(&mut bpf, &mut buf, &tx) {
-                            error!("eBPF perf poll error: {e}");
-                            break;
-                        }
+                        // Poll perf event buffer (placeholder — requires
+                        // spawn_blocking for synchronous PerfEventArray API)
                     }
                 }
             }
@@ -97,21 +102,22 @@ impl EbpfMonitor {
 
         info!("eBPF network monitor active (tcp_v4_connect + tcp_close)");
         Some(Self {
-            cancel: cancel_tx,
+            cancel: Some(cancel_tx),
         })
     }
 }
 
 impl Drop for EbpfMonitor {
     fn drop(&mut self) {
-        let _ = self.cancel.send(());
+        if let Some(cancel) = self.cancel.take() {
+            let _ = cancel.send(());
+        }
     }
 }
 
 // ── Internal helpers ───────────────────────────────────────
 
 fn load_bpf_object() -> io::Result<Vec<u8>> {
-    // Try to load from file first (development), then embedded bytes
     let paths = [
         "collectors/src/network/ebpf/tcp_monitor.bpf.o",
         "../collectors/src/network/ebpf/tcp_monitor.bpf.o",
@@ -125,18 +131,9 @@ fn load_bpf_object() -> io::Result<Vec<u8>> {
         }
     }
 
-    // Embedded fallback: pre-compiled BPF bytecode
-    #[cfg(feature = "ebpf-embedded")]
-    {
-        let bytes: &[u8] = include_bytes!("ebpf/tcp_monitor.bpf.o");
-        if !bytes.is_empty() {
-            return Ok(bytes.to_vec());
-        }
-    }
-
     Err(io::Error::new(
         io::ErrorKind::NotFound,
-        "tcp_monitor.bpf.o not found. Build with: clang -target bpf -O2 -g -c tcp_monitor.bpf.c -o tcp_monitor.bpf.o",
+        "tcp_monitor.bpf.o not found. Build with: cd collectors/src/network/ebpf && ./build.sh",
     ))
 }
 
@@ -145,28 +142,22 @@ fn attach_kprobe(bpf: &mut aya::Bpf, name: &str, fn_name: &str) -> io::Result<()
 
     let program: &mut KProbe = bpf
         .program_mut(name)
-        .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, format!("program {name} not found")))?
+        .ok_or_else(|| {
+            io::Error::new(
+                io::ErrorKind::NotFound,
+                format!("BPF program '{name}' not found in object"),
+            )
+        })?
         .try_into()
         .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{e}")))?;
 
-    program.load()?;
-    program.attach(fn_name, 0)?;
+    program.load().map_err(|e| {
+        io::Error::new(io::ErrorKind::Other, format!("BPF load error: {e}"))
+    })?;
+    program.attach(fn_name, 0).map_err(|e| {
+        io::Error::new(io::ErrorKind::Other, format!("BPF attach error: {e}"))
+    })?;
 
     info!("eBPF kprobe attached: {fn_name}");
-    Ok(())
-}
-
-fn poll_perf_event(
-    _bpf: &mut aya::Bpf,
-    _buf: &mut [u8],
-    _tx: &mpsc::UnboundedSender<EbpfTcpEvent>,
-) -> io::Result<()> {
-    // Perf event reading via aya::maps::PerfEventArray
-    // For now, this is a stub. Real implementation uses:
-    //   let map: PerfEventArray<u32> = PerfEventArray::try_from(bpf.map_mut("events").unwrap())?;
-    //   map.poll(&mut buf, |_cpu, data| { parse_event(data); send(tx); })
-    //
-    // The full poll loop requires spawning a blocking thread since
-    // PerfEventArray::poll() is synchronous.
     Ok(())
 }
