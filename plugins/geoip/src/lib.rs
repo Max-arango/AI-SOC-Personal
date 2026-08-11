@@ -33,11 +33,7 @@ pub struct GeoIpData {
 impl GeoIpResolver {
     pub fn load() -> Self {
         let base = geoip_dir();
-        let mut resolver = Self {
-            country_db: None,
-            city_db: None,
-            asn_db: None,
-        };
+        let mut resolver = Self { country_db: None, city_db: None, asn_db: None };
 
         let country_path = std::env::var("SENTINEL_GEOIP_COUNTRY_DB")
             .ok()
@@ -59,7 +55,7 @@ impl GeoIpResolver {
                 Ok(r) => {
                     info!("GeoIP country DB loaded: {}", country_path.display());
                     resolver.country_db = Some(r);
-                }
+                },
                 Err(e) => warn!("Failed to load GeoIP country DB: {e}"),
             }
         }
@@ -69,7 +65,7 @@ impl GeoIpResolver {
                 Ok(r) => {
                     info!("GeoIP city DB loaded: {}", city_path.display());
                     resolver.city_db = Some(r);
-                }
+                },
                 Err(e) => warn!("Failed to load GeoIP city DB: {e}"),
             }
         }
@@ -79,14 +75,12 @@ impl GeoIpResolver {
                 Ok(r) => {
                     info!("GeoIP ASN DB loaded: {}", asn_path.display());
                     resolver.asn_db = Some(r);
-                }
+                },
                 Err(e) => warn!("Failed to load GeoIP ASN DB: {e}"),
             }
         }
 
-        if resolver.country_db.is_none()
-            && resolver.city_db.is_none()
-            && resolver.asn_db.is_none()
+        if resolver.country_db.is_none() && resolver.city_db.is_none() && resolver.asn_db.is_none()
         {
             info!("GeoIP: no databases found in {}. Download free GeoLite2 from https://dev.maxmind.com/geoip/geolite2-free-geolocation-data",
                 base.display());
@@ -150,17 +144,11 @@ impl GeoIpResolver {
         if let Some(ref db) = self.asn_db {
             if let Ok(asn) = db.lookup::<geoip2::Asn>(ip_addr) {
                 data.asn = asn.autonomous_system_number;
-                data.asn_org = asn
-                    .autonomous_system_organization
-                    .unwrap_or("")
-                    .into();
+                data.asn_org = asn.autonomous_system_organization.unwrap_or("").into();
             }
         }
 
-        if data.country_code.is_empty()
-            && data.city.is_empty()
-            && data.asn_org.is_empty()
-        {
+        if data.country_code.is_empty() && data.city.is_empty() && data.asn_org.is_empty() {
             return None;
         }
 
@@ -168,9 +156,7 @@ impl GeoIpResolver {
     }
 
     pub fn is_loaded(&self) -> bool {
-        self.country_db.is_some()
-            || self.city_db.is_some()
-            || self.asn_db.is_some()
+        self.country_db.is_some() || self.city_db.is_some() || self.asn_db.is_some()
     }
 }
 
@@ -206,11 +192,7 @@ mod tests {
 
     #[test]
     fn lookup_without_db() {
-        let resolver = GeoIpResolver {
-            country_db: None,
-            city_db: None,
-            asn_db: None,
-        };
+        let resolver = GeoIpResolver { country_db: None, city_db: None, asn_db: None };
         assert!(resolver.lookup("8.8.8.8").is_none());
     }
 
@@ -224,11 +206,7 @@ mod tests {
 
     #[test]
     fn empty_ip_returns_none() {
-        let resolver = GeoIpResolver {
-            country_db: None,
-            city_db: None,
-            asn_db: None,
-        };
+        let resolver = GeoIpResolver { country_db: None, city_db: None, asn_db: None };
         assert!(resolver.lookup("").is_none());
     }
 }

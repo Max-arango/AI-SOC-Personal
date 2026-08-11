@@ -22,10 +22,7 @@ async fn check_ip_malicious() {
     let report = result.expect("should return report for malicious IP");
     assert_eq!(report.abuse_score, 95);
     assert_eq!(report.total_reports, 42);
-    assert_eq!(
-        report.risk_level,
-        sentinel_plugin_abuseipdb::RiskLevel::Critical
-    );
+    assert_eq!(report.risk_level, sentinel_plugin_abuseipdb::RiskLevel::Critical);
 
     std::env::remove_var("SENTINEL_ABUSEIPDB_TEST_URL");
     std::env::remove_var("SENTINEL_ABUSEIPDB_API_KEY");

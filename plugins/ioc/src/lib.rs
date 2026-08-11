@@ -34,10 +34,7 @@ pub struct IocEngine {
 
 impl IocEngine {
     pub fn new() -> Self {
-        Self {
-            db: RwLock::new(IocDatabase::default()),
-            paths: default_ioc_paths(),
-        }
+        Self { db: RwLock::new(IocDatabase::default()), paths: default_ioc_paths() }
     }
 
     pub fn load(&self) {
@@ -55,13 +52,13 @@ impl IocEngine {
                             if let Err(e) = Self::load_csv(&path, &mut db) {
                                 warn!("Failed to load IOC CSV {}: {e}", path.display());
                             }
-                        }
+                        },
                         Some("json") => {
                             if let Err(e) = Self::load_stix(&path, &mut db) {
                                 warn!("Failed to load IOC STIX {}: {e}", path.display());
                             }
-                        }
-                        _ => {}
+                        },
+                        _ => {},
                     }
                 }
             }
@@ -97,7 +94,10 @@ impl IocEngine {
             let ioc_type = record[0].trim().to_lowercase();
             let indicator = record[1].trim().to_string();
             let risk_score: u32 = record[2].trim().parse().unwrap_or(50);
-            let description = record.get(3).map(|s| s.trim().to_string()).unwrap_or_default();
+            let description = record
+                .get(3)
+                .map(|s| s.trim().to_string())
+                .unwrap_or_default();
             let source = format!("ioc:{}", path.file_stem().unwrap_or_default().to_string_lossy());
 
             let entry = IocEntry {
@@ -139,28 +139,25 @@ impl IocEngine {
                 continue;
             }
 
-            let pattern = obj
-                .get("pattern")
-                .and_then(|p| p.as_str())
-                .unwrap_or("");
+            let pattern = obj.get("pattern").and_then(|p| p.as_str()).unwrap_or("");
 
-            let name = obj
-                .get("name")
-                .and_then(|n| n.as_str())
-                .unwrap_or("");
+            let name = obj.get("name").and_then(|n| n.as_str()).unwrap_or("");
 
-            let (ioc_type, indicator) = if pattern.contains("ipv4-addr:value") || pattern.contains("ipv6-addr:value") {
-                let val = extract_stix_value(pattern);
-                (IocType::Ip, val)
-            } else if pattern.contains("domain-name:value") {
-                let val = extract_stix_value(pattern);
-                (IocType::Domain, val)
-            } else if pattern.contains("file:hashes.'SHA-256'") || pattern.contains("file:hashes.MD5") {
-                let val = extract_stix_value(pattern);
-                (IocType::Hash, val)
-            } else {
-                continue;
-            };
+            let (ioc_type, indicator) =
+                if pattern.contains("ipv4-addr:value") || pattern.contains("ipv6-addr:value") {
+                    let val = extract_stix_value(pattern);
+                    (IocType::Ip, val)
+                } else if pattern.contains("domain-name:value") {
+                    let val = extract_stix_value(pattern);
+                    (IocType::Domain, val)
+                } else if pattern.contains("file:hashes.'SHA-256'")
+                    || pattern.contains("file:hashes.MD5")
+                {
+                    let val = extract_stix_value(pattern);
+                    (IocType::Hash, val)
+                } else {
+                    continue;
+                };
 
             if indicator.is_empty() {
                 continue;
@@ -196,23 +193,23 @@ impl IocEngine {
 
     pub fn lookup_ip(&self, ip: &str) -> Option<u32> {
         let db = self.db.read().expect("IOC lock poisoned");
-        db.ips.get(ip).map(|entries| {
-            entries.iter().map(|e| e.risk_score).max().unwrap_or(0)
-        })
+        db.ips
+            .get(ip)
+            .map(|entries| entries.iter().map(|e| e.risk_score).max().unwrap_or(0))
     }
 
     pub fn lookup_domain(&self, domain: &str) -> Option<u32> {
         let db = self.db.read().expect("IOC lock poisoned");
-        db.domains.get(domain).map(|entries| {
-            entries.iter().map(|e| e.risk_score).max().unwrap_or(0)
-        })
+        db.domains
+            .get(domain)
+            .map(|entries| entries.iter().map(|e| e.risk_score).max().unwrap_or(0))
     }
 
     pub fn lookup_hash(&self, hash: &str) -> Option<u32> {
         let db = self.db.read().expect("IOC lock poisoned");
-        db.hashes.get(hash).map(|entries| {
-            entries.iter().map(|e| e.risk_score).max().unwrap_or(0)
-        })
+        db.hashes
+            .get(hash)
+            .map(|entries| entries.iter().map(|e| e.risk_score).max().unwrap_or(0))
     }
 
     pub fn is_loaded(&self) -> bool {

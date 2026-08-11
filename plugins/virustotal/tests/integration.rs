@@ -36,9 +36,7 @@ async fn lookup_hash_clean() {
 
     let fixture = include_str!("fixtures/hash_clean.json");
     Mock::given(method("GET"))
-        .and(path(
-            "/api/v3/files/aabbccdd11223344556677889900aabbccddeeff",
-        ))
+        .and(path("/api/v3/files/aabbccdd11223344556677889900aabbccddeeff"))
         .respond_with(ResponseTemplate::new(200).set_body_string(fixture))
         .mount(&mock_server)
         .await;

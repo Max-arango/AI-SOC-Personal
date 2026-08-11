@@ -12,10 +12,18 @@ use service::serve;
 #[command(name = "sentinel-mgmt")]
 #[command(about = "Sentinel AI Management Server")]
 struct Args {
-    #[arg(short, long, default_value = "0.0.0.0:7778")]
+    #[arg(
+        short,
+        long,
+        default_value = "0.0.0.0:7778"
+    )]
     listen: String,
 
-    #[arg(short, long, default_value = "info")]
+    #[arg(
+        short,
+        long,
+        default_value = "info"
+    )]
     log_level: String,
 }
 
@@ -28,10 +36,7 @@ async fn main() -> anyhow::Result<()> {
         .with(tracing_subscriber::fmt::layer().with_writer(std::io::stdout))
         .init();
 
-    info!(
-        "Sentinel AI Management Server v{} starting",
-        env!("CARGO_PKG_VERSION")
-    );
+    info!("Sentinel AI Management Server v{} starting", env!("CARGO_PKG_VERSION"));
 
     let fleet = FleetManager::new();
 

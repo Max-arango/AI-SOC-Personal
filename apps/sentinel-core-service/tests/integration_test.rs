@@ -1,13 +1,13 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use sentinel_core::traits::{AlertRepository, AlertState, EventCursor, EventQuery, EventRepository};
+use sentinel_core::traits::{
+    AlertRepository, AlertState, EventCursor, EventQuery, EventRepository,
+};
 use sentinel_core::{ChannelConfig, EventBus, Ulid};
 use sentinel_correlation::{CorrelationConfig, CorrelationEngine};
 use sentinel_event_bus::EventBusImpl;
-use sentinel_events::{
-    event::Payload, Event, ProcessContext, ProcessEvent, Severity, UserContext,
-};
+use sentinel_events::{event::Payload, Event, ProcessContext, ProcessEvent, Severity, UserContext};
 use sentinel_risk::{RiskConfig, RiskEngine};
 use sentinel_rule_engine::RuleEngine;
 use sentinel_storage::migrations;
@@ -101,7 +101,9 @@ async fn test_alert_crud_integration() {
 
 #[tokio::test]
 async fn test_pipeline_rule_engine_evaluates() {
-    let engine = RuleEngine::new(&sentinel_config::RuleEngineConfig::default()).await.unwrap();
+    let engine = RuleEngine::new(&sentinel_config::RuleEngineConfig::default())
+        .await
+        .unwrap();
 
     let event = Arc::new(Event {
         id: Ulid::new().to_string(),
@@ -174,7 +176,9 @@ async fn test_e2e_powershell_pipeline() {
     let storage = setup_db(&tmp).await;
 
     let bus = Arc::new(EventBusImpl::new(ChannelConfig::default())) as Arc<dyn EventBus>;
-    let engine = RuleEngine::new(&sentinel_config::RuleEngineConfig::default()).await.unwrap();
+    let engine = RuleEngine::new(&sentinel_config::RuleEngineConfig::default())
+        .await
+        .unwrap();
     let correlation = CorrelationEngine::new(CorrelationConfig::default());
     let risk = RiskEngine::new(RiskConfig::default());
     let event_repo = storage.events().await;
@@ -229,26 +233,45 @@ async fn test_e2e_powershell_pipeline() {
                     for m in &eval.matches {
                         let score = risk.calculate(m.risk_score, "Warning", 1.0, None);
                         if let Some(ra) = risk.should_alert(
-                            &m.rule_id, &m.rule_name, score,
-                            &event.source, vec![event.id.clone()], None,
+                            &m.rule_id,
+                            &m.rule_name,
+                            score,
+                            &event.source,
+                            vec![event.id.clone()],
+                            None,
                         ) {
                             let alert = sentinel_core::traits::Alert {
                                 id: Ulid::new(),
                                 rule_id: ra.rule_id.clone(),
-                                correlation_id: ra.correlation_id.map(|_| Ulid::new()).unwrap_or_else(Ulid::new),
+                                correlation_id: ra
+                                    .correlation_id
+                                    .map(|_| Ulid::new())
+                                    .unwrap_or_else(Ulid::new),
                                 risk_score: ra.risk_score,
                                 severity: match ra.severity {
-                                    sentinel_risk::AlertSeverity::Low => sentinel_core::Severity::Info,
-                                    sentinel_risk::AlertSeverity::Medium => sentinel_core::Severity::Notice,
-                                    sentinel_risk::AlertSeverity::High => sentinel_core::Severity::Warning,
-                                    sentinel_risk::AlertSeverity::Critical => sentinel_core::Severity::Critical,
+                                    sentinel_risk::AlertSeverity::Low => {
+                                        sentinel_core::Severity::Info
+                                    },
+                                    sentinel_risk::AlertSeverity::Medium => {
+                                        sentinel_core::Severity::Notice
+                                    },
+                                    sentinel_risk::AlertSeverity::High => {
+                                        sentinel_core::Severity::Warning
+                                    },
+                                    sentinel_risk::AlertSeverity::Critical => {
+                                        sentinel_core::Severity::Critical
+                                    },
                                 },
                                 state: AlertState::New,
                                 created_at: chrono::Utc::now(),
                                 updated_at: chrono::Utc::now(),
                                 acknowledged_by: None,
                                 acknowledged_at: None,
-                                events: ra.event_ids.iter().map(|s| Ulid::from_string(s).unwrap_or_else(|_| Ulid::new())).collect(),
+                                events: ra
+                                    .event_ids
+                                    .iter()
+                                    .map(|s| Ulid::from_string(s).unwrap_or_else(|_| Ulid::new()))
+                                    .collect(),
                                 context: serde_json::Value::Null,
                                 ai_summary: None,
                             };
@@ -262,7 +285,8 @@ async fn test_e2e_powershell_pipeline() {
                 }
             }
         }
-    }).await;
+    })
+    .await;
 
     assert!(result.is_ok(), "E2E pipeline timed out without generating alerts");
 }
@@ -299,14 +323,19 @@ async fn test_e2e_alert_lifecycle() {
 
     // Acknowledge
     repo.update_state(&alert.id, AlertState::Acknowledged, Some("analyst1".into()))
-        .await.unwrap();
+        .await
+        .unwrap();
     let acked = repo.get(&alert.id).await.unwrap().unwrap();
     assert_eq!(acked.state, AlertState::Acknowledged);
     assert_eq!(acked.acknowledged_by, Some("analyst1".to_string()));
 
     // Investigate → ResolveFalsePositive
-    repo.update_state(&alert.id, AlertState::Investigating, None).await.unwrap();
-    repo.update_state(&alert.id, AlertState::ResolvedFalsePositive, None).await.unwrap();
+    repo.update_state(&alert.id, AlertState::Investigating, None)
+        .await
+        .unwrap();
+    repo.update_state(&alert.id, AlertState::ResolvedFalsePositive, None)
+        .await
+        .unwrap();
     let resolved = repo.get(&alert.id).await.unwrap().unwrap();
     assert_eq!(resolved.state, AlertState::ResolvedFalsePositive);
 }
@@ -319,16 +348,20 @@ async fn test_e2e_grpc_service_constructs() {
     let storage = setup_db(&tmp).await;
 
     let registry = Arc::new(sentinel_core::CollectorRegistry::new());
-    let (alert_tx, _) = tokio::sync::broadcast::channel::<sentinel_events::sentinel::api::v1::AlertStreamEvent>(16);
-    let rule_engine = Arc::new(RuleEngine::new(&sentinel_config::RuleEngineConfig::default()).await.unwrap());
+    let (alert_tx, _) =
+        tokio::sync::broadcast::channel::<sentinel_events::sentinel::api::v1::AlertStreamEvent>(16);
+    let rule_engine = Arc::new(
+        RuleEngine::new(&sentinel_config::RuleEngineConfig::default())
+            .await
+            .unwrap(),
+    );
     let ai_engine = Arc::new(sentinel_ai::AiEngine::new(
         sentinel_ai::AiConfig::default(),
         sentinel_ai::AiConfig::default().create_provider(),
     ));
 
-    let _svc = sentinel_api::SentinelService::new(
-        storage, alert_tx, registry, rule_engine, ai_engine,
-    );
+    let _svc =
+        sentinel_api::SentinelService::new(storage, alert_tx, registry, rule_engine, ai_engine);
 }
 
 // ── E2E: Event round-trip through bus + storage ─────────────────
@@ -369,13 +402,17 @@ async fn test_e2e_event_roundtrip() {
 
     let mut sub = bus.subscribe_type("*").await.unwrap();
     let received = tokio::time::timeout(Duration::from_secs(3), sub.receiver.recv())
-        .await.unwrap().expect("No event from bus");
+        .await
+        .unwrap()
+        .expect("No event from bus");
 
     assert_eq!(received.source, "network");
     assert!(received.tags.contains(&"outbound".to_string()));
 
     let stored = repo
         .get(&Ulid::from_string(&event.id).unwrap())
-        .await.unwrap().expect("Event not in storage");
+        .await
+        .unwrap()
+        .expect("Event not in storage");
     assert_eq!(stored.id, event.id);
 }

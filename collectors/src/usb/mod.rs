@@ -45,10 +45,10 @@ fn scan_usb_devices() -> Vec<UsbDevice> {
         let path = entry.path();
         let name = entry.file_name().to_string_lossy().to_string();
 
-            // Filter out interface/endpoint sub-entries (format: N-M, N-M:1.0, etc.)
-            // USB device entries in sysfs are flat directories like "1-1", "2-0:1.0".
-            // We only want root device entries — skip sub-devices and interfaces.
-            if name.contains('-') || name.contains(':') {
+        // Filter out interface/endpoint sub-entries (format: N-M, N-M:1.0, etc.)
+        // USB device entries in sysfs are flat directories like "1-1", "2-0:1.0".
+        // We only want root device entries — skip sub-devices and interfaces.
+        if name.contains('-') || name.contains(':') {
             continue;
         }
 
@@ -58,12 +58,7 @@ fn scan_usb_devices() -> Vec<UsbDevice> {
         let product_name = read_sysfs_attr(&path, "product");
 
         if !vendor_id.is_empty() {
-            devices.push(UsbDevice {
-                vendor_id,
-                product_id,
-                serial,
-                product_name,
-            });
+            devices.push(UsbDevice { vendor_id, product_id, serial, product_name });
         }
     }
 
@@ -105,35 +100,35 @@ fn device_to_event(d: &UsbDevice, action: Action) -> Event {
     }
 }
 
-pub async fn start_usb_monitor(bus: Arc<dyn EventBus>, registry: Arc<sentinel_core::CollectorRegistry>) {
+pub async fn start_usb_monitor(
+    bus: Arc<dyn EventBus>,
+    registry: Arc<sentinel_core::CollectorRegistry>,
+) {
     tokio::spawn(async move {
-        registry.register(sentinel_core::CollectorStatus::new("usb", "Usb Monitor", "Usb collector"));
+        registry.register(sentinel_core::CollectorStatus::new(
+            "usb",
+            "Usb Monitor",
+            "Usb collector",
+        ));
         let reg = registry.clone();
         let mut known: HashSet<String> = HashSet::new();
         let mut tick = tokio::time::interval(POLL_INTERVAL);
         tick.tick().await;
 
-        info!(
-            "USB collector started ({}s polling)",
-            POLL_INTERVAL.as_secs()
-        );
+        info!("USB collector started ({}s polling)", POLL_INTERVAL.as_secs());
 
         loop {
             tick.tick().await;
             let devices = scan_usb_devices();
-            let current_keys: HashSet<String> =
-                devices.iter().map(|d| device_key(d)).collect();
+            let current_keys: HashSet<String> = devices.iter().map(|d| device_key(d)).collect();
 
             for d in &devices {
                 let key = device_key(d);
                 if !known.contains(&key) {
                     let event = Arc::new(device_to_event(d, Action::DeviceConnect));
-                    debug!(
-                        "USB inserted: {}:{} ({})",
-                        d.vendor_id, d.product_id, d.product_name
-                    );
+                    debug!("USB inserted: {}:{} ({})", d.vendor_id, d.product_id, d.product_name);
                     let _ = bus.publish(event).await;
-                reg.increment_events("usb", 1);
+                    reg.increment_events("usb", 1);
                 }
             }
 

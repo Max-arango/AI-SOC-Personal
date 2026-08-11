@@ -13,19 +13,37 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     ImportSigma {
-        #[arg(short, long)]
+        #[arg(
+            short, long
+        )]
         input: PathBuf,
-        #[arg(short, long, default_value = "rules_imported")]
+        #[arg(
+            short,
+            long,
+            default_value = "rules_imported"
+        )]
         output: PathBuf,
-        #[arg(short, long)]
+        #[arg(
+            short, long
+        )]
         dir: bool,
     },
     ExportAlerts {
-        #[arg(short, long, default_value = "json")]
+        #[arg(
+            short,
+            long,
+            default_value = "json"
+        )]
         format: ExportFormat,
-        #[arg(short, long)]
+        #[arg(
+            short, long
+        )]
         output: Option<PathBuf>,
-        #[arg(short, long, default_value = "100")]
+        #[arg(
+            short,
+            long,
+            default_value = "100"
+        )]
         limit: u32,
         #[arg(long)]
         state: Option<String>,
@@ -71,8 +89,14 @@ impl AlertRow {
             self.state,
             escape(&self.created_at),
             escape(&self.updated_at),
-            self.acknowledged_by.as_deref().map(escape).unwrap_or_default(),
-            self.acknowledged_at.as_deref().map(escape).unwrap_or_default(),
+            self.acknowledged_by
+                .as_deref()
+                .map(escape)
+                .unwrap_or_default(),
+            self.acknowledged_at
+                .as_deref()
+                .map(escape)
+                .unwrap_or_default(),
             escape(&self.events),
             self.ai_summary.as_deref().map(escape).unwrap_or_default(),
         )
@@ -89,11 +113,8 @@ async fn main() -> anyhow::Result<()> {
                 let rules = sentinel_sigma::import_sigma_dir(&input.to_string_lossy())?;
                 std::fs::create_dir_all(&output)?;
                 for rule in &rules {
-                    let filename = format!(
-                        "{}/{}.yaml",
-                        output.display(),
-                        rule.rule.id.replace("sigma-", "")
-                    );
+                    let filename =
+                        format!("{}/{}.yaml", output.display(), rule.rule.id.replace("sigma-", ""));
                     let yaml = serde_yaml::to_string(&rule)?;
                     std::fs::write(&filename, yaml)?;
                     println!("Imported: {}", filename);
@@ -102,16 +123,13 @@ async fn main() -> anyhow::Result<()> {
             } else {
                 let rule = sentinel_sigma::import_sigma_file(&input.to_string_lossy())?;
                 std::fs::create_dir_all(&output)?;
-                let filename = format!(
-                    "{}/{}.yaml",
-                    output.display(),
-                    rule.rule.id.replace("sigma-", "")
-                );
+                let filename =
+                    format!("{}/{}.yaml", output.display(), rule.rule.id.replace("sigma-", ""));
                 let yaml = serde_yaml::to_string(&rule)?;
                 std::fs::write(&filename, yaml)?;
                 println!("Imported 1 rule to {}", filename);
             }
-        }
+        },
 
         Commands::ExportAlerts { format, output, limit, state, db } => {
             let db_path = db
@@ -148,15 +166,56 @@ async fn main() -> anyhow::Result<()> {
 
             sql.push_str(&format!(" ORDER BY created_at DESC LIMIT {}", limit));
 
-            let rows = sqlx::query_as::<_, (String, String, i64, i64, i64, String, String, Option<String>, Option<String>, String, Option<String>)>(&sql)
-                .fetch_all(&pool)
-                .await?;
+            let rows = sqlx::query_as::<
+                _,
+                (
+                    String,
+                    String,
+                    i64,
+                    i64,
+                    i64,
+                    String,
+                    String,
+                    Option<String>,
+                    Option<String>,
+                    String,
+                    Option<String>,
+                ),
+            >(&sql)
+            .fetch_all(&pool)
+            .await?;
 
             let alerts: Vec<AlertRow> = rows
                 .into_iter()
-                .map(|(id, rule_id, risk_score, severity, state, created_at, updated_at, acknowledged_by, acknowledged_at, events, ai_summary)| {
-                    AlertRow { id, rule_id, risk_score, severity, state, created_at, updated_at, acknowledged_by, acknowledged_at, events, ai_summary }
-                })
+                .map(
+                    |(
+                        id,
+                        rule_id,
+                        risk_score,
+                        severity,
+                        state,
+                        created_at,
+                        updated_at,
+                        acknowledged_by,
+                        acknowledged_at,
+                        events,
+                        ai_summary,
+                    )| {
+                        AlertRow {
+                            id,
+                            rule_id,
+                            risk_score,
+                            severity,
+                            state,
+                            created_at,
+                            updated_at,
+                            acknowledged_by,
+                            acknowledged_at,
+                            events,
+                            ai_summary,
+                        }
+                    },
+                )
                 .collect();
 
             let output_str = match format {
@@ -169,19 +228,19 @@ async fn main() -> anyhow::Result<()> {
                         csv.push('\n');
                     }
                     csv
-                }
+                },
             };
 
             match output {
                 Some(path) => {
                     std::fs::write(&path, &output_str)?;
                     println!("Exported {} alerts to {}", alerts.len(), path.display());
-                }
+                },
                 None => {
                     println!("{}", output_str);
-                }
+                },
             }
-        }
+        },
     }
 
     Ok(())

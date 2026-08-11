@@ -45,16 +45,25 @@ const MALICIOUS_EXTENSIONS: &[&str] = &[
 ];
 
 const SUSPICIOUS_TLDS: &[&str] = &[
-    ".tk", ".ml", ".ga", ".cf", ".gq",  // Freenom (abused)
-    ".xyz", ".top", ".club", ".work", ".click",
-    ".download", ".review", ".country", ".stream",
+    ".tk",
+    ".ml",
+    ".ga",
+    ".cf",
+    ".gq", // Freenom (abused)
+    ".xyz",
+    ".top",
+    ".club",
+    ".work",
+    ".click",
+    ".download",
+    ".review",
+    ".country",
+    ".stream",
 ];
 
 const DANGEROUS_EXTENSIONS: &[&str] = &[
-    ".exe", ".dll", ".msi", ".scr", ".ps1",
-    ".bat", ".cmd", ".vbs", ".js", ".hta",
-    ".sh", ".shs", ".app", ".dmg", ".pkg",
-    ".deb", ".rpm", ".apk", ".jar",
+    ".exe", ".dll", ".msi", ".scr", ".ps1", ".bat", ".cmd", ".vbs", ".js", ".hta", ".sh", ".shs",
+    ".app", ".dmg", ".pkg", ".deb", ".rpm", ".apk", ".jar",
 ];
 
 struct BrowserProfile {
@@ -81,21 +90,45 @@ fn find_profiles() -> Vec<BrowserProfile> {
 
     let browser_configs: &[(&str, Browser, &str, &str, &str)] = &[
         // (relative_path, browser, history_file, downloads_file, profile_subdir)
-        ("google-chrome",            Browser::Chrome,  "History",       "History", ".config"),
-        ("chromium",                 Browser::Chrome,  "History",       "History", ".config"),
-        ("BraveSoftware/Brave-Browser", Browser::Brave, "History",    "History", ".config"),
-        ("microsoft-edge",           Browser::Edge,    "History",       "History", ".config"),
-        ("vivaldi",                  Browser::Vivaldi, "History",       "History", ".config"),
-        ("opera",                    Browser::Opera,   "History",       "History", ".config"),
-        ("mozilla/firefox",          Browser::Firefox, "places.sqlite", "places.sqlite", "."),
+        ("google-chrome", Browser::Chrome, "History", "History", ".config"),
+        ("chromium", Browser::Chrome, "History", "History", ".config"),
+        ("BraveSoftware/Brave-Browser", Browser::Brave, "History", "History", ".config"),
+        ("microsoft-edge", Browser::Edge, "History", "History", ".config"),
+        ("vivaldi", Browser::Vivaldi, "History", "History", ".config"),
+        ("opera", Browser::Opera, "History", "History", ".config"),
+        ("mozilla/firefox", Browser::Firefox, "places.sqlite", "places.sqlite", "."),
         // Snap packages
-        ("snap/chromium/common/chromium", Browser::Chrome, "Default/History", "Default/History", "snap"),
-        ("snap/firefox/common/.mozilla/firefox", Browser::Firefox, "places.sqlite", "places.sqlite", "snap"),
-        ("snap/opera/common/opera",  Browser::Opera,   "History",       "History", "snap"),
-        ("snap/brave/common/brave",  Browser::Brave,   "History",       "History", "snap"),
+        (
+            "snap/chromium/common/chromium",
+            Browser::Chrome,
+            "Default/History",
+            "Default/History",
+            "snap",
+        ),
+        (
+            "snap/firefox/common/.mozilla/firefox",
+            Browser::Firefox,
+            "places.sqlite",
+            "places.sqlite",
+            "snap",
+        ),
+        ("snap/opera/common/opera", Browser::Opera, "History", "History", "snap"),
+        ("snap/brave/common/brave", Browser::Brave, "History", "History", "snap"),
         // Flatpak
-        ("var/app/com.google.Chrome/config/google-chrome", Browser::Chrome, "Default/History", "Default/History", ".local/share/flatpak/exports/share"),
-        ("var/app/org.mozilla.firefox/.mozilla/firefox",   Browser::Firefox, "places.sqlite",   "places.sqlite", ".local/share/flatpak/exports/share"),
+        (
+            "var/app/com.google.Chrome/config/google-chrome",
+            Browser::Chrome,
+            "Default/History",
+            "Default/History",
+            ".local/share/flatpak/exports/share",
+        ),
+        (
+            "var/app/org.mozilla.firefox/.mozilla/firefox",
+            Browser::Firefox,
+            "places.sqlite",
+            "places.sqlite",
+            ".local/share/flatpak/exports/share",
+        ),
     ];
 
     for (dir_name, browser, hist_file, dl_file, prefix) in browser_configs {
@@ -139,9 +172,10 @@ fn resolve_browser_base(home: &Path, dir_name: &str, prefix: &str) -> PathBuf {
             if flatpak_base.join(dir_name).exists() {
                 flatpak_base.join(dir_name)
             } else {
-                home.join(".local/share/flatpak/exports/share").join(dir_name)
+                home.join(".local/share/flatpak/exports/share")
+                    .join(dir_name)
             }
-        }
+        },
         _ => home.join(dir_name),
     }
 }
@@ -218,11 +252,11 @@ fn safe_read_db<T>(
             let result = query_fn(&tmp, known, last_ts);
             let _ = std::fs::remove_file(&tmp);
             result
-        }
+        },
         Err(e) => {
             debug!("Failed to copy browser DB {}: {e}", db_path.display());
             vec![]
-        }
+        },
     }
 }
 
@@ -364,10 +398,7 @@ fn read_extensions(dir: &Path, known: &mut HashSet<String>) -> Vec<ExtensionEntr
         for entry in rd.flatten() {
             let name = entry.file_name().to_string_lossy().to_string();
             if known.insert(name.clone()) {
-                entries.push(ExtensionEntry {
-                    id: name.clone(),
-                    name,
-                });
+                entries.push(ExtensionEntry { id: name.clone(), name });
             }
         }
     }
@@ -439,7 +470,11 @@ fn navigation_to_event(entry: &NavigationEntry, browser: Browser) -> Event {
         id: sentinel_core::Ulid::new().to_string(),
         r#type: "sentinel.browser.navigation".into(),
         source: "browser".into(),
-        severity: if risk > 10 { sentinel_events::Severity::Notice as i32 } else { sentinel_events::Severity::Debug as i32 },
+        severity: if risk > 10 {
+            sentinel_events::Severity::Notice as i32
+        } else {
+            sentinel_events::Severity::Debug as i32
+        },
         risk_score: risk,
         host_id: String::new(),
         schema_version: 1,
@@ -462,11 +497,8 @@ fn navigation_to_event(entry: &NavigationEntry, browser: Browser) -> Event {
 
 fn download_to_event(entry: &DownloadEntry, browser: Browser) -> Event {
     let is_dangerous = is_dangerous_download(&entry.path);
-    let hash = if Path::new(&entry.path).exists() {
-        compute_sha256(&entry.path)
-    } else {
-        String::new()
-    };
+    let hash =
+        if Path::new(&entry.path).exists() { compute_sha256(&entry.path) } else { String::new() };
 
     let mut risk: u32 = if is_dangerous { 30 } else { 10 };
     let mut tags = vec!["browser".to_string(), "download".to_string()];
@@ -488,7 +520,11 @@ fn download_to_event(entry: &DownloadEntry, browser: Browser) -> Event {
         id: sentinel_core::Ulid::new().to_string(),
         r#type: "sentinel.browser.download_complete".into(),
         source: "browser".into(),
-        severity: if risk > 30 { sentinel_events::Severity::Warning as i32 } else { sentinel_events::Severity::Notice as i32 },
+        severity: if risk > 30 {
+            sentinel_events::Severity::Warning as i32
+        } else {
+            sentinel_events::Severity::Notice as i32
+        },
         risk_score: risk,
         host_id: String::new(),
         schema_version: 1,
@@ -522,7 +558,11 @@ fn extension_to_event(entry: &ExtensionEntry, browser: Browser) -> Event {
         id: sentinel_core::Ulid::new().to_string(),
         r#type: "sentinel.browser.extension_install".into(),
         source: "browser".into(),
-        severity: if malicious { sentinel_events::Severity::Warning as i32 } else { sentinel_events::Severity::Notice as i32 },
+        severity: if malicious {
+            sentinel_events::Severity::Warning as i32
+        } else {
+            sentinel_events::Severity::Notice as i32
+        },
         risk_score: risk,
         host_id: String::new(),
         schema_version: 1,
@@ -571,7 +611,8 @@ impl SuspiciousDownloadTracker {
         }
 
         // Prune old records
-        self.records.retain(|(_, t)| ts - t < SUSPICIOUS_DL_WINDOW.as_secs() as i64);
+        self.records
+            .retain(|(_, t)| ts - t < SUSPICIOUS_DL_WINDOW.as_secs() as i64);
         self.records.push((path.to_string(), ts));
 
         if self.records.len() >= SUSPICIOUS_DL_THRESHOLD {
@@ -584,9 +625,16 @@ impl SuspiciousDownloadTracker {
 
 // ── Main monitor loop ─────────────────────────────────────────────
 
-pub async fn start_browser_monitor(bus: Arc<dyn EventBus>, registry: Arc<sentinel_core::CollectorRegistry>) {
+pub async fn start_browser_monitor(
+    bus: Arc<dyn EventBus>,
+    registry: Arc<sentinel_core::CollectorRegistry>,
+) {
     tokio::spawn(async move {
-        registry.register(sentinel_core::CollectorStatus::new("browser", "Browser Monitor", "Browser history + downloads + extensions"));
+        registry.register(sentinel_core::CollectorStatus::new(
+            "browser",
+            "Browser Monitor",
+            "Browser history + downloads + extensions",
+        ));
         let reg = registry.clone();
 
         if !sqlite3_available() {
@@ -619,8 +667,7 @@ pub async fn start_browser_monitor(bus: Arc<dyn EventBus>, registry: Arc<sentine
 
             for mut profile in profiles {
                 let key = profile.profile_dir_name();
-                let (mut hist_ts, mut dl_ts) =
-                    profile_ts.get(&key).copied().unwrap_or((0, 0));
+                let (mut hist_ts, mut dl_ts) = profile_ts.get(&key).copied().unwrap_or((0, 0));
 
                 profile.last_history_ts = hist_ts;
                 profile.last_downloads_ts = dl_ts;
@@ -638,7 +685,7 @@ pub async fn start_browser_monitor(bus: Arc<dyn EventBus>, registry: Arc<sentine
                         let event = Arc::new(navigation_to_event(&entry, profile.browser));
                         if let Err(e) = bus.publish(event).await {
                             warn!("Browser nav publish failed: {e}");
-                        reg.increment_events("browser", 1);
+                            reg.increment_events("browser", 1);
                         }
                     }
                     total += count;
@@ -662,14 +709,13 @@ pub async fn start_browser_monitor(bus: Arc<dyn EventBus>, registry: Arc<sentine
                         {
                             event.severity = sentinel_events::Severity::Warning as i32;
                             event.risk_score = 60;
-                            event.tags.push(format!(
-                                "suspicious_downloads:{}",
-                                suspicious_count
-                            ));
+                            event
+                                .tags
+                                .push(format!("suspicious_downloads:{}", suspicious_count));
                         }
 
                         let _ = bus.publish(Arc::new(event)).await;
-                    reg.increment_events("browser", 1);
+                        reg.increment_events("browser", 1);
                     }
                     total += count;
                     dl_ts = profile.last_downloads_ts;
@@ -681,7 +727,7 @@ pub async fn start_browser_monitor(bus: Arc<dyn EventBus>, registry: Arc<sentine
                     for entry in exts {
                         let event = Arc::new(extension_to_event(&entry, profile.browser));
                         let _ = bus.publish(event).await;
-                    reg.increment_events("browser", 1);
+                        reg.increment_events("browser", 1);
                     }
                     total += count;
                 }
@@ -690,10 +736,7 @@ pub async fn start_browser_monitor(bus: Arc<dyn EventBus>, registry: Arc<sentine
             }
 
             if total > 0 {
-                info!(
-                    "Browser collector: {} new events ({} profiles)",
-                    total, profile_count
-                );
+                info!("Browser collector: {} new events ({} profiles)", total, profile_count);
             }
         }
     });
@@ -744,11 +787,8 @@ mod tests {
 
     #[test]
     fn test_navigation_event_has_tags() {
-        let entry = NavigationEntry {
-            url: "https://test.com".into(),
-            title: "Test".into(),
-            timestamp: 0,
-        };
+        let entry =
+            NavigationEntry { url: "https://test.com".into(), title: "Test".into(), timestamp: 0 };
         let event = navigation_to_event(&entry, Browser::Chrome);
         assert_eq!(event.source, "browser");
         assert!(event.payload.is_some());
@@ -756,11 +796,8 @@ mod tests {
 
     #[test]
     fn test_download_event_has_tags() {
-        let entry = DownloadEntry {
-            path: "/tmp/x".into(),
-            url: "https://x.com".into(),
-            timestamp: 0,
-        };
+        let entry =
+            DownloadEntry { path: "/tmp/x".into(), url: "https://x.com".into(), timestamp: 0 };
         let event = download_to_event(&entry, Browser::Firefox);
         assert!(event.tags.contains(&"download".to_string()));
     }
@@ -791,10 +828,7 @@ mod tests {
 
     #[test]
     fn test_extension_event() {
-        let entry = ExtensionEntry {
-            id: "abc".into(),
-            name: "Ext".into(),
-        };
+        let entry = ExtensionEntry { id: "abc".into(), name: "Ext".into() };
         let event = extension_to_event(&entry, Browser::Edge);
         assert_eq!(event.risk_score, 20);
     }
@@ -814,11 +848,8 @@ mod tests {
     fn test_empty_history_graceful() {
         let mut known = HashSet::new();
         let mut ts = 0i64;
-        let entries = read_history_incremental(
-            std::path::Path::new("/nonexistent"),
-            &mut known,
-            &mut ts,
-        );
+        let entries =
+            read_history_incremental(std::path::Path::new("/nonexistent"), &mut known, &mut ts);
         assert!(entries.is_empty());
     }
 
@@ -826,11 +857,8 @@ mod tests {
     fn test_empty_downloads_graceful() {
         let mut known = HashSet::new();
         let mut ts = 0i64;
-        let entries = read_downloads_incremental(
-            std::path::Path::new("/nonexistent"),
-            &mut known,
-            &mut ts,
-        );
+        let entries =
+            read_downloads_incremental(std::path::Path::new("/nonexistent"), &mut known, &mut ts);
         assert!(entries.is_empty());
     }
 
@@ -868,10 +896,8 @@ mod tests {
         tracker.record("/tmp/a.exe", base_ts);
         tracker.record("/tmp/b.exe", base_ts + 1);
         // After window expires, count resets
-        let result = tracker.record(
-            "/tmp/c.exe",
-            base_ts + SUSPICIOUS_DL_WINDOW.as_secs() as i64 + 10,
-        );
+        let result =
+            tracker.record("/tmp/c.exe", base_ts + SUSPICIOUS_DL_WINDOW.as_secs() as i64 + 10);
         assert!(result.is_none());
     }
 }

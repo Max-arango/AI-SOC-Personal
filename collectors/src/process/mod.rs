@@ -1,9 +1,9 @@
 //! Process collector — netlink-based Linux implementation.
 
-pub mod process_collector;
 pub mod netlink_bindings;
 pub mod netlink_monitor;
 pub mod proc_reader;
+pub mod process_collector;
 
 use std::sync::Arc;
 
@@ -19,8 +19,15 @@ use netlink_monitor::NetlinkMonitor;
 ///
 /// If netlink is unavailable (permissions, kernel config), falls back
 /// to `/proc` polling every 5 seconds.
-pub async fn start_process_monitor(bus: Arc<dyn EventBus>, registry: Arc<sentinel_core::CollectorRegistry>) {
-    registry.register(sentinel_core::CollectorStatus::new("process", "Process Monitor", "CN_PROC netlink real-time process events"));
+pub async fn start_process_monitor(
+    bus: Arc<dyn EventBus>,
+    registry: Arc<sentinel_core::CollectorRegistry>,
+) {
+    registry.register(sentinel_core::CollectorStatus::new(
+        "process",
+        "Process Monitor",
+        "CN_PROC netlink real-time process events",
+    ));
     let reg = registry.clone();
     let (netlink_tx, mut netlink_rx) = mpsc::unbounded_channel();
     let config = ProcessCollectorConfig::default();
@@ -35,11 +42,11 @@ pub async fn start_process_monitor(bus: Arc<dyn EventBus>, registry: Arc<sentine
                     info!("CN_PROC netlink monitor connected");
                     monitor.run(netlink_tx).await;
                     true
-                }
+                },
                 Err(e) => {
                     warn!("Netlink CN_PROC unavailable: {e} — falling back to /proc polling");
                     false
-                }
+                },
             }
         })
     });
@@ -51,10 +58,9 @@ pub async fn start_process_monitor(bus: Arc<dyn EventBus>, registry: Arc<sentine
         if started {
             // Netlink mode: convert real-time events
             while let Some(nl_event) = netlink_rx.recv().await {
-                if let Some(event) = process_collector::netlink_to_sentinel_event_inner(
-                    &nl_event,
-                    &config,
-                ) {
+                if let Some(event) =
+                    process_collector::netlink_to_sentinel_event_inner(&nl_event, &config)
+                {
                     if bus.publish(Arc::new(event)).await.is_err() {
                         break;
                     }
@@ -75,7 +81,7 @@ pub async fn start_process_monitor(bus: Arc<dyn EventBus>, registry: Arc<sentine
                 Err(_) => {
                     warn!("Cannot read /proc — process fallback failed");
                     return;
-                }
+                },
             };
             for entry in entries.filter_map(|e| e.ok()) {
                 if let Some(pid_str) = entry.file_name().to_str() {

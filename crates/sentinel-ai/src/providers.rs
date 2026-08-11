@@ -79,13 +79,10 @@ impl AiProvider for OllamaProvider {
     async fn is_available(&self) -> bool {
         use ollama_rs::generation::completion::request::GenerationRequest;
         let request = GenerationRequest::new(self.config.model.clone(), "ping".to_string());
-        tokio::time::timeout(
-            std::time::Duration::from_secs(3),
-            self.ollama.generate(request),
-        )
-        .await
-        .map(|r| r.is_ok())
-        .unwrap_or(false)
+        tokio::time::timeout(std::time::Duration::from_secs(3), self.ollama.generate(request))
+            .await
+            .map(|r| r.is_ok())
+            .unwrap_or(false)
     }
 }
 
@@ -96,10 +93,7 @@ pub struct HttpProvider {
 
 impl HttpProvider {
     fn new(config: &AiConfig, api_url: String) -> Self {
-        Self {
-            config: config.clone(),
-            api_url,
-        }
+        Self { config: config.clone(), api_url }
     }
 
     pub fn for_openrouter(config: &AiConfig) -> Self {
@@ -122,11 +116,7 @@ impl HttpProvider {
 #[async_trait]
 impl AiProvider for HttpProvider {
     async fn generate(&self, prompt: &str) -> Result<String, AiError> {
-        let api_key = self
-            .config
-            .api_key
-            .as_deref()
-            .unwrap_or("missing-api-key");
+        let api_key = self.config.api_key.as_deref().unwrap_or("missing-api-key");
 
         let request = ChatRequest {
             model: self.config.model.clone(),
@@ -135,10 +125,7 @@ impl AiProvider for HttpProvider {
                     role: "system".into(),
                     content: "You are a helpful security analyst assistant. Be concise.".into(),
                 },
-                ChatMessage {
-                    role: "user".into(),
-                    content: prompt.into(),
-                },
+                ChatMessage { role: "user".into(), content: prompt.into() },
             ],
             temperature: self.config.temperature,
         };

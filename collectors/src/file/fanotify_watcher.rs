@@ -78,10 +78,7 @@ pub struct FanotifyWatcher {
 
 impl FanotifyWatcher {
     pub fn new() -> Self {
-        Self {
-            fan_fd: None,
-            watched: Vec::new(),
-        }
+        Self { fan_fd: None, watched: Vec::new() }
     }
 
     /// Initialize fanotify and add marks for all watch paths.
@@ -102,18 +99,11 @@ impl FanotifyWatcher {
 
         if self.watched.is_empty() {
             unsafe { libc::close(fd) };
-            return Err(io::Error::new(
-                io::ErrorKind::NotFound,
-                "No valid watch paths",
-            ));
+            return Err(io::Error::new(io::ErrorKind::NotFound, "No valid watch paths"));
         }
 
         self.fan_fd = Some(fd);
-        info!(
-            "Fanotify watcher initialized: {} paths, fd={}",
-            self.watched.len(),
-            fd
-        );
+        info!("Fanotify watcher initialized: {} paths, fd={}", self.watched.len(), fd);
         Ok(())
     }
 
@@ -130,11 +120,7 @@ impl FanotifyWatcher {
 
         loop {
             let n = unsafe {
-                libc::read(
-                    fd,
-                    buf.as_mut_ptr() as *mut libc::c_void,
-                    buf.len() as libc::size_t,
-                )
+                libc::read(fd, buf.as_mut_ptr() as *mut libc::c_void, buf.len() as libc::size_t)
             };
 
             if n < 0 {
@@ -176,11 +162,7 @@ fn fanotify_init() -> io::Result<RawFd> {
     let event_f_flags = FAN_CLASS_NOTIF | FAN_REPORT_FID;
 
     let fd = unsafe {
-        libc::syscall(
-            libc::SYS_fanotify_init,
-            event_f_flags as libc::c_uint,
-            flags as libc::c_uint,
-        )
+        libc::syscall(libc::SYS_fanotify_init, event_f_flags as libc::c_uint, flags as libc::c_uint)
     };
 
     if fd < 0 {
@@ -192,9 +174,14 @@ fn fanotify_init() -> io::Result<RawFd> {
 }
 
 fn fanotify_mark(fd: RawFd, path: &Path) -> io::Result<()> {
-    let mask = FAN_OPEN | FAN_MODIFY | FAN_CLOSE_WRITE
-        | FAN_DELETE | FAN_DELETE_SELF | FAN_MOVE_SELF
-        | FAN_OPEN_EXEC | FAN_ONDIR;
+    let mask = FAN_OPEN
+        | FAN_MODIFY
+        | FAN_CLOSE_WRITE
+        | FAN_DELETE
+        | FAN_DELETE_SELF
+        | FAN_MOVE_SELF
+        | FAN_OPEN_EXEC
+        | FAN_ONDIR;
 
     let path_c = std::ffi::CString::new(path.to_string_lossy().as_bytes())
         .map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e))?;
@@ -227,9 +214,7 @@ fn parse_events(buf: &[u8]) -> Vec<FileEvent> {
     let mut offset = 0;
 
     while offset + std::mem::size_of::<FanotifyEventMetadata>() <= buf.len() {
-        let meta = unsafe {
-            &*(buf.as_ptr().add(offset) as *const FanotifyEventMetadata)
-        };
+        let meta = unsafe { &*(buf.as_ptr().add(offset) as *const FanotifyEventMetadata) };
 
         if meta.event_len == 0 || meta.event_len as usize > buf.len() - offset {
             break;
@@ -243,12 +228,7 @@ fn parse_events(buf: &[u8]) -> Vec<FileEvent> {
             continue;
         }
 
-        events.push(FileEvent {
-            action,
-            path,
-            pid: meta.pid,
-            timestamp_secs: current_unix_secs(),
-        });
+        events.push(FileEvent { action, path, pid: meta.pid, timestamp_secs: current_unix_secs() });
 
         offset += meta.event_len as usize;
         if meta.event_len == 0 {
@@ -267,10 +247,10 @@ fn resolve_path(meta: &FanotifyEventMetadata) -> String {
                 let path = p.to_string_lossy().into_owned();
                 unsafe { libc::close(meta.fd as libc::c_int) };
                 return path;
-            }
+            },
             Err(_) => {
                 unsafe { libc::close(meta.fd as libc::c_int) };
-            }
+            },
         }
     }
     String::new()

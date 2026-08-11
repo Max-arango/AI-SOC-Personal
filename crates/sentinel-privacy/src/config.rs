@@ -109,46 +109,46 @@ impl Default for SharingConfig {
 
 impl Default for FleetQueryConfig {
     fn default() -> Self {
-        Self {
-            require_approval: true,
-            auto_approve_localhost: true,
-            max_rows_per_query: 1000,
-        }
+        Self { require_approval: true, auto_approve_localhost: true, max_rows_per_query: 1000 }
     }
 }
 
 impl Default for MlConfig {
     fn default() -> Self {
-        Self {
-            federated_learning: false,
-            differential_privacy_epsilon: 8.0,
-        }
+        Self { federated_learning: false, differential_privacy_epsilon: 8.0 }
     }
 }
 
 impl Default for NotificationConfig {
     fn default() -> Self {
-        Self {
-            silent_push_only: true,
-            local_websocket_fallback: true,
-        }
+        Self { silent_push_only: true, local_websocket_fallback: true }
     }
 }
 
 impl Default for SiemConfig {
     fn default() -> Self {
-        Self {
-            enabled: false,
-            redact_pii: true,
-            field_whitelist: vec![],
-        }
+        Self { enabled: false, redact_pii: true, field_whitelist: vec![] }
     }
 }
 
-fn default_mode() -> String { "personal".into() }
-fn default_anonymization() -> AnonymizationLevel { AnonymizationLevel::Redacted }
-fn default_hashed() -> AnonymizationLevel { AnonymizationLevel::Hashed }
-fn default_full() -> AnonymizationLevel { AnonymizationLevel::Full }
-fn default_true() -> bool { true }
-fn default_max_rows() -> usize { 1000 }
-fn default_epsilon() -> f64 { 8.0 }
+fn default_mode() -> String {
+    "personal".into()
+}
+fn default_anonymization() -> AnonymizationLevel {
+    AnonymizationLevel::Redacted
+}
+fn default_hashed() -> AnonymizationLevel {
+    AnonymizationLevel::Hashed
+}
+fn default_full() -> AnonymizationLevel {
+    AnonymizationLevel::Full
+}
+fn default_true() -> bool {
+    true
+}
+fn default_max_rows() -> usize {
+    1000
+}
+fn default_epsilon() -> f64 {
+    8.0
+}

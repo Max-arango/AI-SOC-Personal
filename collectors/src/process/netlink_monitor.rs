@@ -119,7 +119,7 @@ impl NetlinkMonitor {
             None => {
                 warn!("NetlinkMonitor::run called without connect");
                 return;
-            }
+            },
         };
 
         let async_fd = match AsyncFd::new(fd) {
@@ -127,7 +127,7 @@ impl NetlinkMonitor {
             Err(e) => {
                 error!("Failed to wrap netlink fd: {e}");
                 return;
-            }
+            },
         };
 
         let mut buf = vec![0u8; 4096];
@@ -138,7 +138,7 @@ impl NetlinkMonitor {
                 Err(e) => {
                     error!("Netlink fd became unreadable: {e}");
                     break;
-                }
+                },
             };
 
             let raw_fd = guard.get_ref().as_raw_fd();
@@ -153,11 +153,11 @@ impl NetlinkMonitor {
                     }
                     error!("Netlink read error: {e}");
                     break;
-                }
+                },
                 0 => {
                     debug!("Netlink EOF");
                     break;
-                }
+                },
                 x => x as usize,
             };
             guard.clear_ready();
@@ -198,16 +198,17 @@ impl NetlinkMonitor {
 
         let mut packet = Vec::with_capacity(nlh.nlmsg_len as usize);
         packet.extend_from_slice(unsafe {
-            std::slice::from_raw_parts(&nlh as *const _ as *const u8, std::mem::size_of::<nlmsghdr>())
+            std::slice::from_raw_parts(
+                &nlh as *const _ as *const u8,
+                std::mem::size_of::<nlmsghdr>(),
+            )
         });
         packet.extend_from_slice(unsafe {
             std::slice::from_raw_parts(&cn as *const _ as *const u8, std::mem::size_of::<cn_msg>())
         });
         packet.extend_from_slice(&op_slice);
 
-        let sent = unsafe {
-            libc::write(fd, packet.as_ptr() as *const libc::c_void, packet.len())
-        };
+        let sent = unsafe { libc::write(fd, packet.as_ptr() as *const libc::c_void, packet.len()) };
         if sent < 0 {
             return Err(io::Error::last_os_error());
         }
@@ -269,7 +270,7 @@ fn decode_proc_event(pe: &proc_event) -> Option<ProcNetlinkEvent> {
                     child_tgid: f.child_tgid,
                     timestamp_ns: ts,
                 }
-            }
+            },
             PROC_EVENT_EXEC => {
                 let e = &pe.event_data.exec;
                 ProcNetlinkEvent::Exec {
@@ -277,7 +278,7 @@ fn decode_proc_event(pe: &proc_event) -> Option<ProcNetlinkEvent> {
                     process_tgid: e.process_tgid,
                     timestamp_ns: ts,
                 }
-            }
+            },
             PROC_EVENT_EXIT => {
                 let x = &pe.event_data.exit;
                 ProcNetlinkEvent::Exit {
@@ -287,7 +288,7 @@ fn decode_proc_event(pe: &proc_event) -> Option<ProcNetlinkEvent> {
                     exit_signal: x.exit_signal,
                     timestamp_ns: ts,
                 }
-            }
+            },
             PROC_EVENT_UID => {
                 let u = &pe.event_data.id;
                 ProcNetlinkEvent::Uid {
@@ -297,7 +298,7 @@ fn decode_proc_event(pe: &proc_event) -> Option<ProcNetlinkEvent> {
                     euid: u.euid,
                     timestamp_ns: ts,
                 }
-            }
+            },
             PROC_EVENT_PTRACE => {
                 let p = &pe.event_data.ptrace;
                 ProcNetlinkEvent::Ptrace {
@@ -307,7 +308,7 @@ fn decode_proc_event(pe: &proc_event) -> Option<ProcNetlinkEvent> {
                     tracer_tgid: p.tracer_tgid,
                     timestamp_ns: ts,
                 }
-            }
+            },
             PROC_EVENT_COMM => {
                 let c = &pe.event_data.comm;
                 ProcNetlinkEvent::Comm {
@@ -316,7 +317,7 @@ fn decode_proc_event(pe: &proc_event) -> Option<ProcNetlinkEvent> {
                     comm: c.comm,
                     timestamp_ns: ts,
                 }
-            }
+            },
             PROC_EVENT_COREDUMP => {
                 let d = &pe.event_data.coredump;
                 ProcNetlinkEvent::Coredump {
@@ -326,7 +327,7 @@ fn decode_proc_event(pe: &proc_event) -> Option<ProcNetlinkEvent> {
                     parent_tgid: d.parent_tgid,
                     timestamp_ns: ts,
                 }
-            }
+            },
             _ => return None,
         }
     };

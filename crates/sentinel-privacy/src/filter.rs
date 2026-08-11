@@ -14,17 +14,11 @@ impl PrivacyFilter {
             .map(|p| p.to_string_lossy().to_string())
             .unwrap_or_else(|| "/home/user".into());
 
-        Self {
-            sharing,
-            home_dir: home,
-        }
+        Self { sharing, home_dir: home }
     }
 
     pub fn with_home_dir(sharing: SharingConfig, home_dir: String) -> Self {
-        Self {
-            sharing,
-            home_dir,
-        }
+        Self { sharing, home_dir }
     }
 
     pub fn redact_command_line(&self, cmd: &str) -> String {
@@ -43,7 +37,7 @@ impl PrivacyFilter {
             AnonymizationLevel::None => String::new(),
             AnonymizationLevel::Redacted | AnonymizationLevel::Anonymized => {
                 Self::do_anonymize_path(path, &self.home_dir)
-            }
+            },
             AnonymizationLevel::Hashed => Self::do_hash(path),
         }
     }
@@ -63,7 +57,7 @@ impl PrivacyFilter {
                         "x.x.x.x".into()
                     }
                 }
-            }
+            },
             AnonymizationLevel::Hashed => Self::do_hash(ip),
         }
     }
@@ -72,9 +66,9 @@ impl PrivacyFilter {
         match &self.sharing.user_names {
             AnonymizationLevel::Full => username.into(),
             AnonymizationLevel::None => String::new(),
-            AnonymizationLevel::Hashed | AnonymizationLevel::Redacted | AnonymizationLevel::Anonymized => {
-                Self::do_hash(username)
-            }
+            AnonymizationLevel::Hashed
+            | AnonymizationLevel::Redacted
+            | AnonymizationLevel::Anonymized => Self::do_hash(username),
         }
     }
 
@@ -82,9 +76,9 @@ impl PrivacyFilter {
         match &self.sharing.process_names {
             AnonymizationLevel::Full => name.into(),
             AnonymizationLevel::None => String::new(),
-            AnonymizationLevel::Redacted | AnonymizationLevel::Anonymized | AnonymizationLevel::Hashed => {
-                Self::do_hash(name)
-            }
+            AnonymizationLevel::Redacted
+            | AnonymizationLevel::Anonymized
+            | AnonymizationLevel::Hashed => Self::do_hash(name),
         }
     }
 
@@ -97,14 +91,22 @@ impl PrivacyFilter {
         result = result.replace(home_dir, "$HOME");
 
         let flag_values = [
-            "--password", "--token", "--api-key", "--secret",
-            "--key", "-password", "password", "passwd",
+            "--password",
+            "--token",
+            "--api-key",
+            "--secret",
+            "--key",
+            "-password",
+            "password",
+            "passwd",
         ];
 
         for flag in &flag_values {
             let pattern_eq = format!("{}=", flag);
             let pattern_space = format!("{} ", flag);
-            let pos = result.find(&pattern_eq).or_else(|| result.find(&pattern_space));
+            let pos = result
+                .find(&pattern_eq)
+                .or_else(|| result.find(&pattern_space));
             if let Some(pos) = pos {
                 let val_start = pos + flag.len() + 1;
                 if val_start < result.len() {
@@ -228,10 +230,7 @@ mod tests {
             user_names: AnonymizationLevel::Full,
             process_names: AnonymizationLevel::Full,
         });
-        assert_eq!(
-            filter.redact_command_line("ls /tmp"),
-            "ls /tmp"
-        );
+        assert_eq!(filter.redact_command_line("ls /tmp"), "ls /tmp");
         assert_eq!(filter.anonymize_ip("8.8.8.8"), "8.8.8.8");
         assert_eq!(filter.hash_username("bob"), "bob");
     }

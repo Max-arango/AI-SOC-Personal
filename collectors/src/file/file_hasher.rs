@@ -40,7 +40,7 @@ fn hash_file_sync(path: &str, max_bytes: u64) -> FileHashResult {
         Err(e) => {
             warn!("Failed to read {}: {e}", path);
             return FileHashResult::empty();
-        }
+        },
     };
 
     if data.len() as u64 > max_bytes {
@@ -107,12 +107,11 @@ fn detect_mime(data: &[u8], path: &str) -> String {
             (0x1F, 0x8B) => return "application/gzip".into(),
             (0x7F, b'E') => return "application/x-elf".into(),
             (0xCA, 0xFE) => return "application/x-mach-o".into(),
-            _ => {}
+            _ => {},
         }
     }
 
-    if data.len() >= 4 && data[0] == 0x00 && data[1] == 0x00 && data[2] == 0x01 && data[3] == 0x00
-    {
+    if data.len() >= 4 && data[0] == 0x00 && data[1] == 0x00 && data[2] == 0x01 && data[3] == 0x00 {
         return "font/ttf".into();
     }
 
@@ -139,7 +138,9 @@ fn detect_mime_from_ext(path: &str) -> String {
         "application/x-sharedlib"
     } else if lower.ends_with(".rpm") || lower.ends_with(".deb") {
         "application/x-package"
-    } else if lower.ends_with(".tar") || lower.ends_with(".gz") || lower.ends_with(".bz2")
+    } else if lower.ends_with(".tar")
+        || lower.ends_with(".gz")
+        || lower.ends_with(".bz2")
         || lower.ends_with(".xz")
     {
         "application/x-archive"
@@ -149,7 +150,9 @@ fn detect_mime_from_ext(path: &str) -> String {
         "application/xml"
     } else if lower.ends_with(".yaml") || lower.ends_with(".yml") {
         "application/x-yaml"
-    } else if lower.ends_with(".toml") || lower.ends_with(".ini") || lower.ends_with(".cfg")
+    } else if lower.ends_with(".toml")
+        || lower.ends_with(".ini")
+        || lower.ends_with(".cfg")
         || lower.ends_with(".conf")
     {
         "text/x-config"

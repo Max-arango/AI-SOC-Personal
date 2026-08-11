@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use sentinel_config::RuleEngineConfig;
-use sentinel_rule_engine::RuleEngine;
 use sentinel_events::Event;
+use sentinel_rule_engine::RuleEngine;
 
 #[tokio::test]
 async fn test_load_all_50_rules() {
@@ -16,10 +16,10 @@ async fn test_load_all_50_rules() {
     match engine {
         Ok(_) => {
             println!("Successfully loaded all rules from rules/");
-        }
+        },
         Err(e) => {
             panic!("Failed to load rules: {e}");
-        }
+        },
     }
 }
 
@@ -52,10 +52,7 @@ async fn test_rule_evaluates_process_create() {
     });
 
     let result = engine.evaluate(&event).await;
-    println!(
-        "Rules evaluated: {}, Matches: {}",
-        result.rules_evaluated, result.matches.len()
-    );
+    println!("Rules evaluated: {}, Matches: {}", result.rules_evaluated, result.matches.len());
 
     assert!(result.rules_evaluated > 0, "Should evaluate at least some rules");
     assert!(
@@ -86,10 +83,20 @@ async fn test_rule_evaluates_network_event() {
 
     let result = engine.evaluate(&event).await;
     println!("Rules evaluated: {}", result.rules_evaluated);
-    println!("Matches: {:?}", result.matches.iter().map(|m| &m.rule_id).collect::<Vec<_>>());
+    println!(
+        "Matches: {:?}",
+        result
+            .matches
+            .iter()
+            .map(|m| &m.rule_id)
+            .collect::<Vec<_>>()
+    );
     assert!(result.rules_evaluated > 0, "Should evaluate rules");
     assert!(
-        result.matches.iter().any(|m| m.rule_id == "rule-008-high-severity-event"),
+        result
+            .matches
+            .iter()
+            .any(|m| m.rule_id == "rule-008-high-severity-event"),
         "SEVERITY_ERROR event should match rule-008 high_severity_event"
     );
 }
@@ -160,10 +167,7 @@ async fn test_powershell_rule_matches_with_lowerascii_preprocess() {
 
     let result = engine.evaluate(&event).await;
     let matches: Vec<_> = result.matches.iter().map(|m| &m.rule_id).collect();
-    println!(
-        "Rules evaluated: {}, Matches: {:?}",
-        result.rules_evaluated, matches
-    );
+    println!("Rules evaluated: {}, Matches: {:?}", result.rules_evaluated, matches);
 
     assert!(result.rules_evaluated >= 49, "Should evaluate at least 49 rules");
     assert!(

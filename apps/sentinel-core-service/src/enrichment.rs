@@ -1,7 +1,6 @@
 use tracing::info;
 
 pub async fn enrich(event: &mut sentinel_events::Event) {
-
     if event.source == "network" {
         if let Some(ref payload) = event.payload {
             if let sentinel_events::event::Payload::NetworkEvent(ref ne) = payload {
@@ -12,22 +11,30 @@ pub async fn enrich(event: &mut sentinel_events::Event) {
                         async {
                             if sentinel_plugin_abuseipdb::enabled() {
                                 sentinel_plugin_abuseipdb::check_ip(&ip).await
-                            } else { None }
+                            } else {
+                                None
+                            }
                         },
                         async {
                             if sentinel_plugin_shodan::enabled() {
                                 sentinel_plugin_shodan::lookup_host(&ip).await
-                            } else { None }
+                            } else {
+                                None
+                            }
                         },
                         async {
                             if sentinel_plugin_otx::enabled() {
                                 sentinel_plugin_otx::check_ip(&ip).await
-                            } else { None }
+                            } else {
+                                None
+                            }
                         },
                         async {
                             if sentinel_plugin_greynoise::enabled() {
                                 sentinel_plugin_greynoise::check_ip(&ip).await
-                            } else { None }
+                            } else {
+                                None
+                            }
                         }
                     );
 
@@ -57,7 +64,9 @@ pub async fn enrich(event: &mut sentinel_events::Event) {
                             event.tags.push("threat_intel:shodan:high".into());
                             info!(
                                 "Shodan enrichment: {} +25 risk (ports={}, vulns={})",
-                                ip, report.open_ports.len(), report.vulnerabilities.len()
+                                ip,
+                                report.open_ports.len(),
+                                report.vulnerabilities.len()
                             );
                         } else if report.risk_score > 25 {
                             event.risk_score = event.risk_score.saturating_add(10);
@@ -83,10 +92,9 @@ pub async fn enrich(event: &mut sentinel_events::Event) {
                             event.tags.push("threat_intel:otx:medium".into());
                         }
                         if report.pulse_count > 0 {
-                            event.tags.push(format!(
-                                "threat_intel:otx:{}_pulses",
-                                report.pulse_count
-                            ));
+                            event
+                                .tags
+                                .push(format!("threat_intel:otx:{}_pulses", report.pulse_count));
                         }
                         if !report.malware_families.is_empty() {
                             event.tags.push("threat_intel:otx:malware".into());
@@ -106,7 +114,9 @@ pub async fn enrich(event: &mut sentinel_events::Event) {
                             event.tags.push("grey_noise:benign".into());
                         }
                         if !report.name.is_empty() {
-                            event.tags.push(format!("grey_noise:{}", report.name.to_lowercase()));
+                            event
+                                .tags
+                                .push(format!("grey_noise:{}", report.name.to_lowercase()));
                         }
                         info!("GreyNoise: {} → {} ({})", ip, report.classification, report.name);
                     }
@@ -115,13 +125,21 @@ pub async fn enrich(event: &mut sentinel_events::Event) {
                         let geo = sentinel_plugin_geoip::resolver().lookup(&ip);
                         if let Some(ref data) = geo {
                             if !data.country_code.is_empty() {
-                                event.tags.push(format!("geoip:cc:{}", data.country_code.to_lowercase()));
+                                event
+                                    .tags
+                                    .push(format!("geoip:cc:{}", data.country_code.to_lowercase()));
                             }
                             if !data.city.is_empty() {
-                                event.tags.push(format!("geoip:city:{}", data.city.to_lowercase().replace(' ', "_")));
+                                event.tags.push(format!(
+                                    "geoip:city:{}",
+                                    data.city.to_lowercase().replace(' ', "_")
+                                ));
                             }
                             if !data.asn_org.is_empty() {
-                                event.tags.push(format!("geoip:asn:{}", data.asn_org.to_lowercase().replace(' ', "_")));
+                                event.tags.push(format!(
+                                    "geoip:asn:{}",
+                                    data.asn_org.to_lowercase().replace(' ', "_")
+                                ));
                             }
                             if data.is_anonymous {
                                 event.risk_score = event.risk_score.saturating_add(10);
@@ -162,7 +180,10 @@ pub async fn enrich(event: &mut sentinel_events::Event) {
                     }
                     info!(
                         "VirusTotal enrichment: {} +{} risk (malicious={}/{}, ratio={:.0}%)",
-                        report.name, base_boost, report.malicious, report.total,
+                        report.name,
+                        base_boost,
+                        report.malicious,
+                        report.total,
                         report.threat_ratio * 100.0
                     );
                 }

@@ -95,7 +95,9 @@ fn map_logsource_to_event_type(logsource: &Option<SigmaLogSource>) -> String {
         Some("process_creation") => "sentinel.process.create",
         Some("network_connection") => "sentinel.network.connect",
         Some("file_event") | Some("file_change") => "sentinel.file.modify",
-        Some("registry_event") | Some("registry_add") | Some("registry_delete") => "sentinel.registry.set_value",
+        Some("registry_event") | Some("registry_add") | Some("registry_delete") => {
+            "sentinel.registry.set_value"
+        },
         Some("dns_query") => "sentinel.network.connect",
         Some("image_load") => "sentinel.process.create",
         Some("pipe_created") => "sentinel.process.create",
@@ -103,7 +105,8 @@ fn map_logsource_to_event_type(logsource: &Option<SigmaLogSource>) -> String {
         Some("create_remote_thread") => "sentinel.process.inject",
         Some("driver_load") => "sentinel.process.create",
         _ => "sentinel.process.create",
-    }.into()
+    }
+    .into()
 }
 
 fn map_level_to_severity(level: &Option<String>) -> (&str, u32) {
@@ -143,15 +146,15 @@ fn map_sigma_field_to_cel(field: &str, operand: &str, value: &str) -> Option<Str
         "contains" => {
             let val = value.trim_matches('\'');
             Some(format!("{}.contains(\"{}\")", cel_field, val))
-        }
+        },
         "endswith" => {
             let val = value.trim_matches('\'');
             Some(format!("{}.contains(\"{}\")", cel_field, val))
-        }
+        },
         "startswith" => {
             let val = value.trim_matches('\'');
             Some(format!("{}.contains(\"{}\")", cel_field, val))
-        }
+        },
         _ => {
             let val = value.trim_matches('\'');
             if val == "true" || val == "false" {
@@ -161,7 +164,7 @@ fn map_sigma_field_to_cel(field: &str, operand: &str, value: &str) -> Option<Str
             } else {
                 Some(format!("{}.contains(\"{}\")", cel_field, val))
             }
-        }
+        },
     }
 }
 
@@ -193,7 +196,7 @@ fn build_cel_condition(detection: &SigmaDetection) -> String {
                             if let Some(cel) = map_sigma_field_to_cel(field, operand, s) {
                                 sub_conditions.push(cel);
                             }
-                        }
+                        },
                         serde_yaml::Value::Sequence(vals) => {
                             let mut or_conds = Vec::new();
                             for v in vals {
@@ -206,8 +209,8 @@ fn build_cel_condition(detection: &SigmaDetection) -> String {
                             if !or_conds.is_empty() {
                                 sub_conditions.push(format!("({})", or_conds.join(" || ")));
                             }
-                        }
-                        _ => {}
+                        },
+                        _ => {},
                     }
                 }
                 if !sub_conditions.is_empty() {
@@ -294,7 +297,14 @@ fn map_mitre_tags(tags: &[String]) -> Vec<SentinelMitreMapping> {
 
 pub fn convert_sigma_to_sentinel(sigma: &SigmaRule) -> SentinelRule {
     let id = if sigma.id.is_empty() {
-        format!("sigma-{}", uuid::Uuid::new_v4().to_string().split('-').next().unwrap_or("0"))
+        format!(
+            "sigma-{}",
+            uuid::Uuid::new_v4()
+                .to_string()
+                .split('-')
+                .next()
+                .unwrap_or("0")
+        )
     } else {
         sigma.id.clone()
     };
@@ -327,15 +337,14 @@ pub fn convert_sigma_to_sentinel(sigma: &SigmaRule) -> SentinelRule {
             created: now.clone(),
             modified: now,
             enabled: sigma.status != "deprecated",
-            category: mitre.first().map(|m| m.tactic.clone().to_lowercase().replace(' ', "-")).unwrap_or_else(|| "general".into()),
+            category: mitre
+                .first()
+                .map(|m| m.tactic.clone().to_lowercase().replace(' ', "-"))
+                .unwrap_or_else(|| "general".into()),
             subcategory: None,
             mitre,
             severity: severity.into(),
-            risk: SentinelRisk {
-                base_score,
-                confidence: 0.8,
-                multipliers: vec![],
-            },
+            risk: SentinelRisk { base_score, confidence: 0.8, multipliers: vec![] },
             condition: full_condition,
             and_conditions: vec![],
             or_conditions: vec![],
@@ -358,12 +367,16 @@ pub fn import_sigma_dir(dir: &str) -> anyhow::Result<Vec<SentinelRule>> {
     let entries = std::fs::read_dir(dir)?;
     for entry in entries.flatten() {
         let path = entry.path();
-        if path.extension().map(|e| e == "yml" || e == "yaml").unwrap_or(false) {
+        if path
+            .extension()
+            .map(|e| e == "yml" || e == "yaml")
+            .unwrap_or(false)
+        {
             match import_sigma_file(&path.to_string_lossy()) {
                 Ok(rule) => rules.push(rule),
                 Err(e) => {
                     eprintln!("Failed to import {}: {e}", path.display());
-                }
+                },
             }
         }
     }

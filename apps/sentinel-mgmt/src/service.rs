@@ -5,8 +5,8 @@ use tracing::info;
 
 use sentinel_events::sentinel::mgmt::v1::agent_service_server::{AgentService, AgentServiceServer};
 use sentinel_events::sentinel::mgmt::v1::{
-    AgentEvent, CommandRequest, CommandResponse, HeartbeatRequest,
-    HeartbeatResponse, RegisterRequest, RegisterResponse,
+    AgentEvent, CommandRequest, CommandResponse, HeartbeatRequest, HeartbeatResponse,
+    RegisterRequest, RegisterResponse,
 };
 
 use crate::fleet::FleetManager;
@@ -28,10 +28,7 @@ impl AgentService for MgmtService {
         req: Request<RegisterRequest>,
     ) -> Result<Response<RegisterResponse>, Status> {
         let r = req.into_inner();
-        info!(
-            "Agent registering: host_id={}, hostname={}, os={}",
-            r.host_id, r.hostname, r.os
-        );
+        info!("Agent registering: host_id={}, hostname={}, os={}", r.host_id, r.hostname, r.os);
 
         self.fleet.register(crate::fleet::RegisteredAgent {
             host_id: r.host_id.clone(),
@@ -62,9 +59,7 @@ impl AgentService for MgmtService {
         }))
     }
 
-    type StreamStream = tokio_stream::wrappers::ReceiverStream<
-        Result<CommandRequest, Status>,
-    >;
+    type StreamStream = tokio_stream::wrappers::ReceiverStream<Result<CommandRequest, Status>>;
 
     async fn stream(
         &self,
@@ -99,10 +94,7 @@ impl AgentService for MgmtService {
         req: Request<CommandRequest>,
     ) -> Result<Response<CommandResponse>, Status> {
         let cmd = req.into_inner();
-        info!(
-            "Command received: id={}, agent={}",
-            cmd.command_id, cmd.agent_id
-        );
+        info!("Command received: id={}, agent={}", cmd.command_id, cmd.agent_id);
 
         Ok(Response::new(CommandResponse {
             command_id: cmd.command_id,

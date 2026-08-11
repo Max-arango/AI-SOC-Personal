@@ -107,8 +107,7 @@ pub async fn check_ip(ip: &str) -> Option<IpReport> {
         .and_then(|s| s.parse::<u32>().ok())
         .unwrap_or(90);
 
-    let url =
-        format!("{}/api/v2/check?ipAddress={}&maxAgeInDays={}", base_url(), ip, max_age);
+    let url = format!("{}/api/v2/check?ipAddress={}&maxAgeInDays={}", base_url(), ip, max_age);
 
     let client = reqwest::Client::new();
     let resp = match client

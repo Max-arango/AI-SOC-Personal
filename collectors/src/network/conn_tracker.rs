@@ -24,9 +24,7 @@ impl ConnectionKey {
         let proto = if self.protocol == Protocol::Tcp { "tcp" } else { "udp" };
         format!(
             "{}:{} → {}:{} ({})",
-            self.local_addr, self.local_port,
-            self.remote_addr, self.remote_port,
-            proto,
+            self.local_addr, self.local_port, self.remote_addr, self.remote_port, proto,
         )
     }
 }
@@ -76,9 +74,7 @@ pub struct ConnTracker {
 
 impl ConnTracker {
     pub fn new() -> Self {
-        Self {
-            connections: HashMap::with_capacity(256),
-        }
+        Self { connections: HashMap::with_capacity(256) }
     }
 
     /// Feed the tracker with the current set of connections observed
@@ -107,30 +103,18 @@ impl ConnTracker {
                 self.connections.remove(key)
             {
                 let duration = now.duration_since(first_seen);
-                events.push(ConnectionEvent::Close {
-                    key: key.clone(),
-                    duration,
-                    meta,
-                });
+                events.push(ConnectionEvent::Close { key: key.clone(), duration, meta });
             }
         }
 
         // Detect NEW: connections not yet tracked
         for (key, meta) in current {
             if !self.connections.contains_key(&key) {
-                events.push(ConnectionEvent::New {
-                    key: key.clone(),
-                    meta: meta.clone(),
-                });
+                events.push(ConnectionEvent::New { key: key.clone(), meta: meta.clone() });
 
                 self.connections.insert(
                     key,
-                    ConnState::Established {
-                        first_seen: now,
-                        tx_bytes: 0,
-                        rx_bytes: 0,
-                        meta,
-                    },
+                    ConnState::Established { first_seen: now, tx_bytes: 0, rx_bytes: 0, meta },
                 );
             }
             // Already-tracked connections: nothing to do (would update
@@ -161,12 +145,7 @@ mod tests {
     }
 
     fn make_meta(pid: u32) -> ConnectionMeta {
-        ConnectionMeta {
-            pid,
-            process_name: "test".into(),
-            uid: 1000,
-            inode: 10000 + pid as u64,
-        }
+        ConnectionMeta { pid, process_name: "test".into(), uid: 1000, inode: 10000 + pid as u64 }
     }
 
     #[test]

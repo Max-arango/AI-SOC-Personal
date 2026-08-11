@@ -47,7 +47,7 @@ pub async fn check_ip(ip: &str) -> Option<GreyNoiseReport> {
         Err(e) => {
             warn!("GreyNoise request failed: {e}");
             return None;
-        }
+        },
     };
 
     if resp.status().as_u16() == 404 {
@@ -64,7 +64,7 @@ pub async fn check_ip(ip: &str) -> Option<GreyNoiseReport> {
         Err(e) => {
             warn!("GreyNoise parse error: {e}");
             return None;
-        }
+        },
     };
 
     if data.message.is_some() {
@@ -92,10 +92,7 @@ pub async fn check_ip(ip: &str) -> Option<GreyNoiseReport> {
     };
 
     if risk_modifier != 0 {
-        info!(
-            "GreyNoise: {} → {} ({}) modifier={}",
-            ip, classification, name, risk_modifier
-        );
+        info!("GreyNoise: {} → {} ({}) modifier={}", ip, classification, name, risk_modifier);
     }
 
     Some(report)

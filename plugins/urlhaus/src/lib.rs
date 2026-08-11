@@ -52,7 +52,7 @@ pub async fn check_url(url: &str) -> Option<UrlReport> {
         Err(e) => {
             warn!("URLhaus request failed: {e}");
             return None;
-        }
+        },
     };
 
     if !resp.status().is_success() {
@@ -65,22 +65,24 @@ pub async fn check_url(url: &str) -> Option<UrlReport> {
         Err(e) => {
             warn!("URLhaus parse error: {e}");
             return None;
-        }
+        },
     };
 
     if data.query_status.as_deref() == Some("no_results") {
         return None;
     }
 
-    let is_malicious = data.url_status.as_deref() == Some("online")
-        && data.threat.is_some();
+    let is_malicious = data.url_status.as_deref() == Some("online") && data.threat.is_some();
 
     let tags = data.tags.unwrap_or_default();
     let threat = data.threat.unwrap_or_else(|| "unknown".into());
 
     let risk_score = if is_malicious {
         let base = 50u32;
-        let tag_bonus = if tags.iter().any(|t| t.contains("exe") || t.contains("ransomware")) {
+        let tag_bonus = if tags
+            .iter()
+            .any(|t| t.contains("exe") || t.contains("ransomware"))
+        {
             30
         } else {
             10
@@ -101,12 +103,7 @@ pub async fn check_url(url: &str) -> Option<UrlReport> {
     };
 
     if is_malicious {
-        info!(
-            "URLhaus: {} → {} (tags: {:?})",
-            report.url,
-            report.threat,
-            report.tags,
-        );
+        info!("URLhaus: {} → {} (tags: {:?})", report.url, report.threat, report.tags,);
     }
 
     Some(report)

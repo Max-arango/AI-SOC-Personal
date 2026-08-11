@@ -10,7 +10,10 @@ pub enum ResponseTier {
 
 impl ResponseTier {
     pub fn requires_human(&self) -> bool {
-        matches!(self, ResponseTier::T2Confirm | ResponseTier::T3Quorum | ResponseTier::T4BreakGlass)
+        matches!(
+            self,
+            ResponseTier::T2Confirm | ResponseTier::T3Quorum | ResponseTier::T4BreakGlass
+        )
     }
 
     pub fn confirmation_count(&self) -> usize {
@@ -34,13 +37,27 @@ impl ResponseTier {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum EdrAction {
-    KillProcess { pid: u32 },
-    QuarantineFile { path: String, hash: Option<String> },
-    BlockNetwork { ip: String, port: Option<u16> },
-    IsolateHost { auto_revert_seconds: u64 },
+    KillProcess {
+        pid: u32,
+    },
+    QuarantineFile {
+        path: String,
+        hash: Option<String>,
+    },
+    BlockNetwork {
+        ip: String,
+        port: Option<u16>,
+    },
+    IsolateHost {
+        auto_revert_seconds: u64,
+    },
     CollectSnapshot,
-    RemoteShell { duration_seconds: u64 },
-    NotifyAll { channels: Vec<String> },
+    RemoteShell {
+        duration_seconds: u64,
+    },
+    NotifyAll {
+        channels: Vec<String>,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -143,8 +160,7 @@ impl ResponseEngine {
 
     pub fn expire_pending(&self) -> Vec<EdrCommand> {
         let mut pending = self.pending.write();
-        let (expired, active): (Vec<_>, Vec<_>) =
-            pending.drain(..).partition(|c| c.is_expired());
+        let (expired, active): (Vec<_>, Vec<_>) = pending.drain(..).partition(|c| c.is_expired());
         *pending = active;
         expired
     }

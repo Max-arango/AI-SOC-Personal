@@ -6,9 +6,9 @@ pub mod framework;
 pub mod process;
 pub mod process_collector;
 
+pub mod browser;
 pub mod file;
 pub mod network;
-pub mod startup;
-pub mod browser;
-pub mod usb;
 pub mod registry;
+pub mod startup;
+pub mod usb;

@@ -28,9 +28,7 @@ use crate::framework::*;
 use sentinel_config::ProcessCollectorConfig;
 use sentinel_core::traits::{Collector, CollectorContext, ConfigSchema};
 use sentinel_core::{CollectorError, CollectorHealth, CollectorMetrics, CollectorState};
-use sentinel_events::{
-    Event, ProcessContext, ProcessEvent, Severity, UserContext,
-};
+use sentinel_events::{Event, ProcessContext, ProcessEvent, Severity, UserContext};
 
 use super::netlink_monitor::{NetlinkMonitor, ProcNetlinkEvent};
 use super::proc_reader;
@@ -152,13 +150,10 @@ impl ProcessCollector {
         });
 
         // Wait briefly for monitor to report ready
-        let started = tokio::time::timeout(
-            tokio::time::Duration::from_secs(3),
-            monitor_started_rx,
-        )
-        .await
-        .map(|r| r.unwrap_or(false))
-        .unwrap_or(false);
+        let started = tokio::time::timeout(tokio::time::Duration::from_secs(3), monitor_started_rx)
+            .await
+            .map(|r| r.unwrap_or(false))
+            .unwrap_or(false);
 
         if started {
             info!("Process collector running (CN_PROC netlink)");
@@ -167,10 +162,7 @@ impl ProcessCollector {
     }
 
     async fn do_stop_inner(&mut self, graceful: bool) -> Result<(), CollectorError> {
-        info!(
-            "Stopping process collector (graceful={})",
-            graceful
-        );
+        info!("Stopping process collector (graceful={})", graceful);
         if let Some(cancel) = self.cancel_tx.take() {
             let _ = cancel.send(());
         }
@@ -288,7 +280,13 @@ pub fn netlink_to_sentinel_event_inner(
     config: &ProcessCollectorConfig,
 ) -> Option<Event> {
     match nl {
-        ProcNetlinkEvent::Fork { child_pid: _, child_tgid, parent_pid, parent_tgid, timestamp_ns: _ } => {
+        ProcNetlinkEvent::Fork {
+            child_pid: _,
+            child_tgid,
+            parent_pid,
+            parent_tgid,
+            timestamp_ns: _,
+        } => {
             let pid = *child_tgid as u32;
             let info = proc_reader::gather_pid_info(pid);
             Some(build_event(
@@ -298,18 +296,12 @@ pub fn netlink_to_sentinel_event_inner(
                 ProcessEventAction::Create,
                 config,
             ))
-        }
+        },
         ProcNetlinkEvent::Exec { process_tgid, .. } => {
             let pid = *process_tgid as u32;
             let info = proc_reader::gather_pid_info(pid);
-            Some(build_event(
-                pid,
-                info,
-                "",
-                ProcessEventAction::Create,
-                config,
-            ))
-        }
+            Some(build_event(pid, info, "", ProcessEventAction::Create, config))
+        },
         ProcNetlinkEvent::Exit { process_tgid, exit_code, exit_signal, .. } => {
             let pid = *process_tgid as u32;
             let info = proc_reader::gather_pid_info(pid);
@@ -321,16 +313,18 @@ pub fn netlink_to_sentinel_event_inner(
             }
             ev.tags.push(format!("exit_signal:{}", exit_signal));
             Some(ev)
-        }
+        },
         ProcNetlinkEvent::Comm { process_tgid, comm, .. } => {
             let pid = *process_tgid as u32;
-            let comm_name = String::from_utf8_lossy(&comm_slice(comm)).trim_end_matches('\0').to_string();
+            let comm_name = String::from_utf8_lossy(&comm_slice(comm))
+                .trim_end_matches('\0')
+                .to_string();
             let mut info = proc_reader::gather_pid_info(pid);
             if !comm_name.is_empty() {
                 info.name = comm_name;
             }
             Some(build_event(pid, info, "", ProcessEventAction::Create, config))
-        }
+        },
         ProcNetlinkEvent::Ptrace { process_tgid, tracer_pid, tracer_tgid, .. } => {
             let target_pid = *process_tgid as u32;
             let tracer_info = proc_reader::gather_pid_info(*tracer_tgid as u32);
@@ -356,12 +350,12 @@ pub fn netlink_to_sentinel_event_inner(
             }
             ev.tags.push(format!("tracer_pid:{}", tracer_pid));
             Some(ev)
-        }
+        },
         ProcNetlinkEvent::Coredump { process_tgid, parent_tgid, .. } => {
             let pid = *process_tgid as u32;
             let info = proc_reader::gather_pid_info(pid);
             Some(build_event(pid, info, &parent_tgid.to_string(), ProcessEventAction::Dump, config))
-        }
+        },
         // Ignore UID/GID changes for now (low signal)
         _ => None,
     }
@@ -404,19 +398,16 @@ fn build_event(
         ProcessEventAction::Inject => {
             tags.push("mitre:T1055".to_string());
             tags.push("ptrace".to_string());
-        }
+        },
         ProcessEventAction::Dump => {
             tags.push("mitre:T1003".to_string());
             tags.push("coredump".to_string());
-        }
-        _ => {}
+        },
+        _ => {},
     }
 
-    let command_line = if config.include_command_line {
-        info.cmdline.clone()
-    } else {
-        String::new()
-    };
+    let command_line =
+        if config.include_command_line { info.cmdline.clone() } else { String::new() };
 
     Event {
         id: sentinel_core::Ulid::new().to_string(),

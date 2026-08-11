@@ -26,27 +26,21 @@ pub struct AiConfig {
 
 impl Default for AiConfig {
     fn default() -> Self {
-        let provider = std::env::var("SENTINEL_AI_PROVIDER")
-            .unwrap_or_else(|_| "ollama".into());
+        let provider = std::env::var("SENTINEL_AI_PROVIDER").unwrap_or_else(|_| "ollama".into());
         let api_key = std::env::var("SENTINEL_AI_API_KEY").ok();
         let api_base = std::env::var("SENTINEL_AI_API_BASE").ok();
 
         let (model, port) = match provider.as_str() {
             "openrouter" => (
-                std::env::var("SENTINEL_AI_MODEL")
-                    .unwrap_or_else(|_| "openai/gpt-4o-mini".into()),
+                std::env::var("SENTINEL_AI_MODEL").unwrap_or_else(|_| "openai/gpt-4o-mini".into()),
                 443,
             ),
-            "openai" => (
-                std::env::var("SENTINEL_AI_MODEL")
-                    .unwrap_or_else(|_| "gpt-4o-mini".into()),
-                443,
-            ),
-            _ => (
-                std::env::var("SENTINEL_AI_MODEL")
-                    .unwrap_or_else(|_| "llama3.2:3b".into()),
-                11434,
-            ),
+            "openai" => {
+                (std::env::var("SENTINEL_AI_MODEL").unwrap_or_else(|_| "gpt-4o-mini".into()), 443)
+            },
+            _ => {
+                (std::env::var("SENTINEL_AI_MODEL").unwrap_or_else(|_| "llama3.2:3b".into()), 11434)
+            },
         };
 
         Self {
@@ -100,7 +94,9 @@ impl ContextBuilder {
     pub fn investigate(alert: &Alert, events: &[Arc<Event>]) -> String {
         format!(
             "Recommend 3-5 investigation steps for: Alert={} (risk={}/1000)\n\n{}\n\nSteps:",
-            alert.rule_id, alert.risk_score, Self::summarise_events(events)
+            alert.rule_id,
+            alert.risk_score,
+            Self::summarise_events(events)
         )
     }
 
@@ -154,15 +150,20 @@ impl AiEngine {
     }
 
     pub fn requests_total(&self) -> u64 {
-        self.requests_total.load(std::sync::atomic::Ordering::Relaxed)
+        self.requests_total
+            .load(std::sync::atomic::Ordering::Relaxed)
     }
 
     pub fn avg_latency_ms(&self) -> f64 {
-        let total = self.requests_total.load(std::sync::atomic::Ordering::Relaxed);
+        let total = self
+            .requests_total
+            .load(std::sync::atomic::Ordering::Relaxed);
         if total == 0 {
             return 0.0;
         }
-        let latency_ns = self.total_latency_ns.load(std::sync::atomic::Ordering::Relaxed);
+        let latency_ns = self
+            .total_latency_ns
+            .load(std::sync::atomic::Ordering::Relaxed);
         (latency_ns as f64 / total as f64) / 1_000_000.0
     }
 
@@ -217,11 +218,11 @@ impl AiEngine {
                 }
                 cache.insert(key.to_string(), cleaned.clone());
                 cleaned
-            }
+            },
             Err(e) => {
                 warn!("AI generation failed: {e}");
                 Self::fallback(&Alert::default())
-            }
+            },
         }
     }
 
@@ -268,10 +269,7 @@ mod tests {
 
     #[test]
     fn test_summarise_empty() {
-        assert_eq!(
-            ContextBuilder::summarise_events(&[]),
-            "(no related events)"
-        );
+        assert_eq!(ContextBuilder::summarise_events(&[]), "(no related events)");
     }
 
     #[test]

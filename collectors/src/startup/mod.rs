@@ -203,9 +203,16 @@ fn scan_systemd_services() -> Vec<(String, String)> {
     vec![]
 }
 
-pub async fn start_startup_monitor(bus: Arc<dyn EventBus>, registry: Arc<sentinel_core::CollectorRegistry>) {
+pub async fn start_startup_monitor(
+    bus: Arc<dyn EventBus>,
+    registry: Arc<sentinel_core::CollectorRegistry>,
+) {
     tokio::spawn(async move {
-        registry.register(sentinel_core::CollectorStatus::new("startup", "Startup Monitor", "Startup collector"));
+        registry.register(sentinel_core::CollectorStatus::new(
+            "startup",
+            "Startup Monitor",
+            "Startup collector",
+        ));
         let reg = registry.clone();
         info!("Startup collector started");
 
@@ -226,7 +233,7 @@ pub async fn start_startup_monitor(bus: Arc<dyn EventBus>, registry: Arc<sentine
         let total = events.len();
         for event in events {
             let _ = bus.publish(Arc::new(event)).await;
-                reg.increment_events("startup", 1);
+            reg.increment_events("startup", 1);
             reg.increment_events("startup", 1);
         }
         info!("Startup collector: initial scan found {total} entries");
@@ -239,7 +246,7 @@ pub async fn start_startup_monitor(bus: Arc<dyn EventBus>, registry: Arc<sentine
             for event in events {
                 let _ = bus.publish(Arc::new(event)).await;
                 reg.increment_events("startup", 1);
-            reg.increment_events("startup", 1);
+                reg.increment_events("startup", 1);
             }
             debug!("Startup collector rescanned: {new_count} entries");
         }

@@ -6,7 +6,7 @@
 use chrono::Utc;
 use sentinel_core::traits::{Alert, AlertQuery, AlertRepository, AlertState};
 use sentinel_core::{AlertId, Result as CoreResult, Ulid};
-use sentinel_events::sentinel::api::v1::{AlertStreamEvent, alert_stream_event::EventType};
+use sentinel_events::sentinel::api::v1::{alert_stream_event::EventType, AlertStreamEvent};
 use std::sync::Arc;
 use tokio::sync::broadcast;
 
@@ -48,7 +48,9 @@ impl AlertManager {
         };
         self.repo.create(&alert).await?;
 
-        let _ = self.tx.send(alert_to_stream_event(&alert, EventType::Created));
+        let _ = self
+            .tx
+            .send(alert_to_stream_event(&alert, EventType::Created));
 
         Ok(alert)
     }
@@ -60,7 +62,9 @@ impl AlertManager {
             .await?;
 
         if let Ok(Some(updated)) = self.repo.get(alert_id).await {
-            let _ = self.tx.send(alert_to_stream_event(&updated, EventType::Updated));
+            let _ = self
+                .tx
+                .send(alert_to_stream_event(&updated, EventType::Updated));
         }
 
         Ok(())
@@ -75,7 +79,9 @@ impl AlertManager {
         self.repo.update_state(alert_id, state, None).await?;
 
         if let Ok(Some(updated)) = self.repo.get(alert_id).await {
-            let _ = self.tx.send(alert_to_stream_event(&updated, EventType::Updated));
+            let _ = self
+                .tx
+                .send(alert_to_stream_event(&updated, EventType::Updated));
         }
 
         Ok(())
@@ -90,7 +96,9 @@ impl AlertManager {
         self.repo.update_state(alert_id, state, username).await?;
 
         if let Ok(Some(updated)) = self.repo.get(alert_id).await {
-            let _ = self.tx.send(alert_to_stream_event(&updated, EventType::Updated));
+            let _ = self
+                .tx
+                .send(alert_to_stream_event(&updated, EventType::Updated));
         }
 
         Ok(())

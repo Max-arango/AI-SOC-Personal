@@ -17,8 +17,8 @@ use sentinel_core::{ChannelConfig, CollectorRegistry, EventBus};
 use sentinel_correlation::{CorrelationConfig, CorrelationEngine};
 use sentinel_event_bus::EventBusImpl;
 use sentinel_events::Event;
-use sentinel_privacy::PrivacyEngine;
 use sentinel_privacy::config::PrivacyConfig;
+use sentinel_privacy::PrivacyEngine;
 use sentinel_risk::{RiskConfig, RiskEngine};
 use sentinel_rule_engine::RuleEngine;
 use sentinel_storage::sqlite::SqliteStorage;
@@ -142,7 +142,8 @@ async fn main() -> Result<()> {
     // ── M2: Correlation + Risk + Alerts ─────────────────────────
     let correlation = Arc::new(CorrelationEngine::new(CorrelationConfig::default()));
     let risk = Arc::new(RiskEngine::new(RiskConfig::default()));
-    let (alert_broadcast_tx, _alert_broadcast_rx) = broadcast::channel::<sentinel_events::sentinel::api::v1::AlertStreamEvent>(256);
+    let (alert_broadcast_tx, _alert_broadcast_rx) =
+        broadcast::channel::<sentinel_events::sentinel::api::v1::AlertStreamEvent>(256);
     let alert_mgr = Arc::new(AlertManager::new(sqlite.alerts().await, alert_broadcast_tx.clone()));
 
     // ── M3: AI Engine ──────────────────────────────────────────
@@ -153,7 +154,8 @@ async fn main() -> Result<()> {
     let privacy = Arc::new(PrivacyEngine::new(PrivacyConfig::default()));
     info!(
         "Privacy engine initialised (mode: {}, command_lines: {:?})",
-        privacy.config().mode, privacy.config().sharing.command_lines
+        privacy.config().mode,
+        privacy.config().sharing.command_lines
     );
 
     // ── Collector Registry ──────────────────────────────────────
@@ -190,19 +192,24 @@ async fn main() -> Result<()> {
         .map_err(|e| anyhow::anyhow!("Failed to subscribe: {e}"))?;
 
     // ── Linux process collector (CN_PROC netlink) ───────────
-    sentinel_collectors::process::start_process_monitor(bus.clone(), collector_registry.clone()).await;
+    sentinel_collectors::process::start_process_monitor(bus.clone(), collector_registry.clone())
+        .await;
     info!("Process collector started (netlink CN_PROC)");
-    sentinel_collectors::network::start_network_monitor(bus.clone(), collector_registry.clone()).await;
+    sentinel_collectors::network::start_network_monitor(bus.clone(), collector_registry.clone())
+        .await;
     info!("Network collector started");
     sentinel_collectors::file::start_file_monitor(bus.clone(), collector_registry.clone()).await;
     info!("File collector started");
-    sentinel_collectors::startup::start_startup_monitor(bus.clone(), collector_registry.clone()).await;
+    sentinel_collectors::startup::start_startup_monitor(bus.clone(), collector_registry.clone())
+        .await;
     info!("Startup collector started");
-    sentinel_collectors::browser::start_browser_monitor(bus.clone(), collector_registry.clone()).await;
+    sentinel_collectors::browser::start_browser_monitor(bus.clone(), collector_registry.clone())
+        .await;
     info!("Browser collector started");
     sentinel_collectors::usb::start_usb_monitor(bus.clone(), collector_registry.clone()).await;
     info!("USB collector started");
-    sentinel_collectors::registry::start_registry_monitor(bus.clone(), collector_registry.clone()).await;
+    sentinel_collectors::registry::start_registry_monitor(bus.clone(), collector_registry.clone())
+        .await;
     info!("Registry collector started");
     info!("All core components started");
 

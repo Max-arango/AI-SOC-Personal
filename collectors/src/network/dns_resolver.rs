@@ -21,10 +21,7 @@ pub struct DnsResolver {
 
 impl DnsResolver {
     pub fn new(ttl: Duration) -> Self {
-        Self {
-            cache: HashMap::new(),
-            ttl,
-        }
+        Self { cache: HashMap::new(), ttl }
     }
 
     pub async fn reverse_lookup(&mut self, ip: &str) -> String {
@@ -50,10 +47,7 @@ impl DnsResolver {
         }
         self.cache.insert(
             ip.to_string(),
-            DnsEntry {
-                hostname: hostname.clone(),
-                resolved_at: Instant::now(),
-            },
+            DnsEntry { hostname: hostname.clone(), resolved_at: Instant::now() },
         );
         hostname
     }
@@ -79,8 +73,11 @@ fn libc_reverse_dns(ip: &str) -> Option<String> {
             sa.sin_family = libc::AF_INET as u16;
             sa.sin_port = 0;
             sa.sin_addr.s_addr = u32::from_ne_bytes(octets);
-            (std::ptr::addr_of!(storage) as *const libc::sockaddr, std::mem::size_of::<libc::sockaddr_in>() as u32)
-        }
+            (
+                std::ptr::addr_of!(storage) as *const libc::sockaddr,
+                std::mem::size_of::<libc::sockaddr_in>() as u32,
+            )
+        },
         IpAddr::V6(v6) => {
             let segments = v6.segments();
             let mut storage: libc::sockaddr_storage = unsafe { std::mem::zeroed() };
@@ -93,8 +90,11 @@ fn libc_reverse_dns(ip: &str) -> Option<String> {
                 sa.sin6_addr.s6_addr[i * 2] = (seg >> 8) as u8;
                 sa.sin6_addr.s6_addr[i * 2 + 1] = (seg & 0xff) as u8;
             }
-            (std::ptr::addr_of!(storage) as *const libc::sockaddr, std::mem::size_of::<libc::sockaddr_in6>() as u32)
-        }
+            (
+                std::ptr::addr_of!(storage) as *const libc::sockaddr,
+                std::mem::size_of::<libc::sockaddr_in6>() as u32,
+            )
+        },
     };
 
     let mut host_buf = vec![0u8; libc::NI_MAXHOST as usize];
@@ -179,10 +179,7 @@ mod tests {
         let mut resolver = DnsResolver::new(Duration::from_secs(300));
         resolver.cache.insert(
             "8.8.8.8".into(),
-            DnsEntry {
-                hostname: "dns.google".into(),
-                resolved_at: Instant::now(),
-            },
+            DnsEntry { hostname: "dns.google".into(), resolved_at: Instant::now() },
         );
         assert_eq!(resolver.cache_size(), 1);
     }

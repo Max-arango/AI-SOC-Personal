@@ -14,9 +14,18 @@ use std::time::{Duration, Instant};
 /// What kind of suspicious activity was detected
 #[derive(Debug, Clone, PartialEq)]
 pub enum ScanType {
-    VerticalScan { host: String, port_count: usize },
-    HorizontalScan { port: u16, host_count: usize },
-    ConnectionStorm { pid: u32, count: usize },
+    VerticalScan {
+        host: String,
+        port_count: usize,
+    },
+    HorizontalScan {
+        port: u16,
+        host_count: usize,
+    },
+    ConnectionStorm {
+        pid: u32,
+        count: usize,
+    },
 }
 
 /// A recorded connection observation for scan analysis
@@ -51,12 +60,7 @@ impl ScanDetector {
     /// Record a new connection and check for scan patterns.
     ///
     /// Returns `Some(ScanType)` if a scan is detected, `None` otherwise.
-    pub fn record(
-        &mut self,
-        remote_host: &str,
-        remote_port: u16,
-        pid: u32,
-    ) -> Option<ScanType> {
+    pub fn record(&mut self, remote_host: &str, remote_port: u16, pid: u32) -> Option<ScanType> {
         let now = Instant::now();
 
         // Prune old observations outside the window
@@ -103,10 +107,7 @@ impl ScanDetector {
             .collect();
 
         if unique_ports.len() >= self.vertical_threshold {
-            Some(ScanType::VerticalScan {
-                host: host.to_string(),
-                port_count: unique_ports.len(),
-            })
+            Some(ScanType::VerticalScan { host: host.to_string(), port_count: unique_ports.len() })
         } else {
             None
         }
@@ -121,21 +122,14 @@ impl ScanDetector {
             .collect();
 
         if unique_hosts.len() >= self.horizontal_threshold {
-            Some(ScanType::HorizontalScan {
-                port,
-                host_count: unique_hosts.len(),
-            })
+            Some(ScanType::HorizontalScan { port, host_count: unique_hosts.len() })
         } else {
             None
         }
     }
 
     fn check_storm(&self, pid: u32) -> Option<ScanType> {
-        let count = self
-            .observations
-            .iter()
-            .filter(|o| o.pid == pid)
-            .count();
+        let count = self.observations.iter().filter(|o| o.pid == pid).count();
 
         if count >= self.storm_threshold {
             Some(ScanType::ConnectionStorm { pid, count })

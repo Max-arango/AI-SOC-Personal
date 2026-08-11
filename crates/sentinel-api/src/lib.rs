@@ -192,7 +192,7 @@ impl Sentinel for SentinelService {
             None => {
                 tracing::warn!("EventCursor has multiple references — returning empty");
                 vec![]
-            }
+            },
         };
 
         Ok(Response::new(api::QueryEventsResponse {
@@ -276,10 +276,7 @@ impl Sentinel for SentinelService {
             })
             .ok_or_else(|| Status::not_found(format!("PID {} not found", pid)))?;
 
-        Ok(Response::new(api::ProcessDetail {
-            summary: Some(summary),
-            ..Default::default()
-        }))
+        Ok(Response::new(api::ProcessDetail { summary: Some(summary), ..Default::default() }))
     }
 
     async fn get_process_tree(
@@ -296,10 +293,7 @@ impl Sentinel for SentinelService {
                 name: proc.name().to_string_lossy().into_owned(),
                 ..Default::default()
             };
-            api::ProcessTreeNode {
-                process: Some(summary),
-                children: vec![],
-            }
+            api::ProcessTreeNode { process: Some(summary), children: vec![] }
         });
 
         Ok(Response::new(api::ProcessTree { root: first }))
@@ -341,12 +335,12 @@ impl Sentinel for SentinelService {
             } else {
                 None
             },
-            start_time: q.start_time.and_then(|ts| {
-                chrono::DateTime::from_timestamp(ts.seconds, ts.nanos as u32)
-            }),
-            end_time: q.end_time.and_then(|ts| {
-                chrono::DateTime::from_timestamp(ts.seconds, ts.nanos as u32)
-            }),
+            start_time: q
+                .start_time
+                .and_then(|ts| chrono::DateTime::from_timestamp(ts.seconds, ts.nanos as u32)),
+            end_time: q
+                .end_time
+                .and_then(|ts| chrono::DateTime::from_timestamp(ts.seconds, ts.nanos as u32)),
             limit,
             offset,
         };
@@ -361,10 +355,7 @@ impl Sentinel for SentinelService {
                 ..Default::default()
             })
             .collect();
-        Ok(Response::new(api::ListAlertsResponse {
-            alerts: api_alerts,
-            ..Default::default()
-        }))
+        Ok(Response::new(api::ListAlertsResponse { alerts: api_alerts, ..Default::default() }))
     }
 
     async fn get_alert(
@@ -396,8 +387,8 @@ impl Sentinel for SentinelService {
     ) -> Result<Response<api::UpdateAlertStateResponse>, Status> {
         let q = req.into_inner();
         let repo = self.storage.alerts().await;
-        let id = Ulid::from_string(&q.alert_id)
-            .map_err(|e| Status::invalid_argument(e.to_string()))?;
+        let id =
+            Ulid::from_string(&q.alert_id).map_err(|e| Status::invalid_argument(e.to_string()))?;
         let state = proto_alert_state_to_core(q.new_state).map_err(|e| e)?;
 
         repo.update_state(&id, state, Some(q.comment))
@@ -556,10 +547,7 @@ impl Sentinel for SentinelService {
         }
 
         let all_passed = !results.is_empty() && results.iter().all(|r| r.matched);
-        Ok(Response::new(api::TestRuleResponse {
-            results,
-            all_passed,
-        }))
+        Ok(Response::new(api::TestRuleResponse { results, all_passed }))
     }
 
     async fn risk_summary(
@@ -592,10 +580,14 @@ impl Sentinel for SentinelService {
 
         let query = sentinel_core::traits::ChainQuery {
             start_time: q.start_time.and_then(|ts| {
-                std::time::SystemTime::try_from(ts).ok().map(chrono::DateTime::from)
+                std::time::SystemTime::try_from(ts)
+                    .ok()
+                    .map(chrono::DateTime::from)
             }),
             end_time: q.end_time.and_then(|ts| {
-                std::time::SystemTime::try_from(ts).ok().map(chrono::DateTime::from)
+                std::time::SystemTime::try_from(ts)
+                    .ok()
+                    .map(chrono::DateTime::from)
             }),
             status: match q.status {
                 1 => Some(sentinel_core::traits::ChainStatus::ActiveAttack),
@@ -608,8 +600,9 @@ impl Sentinel for SentinelService {
         };
 
         let chains = repo.query_chains(query).await.map_err(map_err)?;
-        let summaries: Vec<api::AttackChainSummary> =
-            chains.into_iter().map(|c| api::AttackChainSummary {
+        let summaries: Vec<api::AttackChainSummary> = chains
+            .into_iter()
+            .map(|c| api::AttackChainSummary {
                 id: c.id,
                 start_time: sentinel_core::chrono_to_proto_ts(c.start_time),
                 end_time: sentinel_core::chrono_to_proto_ts(c.end_time),
@@ -619,7 +612,8 @@ impl Sentinel for SentinelService {
                 event_count: c.event_count as i32,
                 status: chain_status_to_proto(c.status),
                 kill_chain_coverage: c.kill_chain_coverage,
-            }).collect();
+            })
+            .collect();
 
         Ok(Response::new(api::AttackChainsResponse { chains: summaries }))
     }
@@ -649,10 +643,7 @@ impl Sentinel for SentinelService {
             kill_chain_coverage: chain.kill_chain_coverage,
         };
 
-        Ok(Response::new(api::AttackChainDetail {
-            summary: Some(summary),
-            ..Default::default()
-        }))
+        Ok(Response::new(api::AttackChainDetail { summary: Some(summary), ..Default::default() }))
     }
 
     async fn explain_alert(
@@ -681,10 +672,7 @@ impl Sentinel for SentinelService {
         req: Request<api::UpdateConfigRequest>,
     ) -> Result<Response<api::ConfigResponse>, Status> {
         let q = req.into_inner();
-        Ok(Response::new(api::ConfigResponse {
-            config_toml: q.config_toml,
-            version: 1,
-        }))
+        Ok(Response::new(api::ConfigResponse { config_toml: q.config_toml, version: 1 }))
     }
 
     async fn list_plugins(
@@ -751,9 +739,7 @@ impl Sentinel for SentinelService {
         req: Request<api::ConfigurePluginRequest>,
     ) -> Result<Response<api::PluginConfig>, Status> {
         let q = req.into_inner();
-        Ok(Response::new(api::PluginConfig {
-            config: q.config,
-        }))
+        Ok(Response::new(api::PluginConfig { config: q.config }))
     }
 
     async fn list_collectors(
@@ -784,11 +770,9 @@ impl Sentinel for SentinelService {
                         errors: s.errors,
                         ..Default::default()
                     }),
-                    last_event: s.last_event_at.map(|t| {
-                        prost_types::Timestamp {
-                            seconds: t.timestamp(),
-                            nanos: t.timestamp_subsec_nanos() as i32,
-                        }
+                    last_event: s.last_event_at.map(|t| prost_types::Timestamp {
+                        seconds: t.timestamp(),
+                        nanos: t.timestamp_subsec_nanos() as i32,
                     }),
                 }
             })
@@ -825,18 +809,13 @@ impl Sentinel for SentinelService {
                 errors: s.errors,
                 ..Default::default()
             }),
-            last_event: s.last_event_at.map(|t| {
-                prost_types::Timestamp {
-                    seconds: t.timestamp(),
-                    nanos: t.timestamp_subsec_nanos() as i32,
-                }
+            last_event: s.last_event_at.map(|t| prost_types::Timestamp {
+                seconds: t.timestamp(),
+                nanos: t.timestamp_subsec_nanos() as i32,
             }),
         });
 
-        Ok(Response::new(api::CollectorStatusResponse {
-            info,
-            ..Default::default()
-        }))
+        Ok(Response::new(api::CollectorStatusResponse { info, ..Default::default() }))
     }
 
     async fn restart_collector(
@@ -891,10 +870,7 @@ fn proto_alert_state_to_core(state: i32) -> Result<CoreAlertState, Status> {
         4 => Ok(CoreAlertState::ResolvedTruePositive),
         5 => Ok(CoreAlertState::ResolvedFalsePositive),
         6 => Ok(CoreAlertState::Suppressed),
-        _ => Err(Status::invalid_argument(format!(
-            "invalid alert state: {}. Valid: 1-6",
-            state
-        ))),
+        _ => Err(Status::invalid_argument(format!("invalid alert state: {}. Valid: 1-6", state))),
     }
 }
 
@@ -936,10 +912,7 @@ fn core_rule_to_proto(rule: &sentinel_core::traits::Rule) -> api::Rule {
                 .risk
                 .multipliers
                 .iter()
-                .map(|m| api::RiskMultiplier {
-                    condition: m.condition.clone(),
-                    factor: m.factor,
-                })
+                .map(|m| api::RiskMultiplier { condition: m.condition.clone(), factor: m.factor })
                 .collect(),
         }),
         condition: rule.condition.clone(),
@@ -962,9 +935,7 @@ fn core_rule_to_proto(rule: &sentinel_core::traits::Rule) -> api::Rule {
                         .as_object()
                         .map(|o| {
                             o.iter()
-                                .map(|(k, v)| {
-                                    (k.clone(), serde_json_to_proto_value(v))
-                                })
+                                .map(|(k, v)| (k.clone(), serde_json_to_proto_value(v)))
                                 .collect()
                         })
                         .unwrap_or_default(),
@@ -986,19 +957,16 @@ fn core_rule_to_proto(rule: &sentinel_core::traits::Rule) -> api::Rule {
 fn proto_to_core_rule(proto: &api::Rule) -> Result<sentinel_core::traits::Rule, Status> {
     let now = chrono::Utc::now();
     Ok(sentinel_core::traits::Rule {
-        id: if proto.id.is_empty() {
-            Ulid::new().to_string()
-        } else {
-            proto.id.clone()
-        },
+        id: if proto.id.is_empty() { Ulid::new().to_string() } else { proto.id.clone() },
         version: proto.version,
         name: proto.name.clone(),
         description: proto.description.clone(),
         author: proto.author.clone(),
         created: if let Some(ref ts) = proto.created {
-            chrono::DateTime::from(std::time::SystemTime::try_from(ts.clone()).map_err(|e| {
-                Status::invalid_argument(format!("invalid timestamp: {e}"))
-            })?)
+            chrono::DateTime::from(
+                std::time::SystemTime::try_from(ts.clone())
+                    .map_err(|e| Status::invalid_argument(format!("invalid timestamp: {e}")))?,
+            )
         } else {
             now
         },
@@ -1079,45 +1047,39 @@ fn proto_to_core_rule(proto: &api::Rule) -> Result<sentinel_core::traits::Rule, 
 
 fn serde_json_to_proto_value(v: &serde_json::Value) -> prost_types::Value {
     match v {
-        serde_json::Value::Null => prost_types::Value {
-            kind: Some(prost_types::value::Kind::NullValue(0)),
+        serde_json::Value::Null => {
+            prost_types::Value { kind: Some(prost_types::value::Kind::NullValue(0)) }
         },
-        serde_json::Value::Bool(b) => prost_types::Value {
-            kind: Some(prost_types::value::Kind::BoolValue(*b)),
+        serde_json::Value::Bool(b) => {
+            prost_types::Value { kind: Some(prost_types::value::Kind::BoolValue(*b)) }
         },
         serde_json::Value::Number(n) => {
             if let Some(i) = n.as_i64() {
-                prost_types::Value {
-                    kind: Some(prost_types::value::Kind::NumberValue(i as f64)),
-                }
+                prost_types::Value { kind: Some(prost_types::value::Kind::NumberValue(i as f64)) }
             } else {
                 prost_types::Value {
                     kind: Some(prost_types::value::Kind::NumberValue(n.as_f64().unwrap_or(0.0))),
                 }
             }
-        }
-        serde_json::Value::String(s) => prost_types::Value {
-            kind: Some(prost_types::value::Kind::StringValue(s.clone())),
+        },
+        serde_json::Value::String(s) => {
+            prost_types::Value { kind: Some(prost_types::value::Kind::StringValue(s.clone())) }
         },
         serde_json::Value::Array(arr) => {
             let values = arr.iter().map(serde_json_to_proto_value).collect();
             prost_types::Value {
-                kind: Some(prost_types::value::Kind::ListValue(prost_types::ListValue {
-                    values,
-                })),
+                kind: Some(prost_types::value::Kind::ListValue(prost_types::ListValue { values })),
             }
-        }
+        },
         serde_json::Value::Object(obj) => {
             let fields = obj
                 .iter()
                 .map(|(k, v)| (k.clone(), serde_json_to_proto_value(v)))
                 .collect();
             prost_types::Value {
-                kind: Some(prost_types::value::Kind::StructValue(prost_types::Struct {
-                    fields,
-                })),
+                kind: Some(prost_types::value::Kind::StructValue(prost_types::Struct { fields })),
             }
-        }
+        },
     }
 }
 
@@ -1125,22 +1087,20 @@ fn prost_value_to_serde_json(v: &prost_types::Value) -> serde_json::Value {
     match &v.kind {
         Some(prost_types::value::Kind::NullValue(_)) => serde_json::Value::Null,
         Some(prost_types::value::Kind::BoolValue(b)) => serde_json::Value::Bool(*b),
-        Some(prost_types::value::Kind::NumberValue(n)) => {
-            serde_json::Value::Number(serde_json::Number::from_f64(*n).unwrap_or_else(|| {
-                serde_json::Number::from(*n as i64)
-            }))
-        }
+        Some(prost_types::value::Kind::NumberValue(n)) => serde_json::Value::Number(
+            serde_json::Number::from_f64(*n).unwrap_or_else(|| serde_json::Number::from(*n as i64)),
+        ),
         Some(prost_types::value::Kind::StringValue(s)) => serde_json::Value::String(s.clone()),
         Some(prost_types::value::Kind::ListValue(arr)) => {
             serde_json::Value::Array(arr.values.iter().map(prost_value_to_serde_json).collect())
-        }
+        },
         Some(prost_types::value::Kind::StructValue(s)) => {
             let mut map = serde_json::Map::new();
             for (k, v) in &s.fields {
                 map.insert(k.clone(), prost_value_to_serde_json(v));
             }
             serde_json::Value::Object(map)
-        }
+        },
         None => serde_json::Value::Null,
     }
 }
@@ -1152,7 +1112,9 @@ fn cpu_percent() -> f64 {
         sysinfo::ProcessRefreshKind::new(),
     );
     let pid = sysinfo::Pid::from_u32(std::process::id());
-    sys.process(pid).map(|p| p.cpu_usage() as f64).unwrap_or(0.0)
+    sys.process(pid)
+        .map(|p| p.cpu_usage() as f64)
+        .unwrap_or(0.0)
 }
 
 fn memory_bytes() -> u64 {
@@ -1177,13 +1139,8 @@ pub async fn serve(
     use tonic::transport::Server;
     tracing::info!("gRPC server starting on {addr}");
 
-    let svc = SentinelService::new(
-        storage,
-        alert_broadcast,
-        collector_registry,
-        rule_engine,
-        ai_engine,
-    );
+    let svc =
+        SentinelService::new(storage, alert_broadcast, collector_registry, rule_engine, ai_engine);
 
     let (mut reporter, health_svc) = tonic_health::server::health_reporter();
     reporter

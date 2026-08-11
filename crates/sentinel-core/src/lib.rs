@@ -321,7 +321,6 @@ impl ShutdownSignal {
     }
 }
 
-
 /// Module context provided to each subsystem
 #[derive(Clone)]
 pub struct ModuleContext {
@@ -332,8 +331,6 @@ pub struct ModuleContext {
     pub plugin_manager: Arc<dyn traits::PluginManager>,
     pub shutdown: ShutdownSignal,
 }
-
-
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct CollectorStatus {
@@ -368,9 +365,7 @@ pub struct CollectorRegistry {
 
 impl CollectorRegistry {
     pub fn new() -> Self {
-        Self {
-            collectors: parking_lot::RwLock::new(std::collections::HashMap::new()),
-        }
+        Self { collectors: parking_lot::RwLock::new(std::collections::HashMap::new()) }
     }
 
     pub fn register(&self, status: CollectorStatus) {

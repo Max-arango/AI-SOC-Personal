@@ -56,10 +56,7 @@ fn api_key() -> Option<String> {
 
 async fn query_otx(indicator: &str, indicator_type: &str) -> Option<OtxReport> {
     let key = api_key()?;
-    let url = format!(
-        "{}/api/v1/indicators/{}/{}/general",
-        base_url(), indicator_type, indicator
-    );
+    let url = format!("{}/api/v1/indicators/{}/{}/general", base_url(), indicator_type, indicator);
 
     let resp = reqwest::Client::new()
         .get(&url)
@@ -128,12 +125,7 @@ async fn query_otx(indicator: &str, indicator_type: &str) -> Option<OtxReport> {
     Some(report)
 }
 
-fn calculate_risk(
-    pulse_count: u32,
-    reputation: i32,
-    tags: &[String],
-    malware: &[String],
-) -> u32 {
+fn calculate_risk(pulse_count: u32, reputation: i32, tags: &[String], malware: &[String]) -> u32 {
     let mut score = 0u32;
 
     if pulse_count > 50 {
@@ -151,13 +143,27 @@ fn calculate_risk(
     }
 
     let malicious_tags = [
-        "malware", "ransomware", "c2", "botnet", "phishing", "exploit",
-        "trojan", "apt", "backdoor", "rat", "stealer", "spyware",
+        "malware",
+        "ransomware",
+        "c2",
+        "botnet",
+        "phishing",
+        "exploit",
+        "trojan",
+        "apt",
+        "backdoor",
+        "rat",
+        "stealer",
+        "spyware",
     ];
 
     let tag_hits = tags
         .iter()
-        .filter(|t| malicious_tags.iter().any(|mt| t.to_lowercase().contains(mt)))
+        .filter(|t| {
+            malicious_tags
+                .iter()
+                .any(|mt| t.to_lowercase().contains(mt))
+        })
         .count() as u32;
 
     score += tag_hits * 5;

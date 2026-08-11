@@ -47,9 +47,7 @@ pub struct FleetManager {
 
 impl FleetManager {
     pub fn new() -> Arc<Self> {
-        Arc::new(Self {
-            agents: RwLock::new(HashMap::new()),
-        })
+        Arc::new(Self { agents: RwLock::new(HashMap::new()) })
     }
 
     pub fn register(&self, agent: RegisteredAgent) {
@@ -80,12 +78,7 @@ impl FleetManager {
             })
             .collect();
 
-        FleetState {
-            agents: agent_list,
-            total_events: 0,
-            total_alerts: 0,
-            active_threats: 0,
-        }
+        FleetState { agents: agent_list, total_events: 0, total_alerts: 0, active_threats: 0 }
     }
 
     pub fn online_count(&self) -> usize {

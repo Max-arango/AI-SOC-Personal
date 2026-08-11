@@ -24,16 +24,16 @@ pub async fn notify_alerts(
                     &sev,
                     &src,
                     Some(&format!("{} events in chain", event_count)),
-                ).await;
+                )
+                .await;
             });
         }
     }
 
     if sentinel_plugin_telegram::enabled() {
-        if let (Some(token), Some(chat_id)) = (
-            sentinel_plugin_telegram::bot_token(),
-            sentinel_plugin_telegram::chat_id(),
-        ) {
+        if let (Some(token), Some(chat_id)) =
+            (sentinel_plugin_telegram::bot_token(), sentinel_plugin_telegram::chat_id())
+        {
             let eid = rule_id.to_string();
             let name = rule_name.to_string();
             let src = source.to_string();
@@ -48,7 +48,8 @@ pub async fn notify_alerts(
                     &sev,
                     &src,
                     Some(&format!("{} events in chain", event_count)),
-                ).await;
+                )
+                .await;
             });
         }
     }
@@ -60,9 +61,14 @@ pub async fn notify_alerts(
         let sev = severity.to_string();
         tokio::spawn(async move {
             sentinel_plugin_home_assistant::send_alert(
-                &eid, &name, risk_score, &sev, &src,
+                &eid,
+                &name,
+                risk_score,
+                &sev,
+                &src,
                 Some(&format!("{} events in chain", event_count)),
-            ).await;
+            )
+            .await;
         });
     }
 
@@ -73,9 +79,14 @@ pub async fn notify_alerts(
         let sev = severity.to_string();
         tokio::spawn(async move {
             sentinel_plugin_slack::send_alert(
-                &eid, &name, risk_score, &sev, &src,
+                &eid,
+                &name,
+                risk_score,
+                &sev,
+                &src,
                 Some(&format!("{} events in chain", event_count)),
-            ).await;
+            )
+            .await;
         });
     }
 
@@ -86,9 +97,14 @@ pub async fn notify_alerts(
         let sev = severity.to_string();
         tokio::spawn(async move {
             sentinel_plugin_email::send_alert(
-                &eid, &name, risk_score, &sev, &src,
+                &eid,
+                &name,
+                risk_score,
+                &sev,
+                &src,
                 Some(&format!("{} events in chain", event_count)),
-            ).await;
+            )
+            .await;
         });
     }
 }

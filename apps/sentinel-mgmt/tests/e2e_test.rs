@@ -63,9 +63,7 @@ async fn test_e2e_agent_register_and_heartbeat() {
     assert_eq!(agent.os, "linux");
     assert!(matches!(agent.status, AgentStatus::Online));
 
-    eprintln!(
-        "E2E test passed: agent registered, heartbeat acknowledged, fleet state correct"
-    );
+    eprintln!("E2E test passed: agent registered, heartbeat acknowledged, fleet state correct");
 
     server_handle.abort();
 }

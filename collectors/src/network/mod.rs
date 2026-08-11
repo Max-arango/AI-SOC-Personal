@@ -188,8 +188,15 @@ fn read_process_name(pid: u32) -> String {
 // ── Main monitor ──────────────────────────────────────────────────
 
 #[cfg(target_os = "linux")]
-pub async fn start_network_monitor(bus: Arc<dyn EventBus>, registry: Arc<sentinel_core::CollectorRegistry>) {
-    registry.register(sentinel_core::CollectorStatus::new("network", "Network Monitor", "/proc/net polling + DNS + scan detection"));
+pub async fn start_network_monitor(
+    bus: Arc<dyn EventBus>,
+    registry: Arc<sentinel_core::CollectorRegistry>,
+) {
+    registry.register(sentinel_core::CollectorStatus::new(
+        "network",
+        "Network Monitor",
+        "/proc/net polling + DNS + scan detection",
+    ));
     tokio::spawn(async move {
         let reg = registry;
         // Initial scan: populate tracker with existing connections
@@ -202,19 +209,26 @@ pub async fn start_network_monitor(bus: Arc<dyn EventBus>, registry: Arc<sentine
         {
             let raw_conns = poll_all_connections();
             // Full build on first cycle
-            for _ in 0..6 { cycle_count += 1; } // Force full rebuild
+            for _ in 0..6 {
+                cycle_count += 1;
+            } // Force full rebuild
             build_inode_pid_map(&mut inode_map, &mut known_pids, &mut cycle_count);
             let enriched: Vec<(ConnectionKey, ConnectionMeta)> = raw_conns
                 .into_iter()
                 .filter_map(|rc| {
-                    let (pid, proc_name) =
-                        inode_map.get(&rc.inode).cloned().unwrap_or((0, "?".to_string()));
-                    Some((raw_to_key(&rc), ConnectionMeta {
-                        pid,
-                        process_name: proc_name,
-                        uid: rc.uid,
-                        inode: rc.inode,
-                    }))
+                    let (pid, proc_name) = inode_map
+                        .get(&rc.inode)
+                        .cloned()
+                        .unwrap_or((0, "?".to_string()));
+                    Some((
+                        raw_to_key(&rc),
+                        ConnectionMeta {
+                            pid,
+                            process_name: proc_name,
+                            uid: rc.uid,
+                            inode: rc.inode,
+                        },
+                    ))
                 })
                 .collect();
             // Seed tracker silently (no events for existing connections)
@@ -240,14 +254,19 @@ pub async fn start_network_monitor(bus: Arc<dyn EventBus>, registry: Arc<sentine
             let enriched: Vec<(ConnectionKey, ConnectionMeta)> = raw_conns
                 .into_iter()
                 .filter_map(|rc| {
-                    let (pid, proc_name) =
-                        inode_map.get(&rc.inode).cloned().unwrap_or((0, "?".to_string()));
-                    Some((raw_to_key(&rc), ConnectionMeta {
-                        pid,
-                        process_name: proc_name,
-                        uid: rc.uid,
-                        inode: rc.inode,
-                    }))
+                    let (pid, proc_name) = inode_map
+                        .get(&rc.inode)
+                        .cloned()
+                        .unwrap_or((0, "?".to_string()));
+                    Some((
+                        raw_to_key(&rc),
+                        ConnectionMeta {
+                            pid,
+                            process_name: proc_name,
+                            uid: rc.uid,
+                            inode: rc.inode,
+                        },
+                    ))
                 })
                 .collect();
 
@@ -274,17 +293,17 @@ pub async fn start_network_monitor(bus: Arc<dyn EventBus>, registry: Arc<sentine
                                     severity = sentinel_events::Severity::Warning as i32;
                                     risk = 50u32;
                                     tags.push(format!("vertical_scan:{}:{}", host, port_count));
-                                }
+                                },
                                 scan_detector::ScanType::HorizontalScan { port, host_count } => {
                                     severity = sentinel_events::Severity::Warning as i32;
                                     risk = 40u32;
                                     tags.push(format!("horizontal_scan:{}:{}", port, host_count));
-                                }
+                                },
                                 scan_detector::ScanType::ConnectionStorm { pid, count } => {
                                     severity = sentinel_events::Severity::Warning as i32;
                                     risk = 60u32;
                                     tags.push(format!("connection_storm:{}:{}", pid, count));
-                                }
+                                },
                             }
                         } else {
                             severity = sentinel_events::Severity::Info as i32;
@@ -346,7 +365,7 @@ pub async fn start_network_monitor(bus: Arc<dyn EventBus>, registry: Arc<sentine
                         if dns.cache_size() > 1000 {
                             dns.prune();
                         }
-                    }
+                    },
 
                     ConnectionEvent::Close { key, duration, meta } => {
                         let net_event = Arc::new(Event {
@@ -389,7 +408,7 @@ pub async fn start_network_monitor(bus: Arc<dyn EventBus>, registry: Arc<sentine
 
                         let _ = bus.publish(net_event).await;
                         reg.increment_events("network", 1);
-                    }
+                    },
                 }
             }
         }
@@ -439,10 +458,7 @@ mod tests {
 
     #[test]
     fn test_parse_ipv6() {
-        let result = parse_ip_port(
-            "00000000000000000000000000000001:1F90",
-        )
-        .unwrap();
+        let result = parse_ip_port("00000000000000000000000000000001:1F90").unwrap();
         assert_eq!(result.0, "0000:0000:0000:0000:0000:0000:0000:0001");
         assert_eq!(result.1, 8080);
     }

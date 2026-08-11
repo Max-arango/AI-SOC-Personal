@@ -10,9 +10,9 @@ use tracing::info;
 
 use sentinel_core::{
     traits::{
-        AggregationBucket, AggregationQuery, AggregationResult, AlertRepository, ChainRepository,
-        ConfigRepository, EventCursor, EventQuery, EventRepository, RetentionPolicy, RuleRepository,
-        AttackChain, ChainQuery, ChainStatus,
+        AggregationBucket, AggregationQuery, AggregationResult, AlertRepository, AttackChain,
+        ChainQuery, ChainRepository, ChainStatus, ConfigRepository, EventCursor, EventQuery,
+        EventRepository, RetentionPolicy, RuleRepository,
     },
     AlertId, ConfigValue, EventId, Result as CoreResult, SentinelError,
 };
@@ -313,7 +313,10 @@ impl EventRepository for SqliteEventRepository {
 
         let sort_by = query.sort_by.as_deref().unwrap_or("timestamp");
         let valid_sort = ["timestamp", "severity", "risk_score", "type", "source", "host_id"];
-        let sort_col = valid_sort.iter().find(|&&c| c == sort_by).unwrap_or(&"timestamp");
+        let sort_col = valid_sort
+            .iter()
+            .find(|&&c| c == sort_by)
+            .unwrap_or(&"timestamp");
         let sort_order = if query.sort_desc { "DESC" } else { "ASC" };
         sql.push_str(&format!(" ORDER BY {} {}", sort_col, sort_order));
         sql.push_str(" LIMIT ? OFFSET ?");

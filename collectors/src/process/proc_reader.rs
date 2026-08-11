@@ -57,8 +57,8 @@ pub fn read_status(pid: u32) -> io::Result<StatusInfo> {
                 "Uid" => {
                     let parts: Vec<&str> = val.split_whitespace().collect();
                     info.uid = parts.first().and_then(|s| s.parse().ok()).unwrap_or(0);
-                }
-                _ => {}
+                },
+                _ => {},
             }
         }
     }
@@ -92,7 +92,7 @@ pub fn read_exe_path(pid: u32) -> String {
             std::fs::read_to_string(&comm)
                 .map(|s| format!("[{}]", s.trim()))
                 .unwrap_or_else(|_| String::new())
-        }
+        },
     }
 }
 
@@ -110,7 +110,7 @@ pub fn hash_exe_sha256(pid: u32) -> String {
             let mut hasher = Sha256::new();
             hasher.update(&data);
             format!("{:x}", hasher.finalize())
-        }
+        },
         Err(_) => String::new(),
     }
 }
@@ -149,16 +149,13 @@ pub fn read_start_time_ticks(pid: u32) -> u64 {
     match std::fs::read_to_string(&path) {
         Ok(data) => {
             // Field 22 is after the comm field (which is in parens)
-            let after_paren = data
-                .rfind(')')
-                .map(|i| &data[i + 2..])
-                .unwrap_or("");
+            let after_paren = data.rfind(')').map(|i| &data[i + 2..]).unwrap_or("");
             after_paren
                 .split_whitespace()
                 .nth(19) // 0-indexed after removing pid+comm = field 19
                 .and_then(|s| s.parse().ok())
                 .unwrap_or(0)
-        }
+        },
         Err(_) => 0,
     }
 }

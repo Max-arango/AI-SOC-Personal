@@ -23,12 +23,7 @@ mod file_hasher;
 use fanotify_watcher::{FanotifyWatcher, FileAction, FileEvent as RawFileEvent};
 use file_hasher::hash_file;
 
-const DEFAULT_WATCH_PATHS: &[&str] = &[
-    "/etc",
-    "/tmp",
-    "/var/log",
-    "/var/spool/cron",
-];
+const DEFAULT_WATCH_PATHS: &[&str] = &["/etc", "/tmp", "/var/log", "/var/spool/cron"];
 
 const MAX_HASH_BYTES: u64 = 10 * 1024 * 1024; // 10 MB
 const RANSOMWARE_WINDOW: Duration = Duration::from_secs(10);
@@ -41,9 +36,16 @@ struct EntropyRecord {
     timestamp: Instant,
 }
 
-pub async fn start_file_monitor(bus: Arc<dyn EventBus>, registry: Arc<sentinel_core::CollectorRegistry>) {
+pub async fn start_file_monitor(
+    bus: Arc<dyn EventBus>,
+    registry: Arc<sentinel_core::CollectorRegistry>,
+) {
     tokio::spawn(async move {
-        registry.register(sentinel_core::CollectorStatus::new("file", "File Monitor", "File collector"));
+        registry.register(sentinel_core::CollectorStatus::new(
+            "file",
+            "File Monitor",
+            "File collector",
+        ));
         let reg = registry.clone();
         let watch_paths: Vec<PathBuf> = DEFAULT_WATCH_PATHS
             .iter()
@@ -54,10 +56,7 @@ pub async fn start_file_monitor(bus: Arc<dyn EventBus>, registry: Arc<sentinel_c
         // Try fanotify first
         let mut watcher = FanotifyWatcher::new();
         if watcher.init(&watch_paths).is_ok() {
-            info!(
-                "File collector started (fanotify, {} paths)",
-                watch_paths.len()
-            );
+            info!("File collector started (fanotify, {} paths)", watch_paths.len());
 
             let (tx, rx) = std::sync::mpsc::channel::<RawFileEvent>();
 
@@ -119,7 +118,8 @@ async fn run_event_loop(
         }
 
         // Ransomware detection: track high-entropy CloseWrite events
-        if raw.action == FileAction::CloseWrite && hash_result.entropy > RANSOMWARE_ENTROPY_THRESHOLD
+        if raw.action == FileAction::CloseWrite
+            && hash_result.entropy > RANSOMWARE_ENTROPY_THRESHOLD
         {
             entropy_window.push_back(EntropyRecord {
                 path: raw.path.clone(),
@@ -142,11 +142,10 @@ async fn run_event_loop(
                     entropy_window.len(),
                     RANSOMWARE_WINDOW.as_secs(),
                 );
-                let paths: Vec<String> =
-                    entropy_window.iter().map(|r| r.path.clone()).collect();
+                let paths: Vec<String> = entropy_window.iter().map(|r| r.path.clone()).collect();
                 let alert = build_ransomware_alert(&paths, entropy_window.len());
                 let _ = bus.publish(Arc::new(alert)).await;
-            reg.increment_events("file", 1);
+                reg.increment_events("file", 1);
                 entropy_window.clear();
             }
         }
@@ -156,7 +155,7 @@ async fn run_event_loop(
             FileAction::Delete => sentinel_events::Severity::Warning as i32,
             FileAction::CloseWrite if hash_result.entropy > 6.0 => {
                 sentinel_events::Severity::Notice as i32
-            }
+            },
             _ => sentinel_events::Severity::Info as i32,
         };
 
@@ -254,15 +253,16 @@ async fn run_event_loop(
 
 // ── Polling fallback ──────────────────────────────────────────────
 
-async fn run_polling_loop(bus: &Arc<dyn EventBus>, watch_paths: &[PathBuf], reg: Arc<sentinel_core::CollectorRegistry>) {
+async fn run_polling_loop(
+    bus: &Arc<dyn EventBus>,
+    watch_paths: &[PathBuf],
+    reg: Arc<sentinel_core::CollectorRegistry>,
+) {
     let mut known: HashMap<String, (u64, u64)> = HashMap::new(); // path → (mtime, size)
     let mut tick = tokio::time::interval(Duration::from_secs(30));
     tick.tick().await;
 
-    info!(
-        "File collector running in polling mode ({} paths)",
-        watch_paths.len()
-    );
+    info!("File collector running in polling mode ({} paths)", watch_paths.len());
 
     loop {
         tick.tick().await;
@@ -277,7 +277,7 @@ async fn run_polling_loop(bus: &Arc<dyn EventBus>, watch_paths: &[PathBuf], reg:
             total += events.len() as u64;
             for event in events {
                 let _ = bus.publish(Arc::new(event)).await;
-                    reg.increment_events("file", 1);
+                reg.increment_events("file", 1);
             }
         }
 
@@ -309,7 +309,11 @@ fn scan_dir(dir: &Path, known: &mut HashMap<String, (u64, u64)>) -> Vec<Event> {
 
         let mtime = metadata
             .modified()
-            .map(|t| t.duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_secs())
+            .map(|t| {
+                t.duration_since(std::time::UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_secs()
+            })
             .unwrap_or(0);
 
         let size = metadata.len();
@@ -349,11 +353,7 @@ fn scan_dir(dir: &Path, known: &mut HashMap<String, (u64, u64)>) -> Vec<Event> {
         .collect();
 
     for path in &deleted {
-        events.push(build_poll_event(
-            path,
-            0,
-            sentinel_events::file_event::Action::Delete,
-        ));
+        events.push(build_poll_event(path, 0, sentinel_events::file_event::Action::Delete));
         known.remove(path);
     }
 
@@ -405,17 +405,10 @@ fn build_ransomware_alert(paths: &[String], count: usize) -> Event {
             path: paths.first().cloned().unwrap_or_default(),
             entropy: format!("{}_files", count),
             is_sensitive_path: true,
-            attributes: Some(FileAttributes {
-                encrypted: true,
-                ..Default::default()
-            }),
+            attributes: Some(FileAttributes { encrypted: true, ..Default::default() }),
             ..Default::default()
         })),
-        tags: vec![
-            "ransomware".into(),
-            "mitre:T1486".into(),
-            format!("files_encrypted:{}", count),
-        ],
+        tags: vec!["ransomware".into(), "mitre:T1486".into(), format!("files_encrypted:{}", count)],
         ..Default::default()
     }
 }

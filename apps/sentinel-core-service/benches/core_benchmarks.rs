@@ -1,7 +1,7 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use std::sync::Arc;
 
-use sentinel_core::{ChannelConfig, EventBus, Ulid, RuleEngineConfig};
+use sentinel_core::{ChannelConfig, EventBus, RuleEngineConfig, Ulid};
 use sentinel_event_bus::EventBusImpl;
 use sentinel_events::Event;
 use sentinel_rule_engine::RuleEngine;
@@ -33,9 +33,8 @@ fn bench_event_bus_publish(c: &mut Criterion) {
 fn bench_rule_engine_evaluate(c: &mut Criterion) {
     let rt = tokio::runtime::Runtime::new().unwrap();
 
-    let engine = rt.block_on(async {
-        RuleEngine::new(&RuleEngineConfig::default()).await.unwrap()
-    });
+    let engine =
+        rt.block_on(async { RuleEngine::new(&RuleEngineConfig::default()).await.unwrap() });
 
     let event = Arc::new(Event {
         id: Ulid::new().to_string(),
