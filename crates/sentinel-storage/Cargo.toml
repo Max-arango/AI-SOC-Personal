@@ -20,7 +20,7 @@ tracing = { workspace = true }
 chrono = { workspace = true }
 uuid = { workspace = true }
 sqlx = { workspace = true }
-duckdb = { workspace = true }
+duckdb = { workspace = true, optional = true }
 sentinel-core = { path = "../sentinel-core" }
 sentinel-events = { path = "../sentinel-events" }
 sentinel-config = { path = "../sentinel-config" }
@@ -29,3 +29,7 @@ prost = "0.12"
 prost-types = "0.12"
 [dev-dependencies]
 tempfile = { workspace = true }
+
+[features]
+default = []
+duckdb = ["dep:duckdb"]

@@ -325,6 +325,7 @@ async fn migrate_v7(pool: &SqlitePool) -> Result<()> {
 }
 
 /// Run DuckDB migrations
+#[cfg(feature = "duckdb")]
 pub async fn run_duckdb_migrations(_duckdb: &crate::duckdb::DuckDbStorage) -> Result<()> {
     info!("Running DuckDB migrations");
 
