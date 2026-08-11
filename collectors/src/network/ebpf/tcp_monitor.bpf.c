@@ -2,42 +2,38 @@
 // Sentinel AI — eBPF Network Monitor
 //
 // Hooks tcp_v4_connect and tcp_close to capture TCP connection
-// events in real time. Uses BPF CO-RE (Compile Once, Run Everywhere)
-// via BTF — no kernel headers required at build time.
+// events in real time. Uses raw kprobe interface (no CO-RE needed).
 //
-// Build:
-//   clang -target bpf -O2 -g -c tcp_monitor.bpf.c -o tcp_monitor.bpf.o
-//
-// The resulting .o file is embedded in the Rust binary via
-// include_bytes!() and loaded at runtime by the aya crate.
+// Compile:
+//   clang -target bpf -O2 -g -nostdinc \
+//     -isystem /usr/lib/clang/22/include \
+//     -I/usr/include -I/usr/include/x86_64-linux-gnu \
+//     -D__TARGET_ARCH_x86 \
+//     -c tcp_monitor.bpf.c -o tcp_monitor.bpf.o
 
-#include <vmlinux.h>
+#include <linux/types.h>
+#include <linux/bpf.h>
 #include <bpf/bpf_helpers.h>
-#include <bpf/bpf_core_read.h>
-#include <bpf/bpf_tracing.h>
-#include <bpf/bpf_endian.h>
+
+// x86_64 register offsets for kprobe arguments
+// PT_REGS_PARM1 → rdi (offset 112)
+// We access ctx directly via pointer arithmetic
 
 #define TASK_COMM_LEN 16
 
-// Event types
-#define EVENT_CONNECT 1
-#define EVENT_CLOSE   2
-
-// Event sent to userspace via perf buffer
 struct tcp_event {
     __u32 pid;
     __u32 tid;
     __u32 uid;
-    __u32 event_type;       // EVENT_CONNECT or EVENT_CLOSE
-    __u32 saddr;            // source IP (network byte order)
-    __u32 daddr;            // dest IP
-    __u16 sport;            // source port (network byte order)
-    __u16 dport;            // dest port
+    __u32 event_type;
+    __u32 saddr;
+    __u32 daddr;
+    __u16 sport;
+    __u16 dport;
     __u8  comm[TASK_COMM_LEN];
     __u64 timestamp_ns;
-};
+} __attribute__((packed));
 
-// Perf buffer map shared with userspace
 struct {
     __uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
     __uint(key_size, sizeof(__u32));
@@ -45,70 +41,70 @@ struct {
     __uint(max_entries, 1024);
 } events SEC(".maps");
 
-// Helper: send event to userspace
-static __always_inline int send_event(struct tcp_event *evt) {
-    return bpf_perf_event_output(ctx, &events, BPF_F_CURRENT_CPU, evt, sizeof(*evt));
-}
-
-// ── kprobe/tcp_v4_connect ────────────────────────────────
+// ── kprobe/tcp_v4_connect ──────────────────────────────────
 
 SEC("kprobe/tcp_v4_connect")
-int BPF_KPROBE(tcp_v4_connect, struct sock *sk, struct sockaddr *uaddr, int addr_len)
+int tcp_v4_connect_prog(struct pt_regs *ctx)
 {
+    // Argument 1 (rdi) = sk — read via byte offset
+    void *sk;
+    bpf_probe_read_kernel(&sk, sizeof(sk), ((unsigned char *)ctx) + 112);
+
     struct tcp_event evt = {};
-    struct task_struct *task = (struct task_struct *)bpf_get_current_task();
-
-    // Process identity
     __u64 pid_tgid = bpf_get_current_pid_tgid();
-    evt.pid = pid_tgid >> 32;           // TGID (process ID)
-    evt.tid = (__u32)pid_tgid;          // PID (thread ID)
+    evt.pid = pid_tgid >> 32;
+    evt.tid = (__u32)pid_tgid;
     evt.uid = bpf_get_current_uid_gid() & 0xFFFFFFFF;
-    evt.event_type = EVENT_CONNECT;
-
-    // Process name
+    evt.event_type = 1; // EVENT_CONNECT
+    evt.timestamp_ns = bpf_ktime_get_ns();
     bpf_get_current_comm(&evt.comm, sizeof(evt.comm));
 
-    // Source address (from sock)
-    struct inet_sock *inet = (struct inet_sock *)sk;
-    // CO-RE: read saddr and sport from inet_sock
-    evt.saddr = BPF_CORE_READ(inet, inet_saddr);
-    evt.sport = BPF_CORE_READ(inet, inet_sport);
+    // Read sock addresses via bpf_probe_read_kernel
+    // struct sock_common offsets: skc_rcv_saddr=0, skc_daddr=4,
+    //   skc_num=18, skc_dport=20 (stable for Linux 6.x/7.x)
+    __u32 saddr = 0, daddr = 0;
+    __u16 sport = 0, dport = 0;
+    bpf_probe_read_kernel(&saddr, sizeof(saddr), sk + 0);
+    bpf_probe_read_kernel(&daddr, sizeof(daddr), sk + 4);
+    bpf_probe_read_kernel(&sport, sizeof(sport), sk + 18);
+    bpf_probe_read_kernel(&dport, sizeof(dport), sk + 20);
+    evt.saddr = saddr;
+    evt.daddr = daddr;
+    evt.sport = sport;
+    evt.dport = dport;
 
-    // Destination address (from sockaddr)
-    struct sockaddr_in *daddr_in = (struct sockaddr_in *)uaddr;
-    bpf_probe_read_user(&evt.daddr, sizeof(evt.daddr), &daddr_in->sin_addr.s_addr);
-    bpf_probe_read_user(&evt.dport, sizeof(evt.dport), &daddr_in->sin_port);
-
-    evt.timestamp_ns = bpf_ktime_get_ns();
-
-    send_event(&evt);
+    bpf_perf_event_output(ctx, &events, BPF_F_CURRENT_CPU, &evt, sizeof(evt));
     return 0;
 }
 
-// ── kprobe/tcp_close ──────────────────────────────────────
+// ── kprobe/tcp_close ────────────────────────────────────────
 
 SEC("kprobe/tcp_close")
-int BPF_KPROBE(tcp_close, struct sock *sk, long timeout)
+int tcp_close_prog(struct pt_regs *ctx)
 {
-    struct tcp_event evt = {};
+    void *sk;
+    bpf_probe_read_kernel(&sk, sizeof(sk), ((unsigned char *)ctx) + 112);
 
+    struct tcp_event evt = {};
     evt.pid = bpf_get_current_pid_tgid() >> 32;
     evt.tid = (__u32)bpf_get_current_pid_tgid();
     evt.uid = bpf_get_current_uid_gid() & 0xFFFFFFFF;
-    evt.event_type = EVENT_CLOSE;
-
+    evt.event_type = 2; // EVENT_CLOSE
+    evt.timestamp_ns = bpf_ktime_get_ns();
     bpf_get_current_comm(&evt.comm, sizeof(evt.comm));
 
-    // Read socket addresses from sock
-    struct inet_sock *inet = (struct inet_sock *)sk;
-    evt.saddr = BPF_CORE_READ(inet, inet_saddr);
-    evt.daddr = BPF_CORE_READ(inet, inet_daddr);
-    evt.sport = BPF_CORE_READ(inet, inet_sport);
-    evt.dport = BPF_CORE_READ(inet, inet_dport);
+    __u32 saddr = 0, daddr = 0;
+    __u16 sport = 0, dport = 0;
+    bpf_probe_read_kernel(&saddr, sizeof(saddr), sk + 0);
+    bpf_probe_read_kernel(&daddr, sizeof(daddr), sk + 4);
+    bpf_probe_read_kernel(&sport, sizeof(sport), sk + 18);
+    bpf_probe_read_kernel(&dport, sizeof(dport), sk + 20);
+    evt.saddr = saddr;
+    evt.daddr = daddr;
+    evt.sport = sport;
+    evt.dport = dport;
 
-    evt.timestamp_ns = bpf_ktime_get_ns();
-
-    send_event(&evt);
+    bpf_perf_event_output(ctx, &events, BPF_F_CURRENT_CPU, &evt, sizeof(evt));
     return 0;
 }
 

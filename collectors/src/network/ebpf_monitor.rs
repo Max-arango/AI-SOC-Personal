@@ -118,6 +118,17 @@ impl Drop for EbpfMonitor {
 // ── Internal helpers ───────────────────────────────────────
 
 fn load_bpf_object() -> io::Result<Vec<u8>> {
+    // Priority 1: embedded pre-compiled BPF bytecode
+    #[cfg(feature = "ebpf-embedded")]
+    {
+        let bytes: &[u8] = include_bytes!("ebpf/tcp_monitor.bpf.o");
+        if bytes.len() > 64 {
+            debug!("Using embedded BPF object ({} bytes)", bytes.len());
+            return Ok(bytes.to_vec());
+        }
+    }
+
+    // Priority 2: load from filesystem (development)
     let paths = [
         "collectors/src/network/ebpf/tcp_monitor.bpf.o",
         "../collectors/src/network/ebpf/tcp_monitor.bpf.o",

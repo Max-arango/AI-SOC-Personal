@@ -1,33 +1,31 @@
 #!/bin/bash
 # Build the eBPF program for Sentinel AI network monitor
 #
-# Requires: clang >= 12, libbpf headers (linux-libc-dev)
+# Compiles tcp_monitor.bpf.c → tcp_monitor.bpf.o using clang.
+# The resulting .o is loaded at runtime by aya.
 #
-# Usage:
-#   ./build.sh          # Build tcp_monitor.bpf.o
-#   ./build.sh --strip  # Build and strip debug info (smaller)
-#
-# The resulting tcp_monitor.bpf.o is loaded at runtime by the
-# Sentinel eBPF monitor (feature flag: ebpf-embedded).
+# Requires: clang (tested with clang-22)
 
 set -euo pipefail
+cd "$(dirname "$0")"
 
 SRC="tcp_monitor.bpf.c"
 OUT="tcp_monitor.bpf.o"
+CLANG="${CLANG:-/usr/bin/clang-22}"
 
-CLANG="${CLANG:-clang}"
-CLANG_FLAGS="-target bpf -O2 -g -Wall -Werror"
-INCLUDES="-I/usr/include -I/usr/include/x86_64-linux-gnu"
+CLANG_VER=$("$CLANG" --version 2>/dev/null | head -1 || echo "unknown")
+echo "Compiler: $CLANG_VER"
+echo "Building $OUT..."
 
-if [[ "${1:-}" == "--strip" ]]; then
-    echo "Building $OUT (release, no debug info)..."
-    $CLANG $CLANG_FLAGS $INCLUDES -c "$SRC" -o "$OUT"
-    llvm-strip --strip-debug "$OUT" 2>/dev/null || true
-    ls -lh "$OUT"
-else
-    echo "Building $OUT (with BTF debug info)..."
-    $CLANG $CLANG_FLAGS $INCLUDES -c "$SRC" -o "$OUT"
-    ls -lh "$OUT"
-fi
+"$CLANG" \
+  -target bpf -O2 -g -Wall \
+  -nostdinc \
+  -isystem "$(dirname "$(dirname "$("$CLANG" -print-resource-dir 2>/dev/null)")")" \
+  -I/usr/include -I/usr/include/x86_64-linux-gnu \
+  -D__TARGET_ARCH_x86 \
+  -c "$SRC" -o "$OUT"
 
-echo "Done. To use: cargo build --features ebpf-embedded"
+echo "SUCCESS: $(ls -lh "$OUT" | awk '{print $5}')"
+echo ""
+echo "Now build with:"
+echo "  cd ../../../.. && cargo build --features ebpf-embedded --release"
